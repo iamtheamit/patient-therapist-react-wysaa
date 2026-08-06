@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -8,10 +8,23 @@ import { ROUTES } from '@/config/routes';
 
 export const PatientDesktopHeader: React.FC = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((state: AuthState) => state.user);
   const logout = useAuthStore((state: AuthState) => state.logout);
   const addToast = useUIStore((state: UIState) => state.addToast);
+
+  const getBreadcrumbTitle = (pathname: string) => {
+    if (pathname.includes('/book')) return 'Book Therapy Session';
+    if (pathname.includes('/appointments')) return 'My Appointments';
+    if (pathname.includes('/holds')) return 'My Holds';
+    if (pathname.includes('/therapists')) return 'Therapists';
+    if (pathname.includes('/messages')) return 'Messages';
+    if (pathname.includes('/payments')) return 'Payments';
+    if (pathname.includes('/profile')) return 'Profile';
+    if (pathname.includes('/settings')) return 'Settings';
+    return 'Dashboard Overview';
+  };
 
   const handleSignOut = () => {
     logout();
@@ -25,12 +38,12 @@ export const PatientDesktopHeader: React.FC = () => {
 
   return (
     <div className="hidden md:flex justify-between items-center px-4 sm:px-6 lg:px-8 xl:px-10 py-4 bg-[#f8f9fb]/80 backdrop-blur-sm sticky top-0 z-30 border-b border-[#c3c6d6]/30 w-full">
-      {/* Left Side: Portal Context */}
+      {/* Left Side: Dynamic Portal Context / Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-[#51606f] font-semibold">
         <span className="material-symbols-outlined text-base text-[#003d9b]">dashboard</span>
         <span>Patient Portal</span>
         <span className="text-[#c3c6d6]">/</span>
-        <span className="text-[#191c1e]">Dashboard Overview</span>
+        <span className="text-[#191c1e]">{getBreadcrumbTitle(location.pathname)}</span>
       </div>
 
       {/* Right Side: Mode Badge, Notifications, Profile */}

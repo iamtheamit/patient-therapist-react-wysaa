@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { loginSchema, type LoginFormData } from '../schemas/authSchemas';
 import { useLogin } from '../hooks/useLogin';
 import { ROUTES } from '@/config/routes';
+import { Logo } from '@/components/common/Logo';
 
 export const LoginForm: React.FC = () => {
   const { mutate: login, isPending } = useLogin();
@@ -43,10 +44,7 @@ export const LoginForm: React.FC = () => {
     <div className="min-h-screen w-full bg-white flex flex-col justify-between font-body-md text-[#191c1e] selection:bg-[#005eb8] selection:text-white">
       {/* Top Header Logo */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="material-symbols-outlined text-[#005eb8] text-3xl">psychology</span>
-          <span className="font-heading text-2xl font-bold text-[#005eb8]">TherapySync</span>
-        </div>
+        <Logo />
       </header>
 
       {/* Main Content: Centered Grid */}

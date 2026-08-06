@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { PATIENT_NAV_ITEMS } from '@/config/patientNavigation';
+import { Logo } from '@/components/common/Logo';
 import { cn } from '@/utils/cn';
 
 export const PatientSidebar: React.FC = () => {
@@ -8,17 +9,9 @@ export const PatientSidebar: React.FC = () => {
 
   return (
     <aside className="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-[#f8f9fb] shadow-md border-r border-[#c3c6d6]/50 z-40">
-      {/* Brand Header */}
+      {/* Brand Header matching Login Form */}
       <div className="p-6 border-b border-[#c3c6d6]/50">
-        <Link to="/patient/dashboard" className="flex items-center gap-2 mb-1 group">
-          <span className="material-symbols-outlined fill text-[#003d9b] text-3xl">
-            diversity_1
-          </span>
-          <span className="font-heading text-xl font-bold text-[#003d9b]">CareConnect</span>
-        </Link>
-        <div className="text-xs font-semibold text-[#434654] uppercase tracking-wider">
-          Patient Portal
-        </div>
+        <Logo to="/patient/dashboard" subtitle="Patient Portal" />
       </div>
 
       {/* Navigation */}
