@@ -1,4 +1,4 @@
-export type RecurrenceFrequency = 'SINGLE' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+export type RecurrenceFrequency = 'SINGLE' | 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 
 export interface RecurringRule {
   frequency: RecurrenceFrequency;

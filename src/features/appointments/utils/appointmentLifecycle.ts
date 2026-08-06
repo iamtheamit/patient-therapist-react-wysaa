@@ -5,10 +5,15 @@ export type ExtendedAppointmentStatus = AppointmentStatus | 'IN_PROGRESS' | 'NO_
 const ALLOWED_TRANSITIONS: Record<ExtendedAppointmentStatus, ExtendedAppointmentStatus[]> = {
   HELD: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'],
+  SCHEDULED: ['CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'],
   IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
   COMPLETED: [],
   CANCELLED: [],
   NO_SHOW: [],
+  scheduled: ['completed', 'cancelled', 'no_show'],
+  completed: [],
+  no_show: [],
+  cancelled: [],
 };
 
 export const canTransitionStatus = (
@@ -23,15 +28,21 @@ export const getStatusBadgeConfig = (status: ExtendedAppointmentStatus) => {
   switch (status) {
     case 'CONFIRMED':
       return { variant: 'success' as const, label: 'Confirmed' };
+    case 'SCHEDULED':
+    case 'scheduled':
+      return { variant: 'info' as const, label: 'Scheduled' };
     case 'IN_PROGRESS':
       return { variant: 'warning' as const, label: 'In Progress' };
     case 'COMPLETED':
+    case 'completed':
       return { variant: 'info' as const, label: 'Completed' };
     case 'CANCELLED':
+    case 'cancelled':
       return { variant: 'error' as const, label: 'Cancelled' };
     case 'HELD':
       return { variant: 'warning' as const, label: 'Held Lock' };
     case 'NO_SHOW':
+    case 'no_show':
       return { variant: 'error' as const, label: 'No-Show' };
     default:
       return { variant: 'neutral' as const, label: status };

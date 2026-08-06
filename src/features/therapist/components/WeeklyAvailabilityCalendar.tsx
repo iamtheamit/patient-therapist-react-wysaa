@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
   Plus,
   X,
   Calendar as CalendarIcon,
-  Lock,
   Sparkles,
   Trash2,
   RotateCcw,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
+import { CustomSelect } from '@/components/ui/CustomSelect';
+import { useNow } from '@/hooks/useNow';
 
 export interface AvailabilityBlock {
   id: string;
@@ -20,10 +23,14 @@ export interface AvailabilityBlock {
   durationHours: number; // 3
   location: string;
   type: 'available' | 'booked';
+  status?: 'scheduled' | 'completed' | 'no_show' | 'cancelled';
   title?: string;
   services?: string[];
   patientName?: string;
   isRecurring?: boolean;
+  appointmentType?: string;
+  repeatType?: string;
+  repeatFrequency?: string;
 }
 
 // Helper: Format Date object to "YYYY-MM-DD"
@@ -57,6 +64,7 @@ const generateInitialBlocks = (): AvailabilityBlock[] => {
   const monStr = formatDateISO(monday);
   const tueStr = formatDateISO(addDays(monday, 1));
   const wedStr = formatDateISO(addDays(monday, 2));
+  const thuStr = formatDateISO(addDays(monday, 3));
   const friStr = formatDateISO(addDays(monday, 4));
 
   return [
@@ -93,6 +101,7 @@ const generateInitialBlocks = (): AvailabilityBlock[] => {
       durationHours: 1,
       location: 'Telehealth',
       type: 'booked',
+      status: 'completed',
       patientName: 'Alex Patient - CBT Session',
     },
     {
@@ -109,6 +118,42 @@ const generateInitialBlocks = (): AvailabilityBlock[] => {
     },
     {
       id: '5',
+      date: wedStr,
+      startTime: '14:00',
+      endTime: '15:00',
+      startHour: 14,
+      durationHours: 1,
+      location: 'Telehealth',
+      type: 'booked',
+      status: 'no_show',
+      patientName: 'Michael Brown - Consult (No Show)',
+    },
+    {
+      id: '6',
+      date: thuStr,
+      startTime: '11:00',
+      endTime: '12:00',
+      startHour: 11,
+      durationHours: 1,
+      location: 'Online Clinic',
+      type: 'booked',
+      status: 'cancelled',
+      patientName: 'Emma Watson - Cancelled Appt',
+    },
+    {
+      id: '7',
+      date: friStr,
+      startTime: '10:00',
+      endTime: '11:30',
+      startHour: 10,
+      durationHours: 1.5,
+      location: 'Telehealth',
+      type: 'booked',
+      status: 'scheduled',
+      patientName: 'Sarah Jenkins - CBT Session',
+    },
+    {
+      id: '8',
       date: friStr,
       startTime: '13:00',
       endTime: '16:00',
@@ -137,7 +182,8 @@ const MONTH_NAMES = [
   'December',
 ];
 
-const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+const START_HOUR = 7;
+const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
 
 export const WeeklyAvailabilityCalendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -146,20 +192,25 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedBlock, setSelectedBlock] = useState<AvailabilityBlock | null>(null);
 
+  // Real-time Live Clock Hook (precision minute boundary timer)
+  const nowTime = useNow();
+  const weekScrollRef = useRef<HTMLDivElement>(null);
+  const dayScrollRef = useRef<HTMLDivElement>(null);
+
   // Modal Form State
   const [modalDate, setModalDate] = useState<string>(formatDateISO(new Date()));
   const [modalStartTime, setModalStartTime] = useState<string>('09:00');
-  const [modalEndTime, setModalEndTime] = useState<string>('12:00');
-  const [modalLocation, setModalLocation] = useState<string>('MFP - Thane (400601)');
-  const [modalServiceType, setModalServiceType] = useState<string>('One on One Service');
+  const [modalEndTime, setModalEndTime] = useState<string>('10:00');
+  const [appointmentType, setAppointmentType] = useState<string>('Follow Up Session');
   const [isRecurring, setIsRecurring] = useState<boolean>(true);
-  const [servicesEnabled, setServicesEnabled] = useState<{
-    followUp: boolean;
-    consultation: boolean;
-  }>({
-    followUp: true,
-    consultation: true,
-  });
+  const [repeatType, setRepeatType] = useState<string>('Weekly');
+  const [repeatFrequency, setRepeatFrequency] = useState<string>('Every 1 week');
+
+  // Interactive Drag Selection State
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragDateIso, setDragDateIso] = useState<string | null>(null);
+  const [dragStartHour, setDragStartHour] = useState<number | null>(null);
+  const [dragCurrentHour, setDragCurrentHour] = useState<number | null>(null);
 
   // Calculate 7 days of the current week (Mon-Sun)
   const monday = getMondayOfWeek(currentDate);
@@ -185,10 +236,96 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
   })}`;
 
   // Current Time indicator top offset in hours
-  const now = new Date();
-  const currentHourDecimal = now.getHours() + now.getMinutes() / 60;
-  const showTimeLine = currentHourDecimal >= 8 && currentHourDecimal <= 19;
-  const timeLineTopPx = (currentHourDecimal - 8) * 64;
+  const currentHourDecimal = nowTime.getHours() + nowTime.getMinutes() / 60;
+  const showTimeLine = currentHourDecimal >= START_HOUR && currentHourDecimal <= 24;
+  const timeLineTopPx = (currentHourDecimal - START_HOUR) * 64;
+
+  // Auto-scroll scrollable time grid to current time or 8 AM
+  useEffect(() => {
+    const isToday = formatDateISO(currentDate) === formatDateISO(nowTime);
+    const targetHour = isToday ? nowTime.getHours() : 9;
+    const targetScroll = Math.max(0, (targetHour - START_HOUR - 1) * 64);
+
+    if (viewMode === 'week' && weekScrollRef.current) {
+      weekScrollRef.current.scrollTop = targetScroll;
+    } else if (viewMode === 'day' && dayScrollRef.current) {
+      dayScrollRef.current.scrollTop = targetScroll;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, currentDate]);
+
+  // Past slot validation & notice state
+  const [pastSlotNotice, setPastSlotNotice] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  const isPastTimeSlot = (dateIso: string, hour: number): boolean => {
+    const [y, m, d] = dateIso.split('-').map(Number);
+    const slotEnd = new Date(y, m - 1, d, hour + 1, 0, 0, 0);
+    return slotEnd <= nowTime;
+  };
+
+  const checkIsBlockPast = (blockDateIso: string, endTimeStr: string): boolean => {
+    const [y, m, d] = blockDateIso.split('-').map(Number);
+    const [endH, endM] = (endTimeStr || '17:00').split(':').map(Number);
+    const targetDate = new Date(y, m - 1, d, endH, endM || 0, 0, 0);
+    return targetDate <= nowTime;
+  };
+
+  const getStatusStyles = (
+    status?: 'scheduled' | 'completed' | 'no_show' | 'cancelled',
+    isPast?: boolean,
+  ) => {
+    const currentStatus = status || (isPast ? 'completed' : 'scheduled');
+    switch (currentStatus) {
+      case 'scheduled':
+        return {
+          card: 'bg-[#eff6ff] border-l-4 border-l-[#0052cc] border border-[#bfdbfe] text-[#1e40af] hover:shadow-md',
+          badge: 'bg-[#0052cc] text-white',
+          text: 'text-[#0052cc]',
+          titleText: 'text-[#1e40af]',
+          label: 'Scheduled',
+        };
+      case 'completed':
+        return {
+          card: 'bg-[#f0fdf4] border-l-4 border-l-emerald-600 border border-emerald-200 text-emerald-900 hover:shadow-md',
+          badge: 'bg-emerald-600 text-white',
+          text: 'text-emerald-700',
+          titleText: 'text-emerald-950',
+          label: 'Completed',
+        };
+      case 'no_show':
+        return {
+          card: 'bg-[#fffbeb] border-l-4 border-l-amber-500 border border-amber-200 text-amber-900 hover:shadow-md',
+          badge: 'bg-amber-500 text-white',
+          text: 'text-amber-700',
+          titleText: 'text-amber-950',
+          label: 'No Show',
+        };
+      case 'cancelled':
+        return {
+          card: 'bg-[#fef2f2] border-l-4 border-l-rose-500 border border-rose-200 text-rose-900 opacity-80 hover:shadow-md',
+          badge: 'bg-rose-500 text-white',
+          text: 'text-rose-700',
+          titleText: 'text-rose-950 line-through',
+          label: 'Cancelled',
+        };
+    }
+  };
+
+  const handleUpdateBlockStatus = (
+    blockId: string,
+    newStatus: 'scheduled' | 'completed' | 'no_show' | 'cancelled',
+  ) => {
+    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, status: newStatus } : b)));
+    if (selectedBlock && selectedBlock.id === blockId) {
+      setSelectedBlock((prev) => (prev ? { ...prev, status: newStatus } : null));
+    }
+  };
+
+  const triggerPastSlotNotice = () => {
+    setPastSlotNotice('Cannot create availability or book slots in the past.');
+    setTimeout(() => setPastSlotNotice(null), 3500);
+  };
 
   // Navigation handlers
   const handlePrev = () => {
@@ -220,24 +357,90 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
     setViewMode('week');
   };
 
-  const handleOpenModal = (targetDateIso?: string, defaultHour = 9) => {
-    setModalDate(targetDateIso || formatDateISO(currentDate));
-    const startStr = `${defaultHour.toString().padStart(2, '0')}:00`;
-    const endStr = `${(defaultHour + 3).toString().padStart(2, '0')}:00`;
+  const handleOpenModal = (
+    targetDateIso?: string,
+    defaultStartHour = 9,
+    defaultEndHour?: number,
+  ) => {
+    const targetIso = targetDateIso || formatDateISO(currentDate);
+    if (isPastTimeSlot(targetIso, defaultStartHour)) {
+      triggerPastSlotNotice();
+      return;
+    }
+    setModalError(null);
+    setModalDate(targetIso);
+    const startH = defaultStartHour;
+    const endH = defaultEndHour !== undefined ? defaultEndHour : defaultStartHour + 1;
+    const startStr = `${startH.toString().padStart(2, '0')}:00`;
+    const endStr = `${endH.toString().padStart(2, '0')}:00`;
     setModalStartTime(startStr);
     setModalEndTime(endStr);
     setIsModalOpen(true);
   };
 
+  const handleMouseDown = (dateIso: string, hour: number) => {
+    if (isPastTimeSlot(dateIso, hour)) {
+      triggerPastSlotNotice();
+      return;
+    }
+    setIsDragging(true);
+    setDragDateIso(dateIso);
+    setDragStartHour(hour);
+    setDragCurrentHour(hour);
+  };
+
+  const handleMouseEnter = (dateIso: string, hour: number) => {
+    if (isDragging && dragDateIso === dateIso) {
+      setDragCurrentHour(hour);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging && dragDateIso && dragStartHour !== null && dragCurrentHour !== null) {
+      const minH = Math.min(dragStartHour, dragCurrentHour);
+      const maxH = Math.max(dragStartHour, dragCurrentHour);
+      const startH = minH;
+      const endH = maxH + 1;
+      handleOpenModal(dragDateIso, startH, endH);
+    }
+    setIsDragging(false);
+    setDragDateIso(null);
+    setDragStartHour(null);
+    setDragCurrentHour(null);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging, dragDateIso, dragStartHour, dragCurrentHour]);
+
   const handleSaveAvailability = (e: React.FormEvent) => {
     e.preventDefault();
-    const startH = parseInt(modalStartTime.split(':')[0], 10) || 9;
-    const endH = parseInt(modalEndTime.split(':')[0], 10) || 12;
-    const duration = Math.max(1, endH - startH);
+    setModalError(null);
 
-    const activeServices: string[] = [];
-    if (servicesEnabled.followUp) activeServices.push('Follow Up');
-    if (servicesEnabled.consultation) activeServices.push('Consultation');
+    const [year, month, day] = modalDate.split('-').map(Number);
+    const [startH, startM] = modalStartTime.split(':').map((n) => parseInt(n, 10) || 0);
+    const [endH, endM] = modalEndTime.split(':').map((n) => parseInt(n, 10) || 0);
+
+    const startDateTime = new Date(year, month - 1, day, startH, startM);
+    const endDateTime = new Date(year, month - 1, day, endH, endM);
+
+    if (startDateTime < nowTime) {
+      setModalError('Cannot create availability or book slots in the past.');
+      return;
+    }
+
+    if (endDateTime <= startDateTime) {
+      setModalError('End time must be after start time.');
+      return;
+    }
+
+    const duration = Math.max(1, endH - startH);
 
     const newBlock: AvailabilityBlock = {
       id: Date.now().toString(),
@@ -246,10 +449,12 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
       endTime: modalEndTime,
       startHour: startH,
       durationHours: duration,
-      location: modalLocation.includes('Telehealth') ? 'Telehealth' : 'MFP - Thane',
+      location: 'Available',
       type: 'available',
-      services: activeServices.length > 0 ? activeServices : ['General Care'],
       isRecurring,
+      appointmentType,
+      repeatType: isRecurring ? repeatType : undefined,
+      repeatFrequency: isRecurring ? repeatFrequency : undefined,
     };
 
     setBlocks((prev: AvailabilityBlock[]) => [...prev, newBlock]);
@@ -271,6 +476,21 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
 
   return (
     <div className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex flex-col w-full overflow-hidden">
+      {/* Floating Past Slot Warning Toast Banner */}
+      {pastSlotNotice && (
+        <div className="fixed top-20 right-6 z-50 bg-rose-600 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-top-4 duration-200">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{pastSlotNotice}</span>
+          <button
+            type="button"
+            onClick={() => setPastSlotNotice(null)}
+            className="ml-2 hover:opacity-80 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Calendar Header Bar */}
       <div className="p-4 md:p-6 border-b border-[#c3c6d6]/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#f8f9fb]">
         {/* Left: All-in-One Unified Date Selector & Navigation Bar */}
@@ -423,119 +643,183 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
       {/* Main View Area */}
       {viewMode === 'week' && (
         <div className="flex-1 flex flex-col overflow-x-auto">
-          {/* Days Header Row (Mon-Sun) */}
-          <div className="flex border-b border-[#c3c6d6]/40 bg-[#f8f9fb] min-w-[750px]">
-            {/* Time Offset Column Header */}
-            <div className="w-16 shrink-0 border-r border-[#c3c6d6]/40 p-2 text-center text-xs font-bold text-[#737685]">
-              Time
+          {/* Scrollable Time Grid Body (Contains Sticky Header & Grid for 100% Alignment) */}
+          <div
+            ref={weekScrollRef}
+            className="relative min-w-[750px] h-[calc(100vh-160px)] min-h-[660px] overflow-y-auto"
+          >
+            {/* Days Header Row (Mon-Sun) - Sticky Inside Scroll Container */}
+            <div className="flex border-b border-[#c3c6d6]/40 bg-[#f8f9fb] sticky top-0 z-30 shadow-2xs">
+              {/* Time Offset Column Header */}
+              <div className="w-16 shrink-0 border-r border-[#c3c6d6]/40 p-2.5 text-center text-[10px] font-extrabold text-[#737685] uppercase tracking-wider flex items-center justify-center">
+                Time
+              </div>
+
+              {weekDays.map((day) => (
+                <div
+                  key={day.iso}
+                  className={`flex-1 border-r border-[#c3c6d6]/40 p-2 text-center transition-colors ${
+                    day.isToday ? 'bg-[#e6f0ff]/40' : day.isWeekend ? 'bg-[#f1f3f6]/60' : ''
+                  }`}
+                >
+                  <div
+                    className={`text-[10px] uppercase font-extrabold tracking-wider mb-1 ${
+                      day.isToday ? 'text-[#0052cc]' : 'text-[#51606f]'
+                    }`}
+                  >
+                    {day.name}
+                  </div>
+                  {day.isToday ? (
+                    <div className="w-8 h-8 rounded-full bg-[#0052cc] text-white text-sm font-heading font-extrabold flex items-center justify-center mx-auto shadow-sm">
+                      {day.dateNum}
+                    </div>
+                  ) : (
+                    <div className="text-base font-heading font-extrabold text-[#191c1e]">
+                      {day.dateNum}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
-            {weekDays.map((day) => (
-              <div
-                key={day.iso}
-                className={`flex-1 border-r border-[#c3c6d6]/40 p-2.5 text-center ${
-                  day.isToday
-                    ? 'bg-[#e6f0ff]/60 border-b-2 border-b-[#0052cc]'
-                    : day.isWeekend
-                      ? 'bg-[#f1f3f6]/60'
-                      : ''
-                }`}
-              >
+            {/* Time Grid Relative Container */}
+            <div className="relative">
+              {/* Current Time Indicator Red Line */}
+              {showTimeLine && (
                 <div
-                  className={`text-[11px] uppercase font-bold tracking-wider ${
-                    day.isToday ? 'text-[#0052cc]' : 'text-[#51606f]'
-                  }`}
+                  className="absolute left-16 right-0 z-20 pointer-events-none flex items-center"
+                  style={{ top: `${timeLineTopPx}px` }}
                 >
-                  {day.name}
-                </div>
-                <div
-                  className={`text-lg font-heading font-extrabold mt-0.5 ${
-                    day.isToday ? 'text-[#0052cc]' : 'text-[#191c1e]'
-                  }`}
-                >
-                  {day.dateNum}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Scrollable Time Grid Body */}
-          <div className="relative min-w-[750px] max-h-[620px] overflow-y-auto">
-            {/* Current Time Indicator Red Line */}
-            {showTimeLine && (
-              <div
-                className="absolute left-16 right-0 z-20 pointer-events-none flex items-center"
-                style={{ top: `${timeLineTopPx}px` }}
-              >
-                <div className="w-2.5 h-2.5 rounded-full bg-rose-600 -ml-1.25 shadow-xs"></div>
-                <div className="h-0.5 flex-1 bg-rose-500/70"></div>
-              </div>
-            )}
-
-            <div className="flex">
-              {/* Y-Axis Time Labels Column */}
-              <div className="w-16 shrink-0 border-r border-[#c3c6d6]/40 bg-[#f8f9fb]/50 flex flex-col z-10">
-                {HOURS.map((hour) => (
-                  <div
-                    key={hour}
-                    className="h-[64px] border-b border-[#c3c6d6]/30 pr-2 pt-1 text-right relative"
-                  >
-                    <span className="text-[10px] font-bold text-[#51606f]">
-                      {formatHourLabel(hour)}
-                    </span>
+                  <div className="w-3.5 h-3.5 rounded-full bg-rose-600 -ml-1.75 shadow-md flex items-center justify-center ring-4 ring-rose-100 shrink-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                   </div>
-                ))}
-              </div>
+                  <div className="h-0.5 flex-1 bg-rose-500 shadow-xs"></div>
+                  <span className="px-2.5 py-0.5 bg-rose-600 text-white text-[9px] font-extrabold rounded-md shadow-xs mr-2 uppercase tracking-wider shrink-0">
+                    NOW{' '}
+                    {nowTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  </span>
+                </div>
+              )}
 
-              {/* 7 Day Columns Grid */}
-              <div className="flex-1 flex relative">
-                {/* Background Horizontal Hour Grid Lines */}
-                <div className="absolute inset-0 pointer-events-none flex flex-col">
+              <div className="flex">
+                {/* Y-Axis Time Labels Column */}
+                <div className="w-16 shrink-0 border-r border-[#c3c6d6]/40 bg-[#f8f9fb]/50 flex flex-col z-10 select-none">
                   {HOURS.map((hour) => (
-                    <div key={hour} className="h-[64px] w-full border-b border-[#c3c6d6]/20"></div>
+                    <div
+                      key={hour}
+                      className="h-[64px] border-b border-[#c3c6d6]/60 pr-2 pt-1 text-right relative"
+                    >
+                      <span className="text-[10px] font-bold text-[#51606f]">
+                        {formatHourLabel(hour)}
+                      </span>
+                    </div>
                   ))}
                 </div>
 
-                {/* Day Columns */}
-                {weekDays.map((day) => {
-                  const dayBlocks = blocks.filter(
-                    (b: AvailabilityBlock) =>
-                      b.date === day.iso ||
-                      (b.isRecurring && new Date(b.date).getDay() === day.dateObj.getDay()),
-                  );
+                {/* 7 Day Columns Grid */}
+                <div className="flex-1 flex relative">
+                  {/* Day Columns */}
+                  {weekDays.map((day) => {
+                    const dayBlocks = blocks.filter(
+                      (b: AvailabilityBlock) =>
+                        b.date === day.iso ||
+                        (b.isRecurring && new Date(b.date).getDay() === day.dateObj.getDay()),
+                    );
 
-                  return (
-                    <div
-                      key={day.iso}
-                      className={`flex-1 border-r border-[#c3c6d6]/30 relative group min-h-[704px] transition-colors ${
-                        day.isWeekend
-                          ? 'bg-slate-100/40 cursor-not-allowed'
-                          : 'hover:bg-[#0052cc]/[0.02] cursor-pointer'
-                      }`}
-                      onClick={() => !day.isWeekend && handleOpenModal(day.iso, 9)}
-                    >
-                      {/* Hover "+ Add Slot" hint on empty cell */}
-                      {!day.isWeekend && (
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center pointer-events-none z-0">
-                          <span className="bg-[#0052cc] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
-                            <Plus className="w-3.5 h-3.5" /> Add Slot
-                          </span>
-                        </div>
-                      )}
+                    return (
+                      <div
+                        key={day.iso}
+                        className="flex-1 border-r border-[#c3c6d6]/40 relative min-h-[1088px] flex flex-col"
+                      >
+                        {/* Hourly Interactive Rows with Visible Border Lines */}
+                        {HOURS.map((hour) => {
+                          const isPast = isPastTimeSlot(day.iso, hour);
+                          return (
+                            <div
+                              key={hour}
+                              onMouseDown={() =>
+                                !day.isWeekend && !isPast && handleMouseDown(day.iso, hour)
+                              }
+                              onMouseEnter={() =>
+                                !day.isWeekend && !isPast && handleMouseEnter(day.iso, hour)
+                              }
+                              onMouseUp={handleMouseUp}
+                              className={`h-[64px] border-b border-[#c3c6d6]/50 relative group/hour transition-colors select-none ${
+                                day.isWeekend || isPast
+                                  ? 'bg-slate-100/40 cursor-not-allowed opacity-60'
+                                  : 'hover:bg-[#0052cc]/[0.06] cursor-pointer'
+                              }`}
+                            >
+                              {/* Half-Hour Dashed Divider Line */}
+                              <div className="absolute top-8 left-0 right-0 border-b border-dashed border-[#c3c6d6]/30 pointer-events-none" />
 
-                      {/* Weekend Icon Indicator */}
-                      {day.isWeekend && (
-                        <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                          <Lock className="w-8 h-8 text-slate-400" />
-                        </div>
-                      )}
+                              {/* Hover "+" icon hint (no text) */}
+                              {!day.isWeekend && !isPast && !isDragging && (
+                                <div className="absolute inset-0 opacity-0 group-hover/hour:opacity-100 flex items-center justify-center pointer-events-none z-0 transition-all">
+                                  <span className="w-8 h-8 rounded-full bg-[#0052cc] hover:bg-[#0041a3] text-white shadow-md flex items-center justify-center transition-transform transform scale-90 group-hover/hour:scale-105">
+                                    <Plus className="w-4 h-4" />
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
 
-                      {/* Render Blocks */}
-                      {dayBlocks.map((block: AvailabilityBlock) => {
-                        const topOffset = (block.startHour - 8) * 64;
-                        const heightPx = block.durationHours * 64;
+                        {/* Active Drag Selection Overlay Box */}
+                        {isDragging &&
+                          dragDateIso === day.iso &&
+                          dragStartHour !== null &&
+                          dragCurrentHour !== null && (
+                            <div
+                              style={{
+                                top: `${(Math.min(dragStartHour, dragCurrentHour) - START_HOUR) * 64}px`,
+                                height: `${(Math.abs(dragCurrentHour - dragStartHour) + 1) * 64}px`,
+                              }}
+                              className="absolute left-1 right-1 bg-[#0052cc]/20 border-2 border-[#0052cc] rounded-xl z-20 pointer-events-none flex items-center justify-center shadow-md transition-all"
+                            >
+                              <span className="w-8 h-8 rounded-full bg-[#0052cc] text-white shadow-md flex items-center justify-center">
+                                <Plus className="w-4 h-4" />
+                              </span>
+                            </div>
+                          )}
 
-                        if (block.type === 'booked') {
+                        {/* Render Overlay Blocks */}
+                        {dayBlocks.map((block: AvailabilityBlock) => {
+                          const topOffset = (block.startHour - START_HOUR) * 64;
+                          const heightPx = block.durationHours * 64;
+                          const isPast = checkIsBlockPast(block.date, block.endTime);
+
+                          if (block.type === 'booked') {
+                            const st = getStatusStyles(block.status, isPast);
+                            return (
+                              <div
+                                key={block.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedBlock(block);
+                                }}
+                                style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
+                                className={`absolute left-1 right-1 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between z-10 transition-all cursor-pointer ${st.card}`}
+                              >
+                                <div className="flex justify-between items-start gap-1">
+                                  <span
+                                    className={`px-1.5 py-0.5 text-[9px] font-extrabold rounded uppercase tracking-wider ${st.badge}`}
+                                  >
+                                    {st.label}
+                                  </span>
+                                  <span className={`text-[10px] font-bold ${st.text}`}>
+                                    {block.startTime} – {block.endTime}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className={`text-xs font-bold truncate ${st.titleText}`}>
+                                    {block.patientName}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+
                           return (
                             <div
                               key={block.id}
@@ -544,69 +828,42 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
                                 setSelectedBlock(block);
                               }}
                               style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
-                              className="absolute left-1 right-1 bg-[#e6f0ff] border border-[#0052cc]/40 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between z-10 hover:shadow-md transition-all cursor-pointer"
+                              className={`absolute left-1 right-1 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between z-10 transition-all cursor-pointer ${
+                                isPast
+                                  ? 'bg-slate-100/80 border-l-4 border-l-slate-400 border border-slate-300 border-dashed text-slate-500 opacity-60'
+                                  : 'bg-[#f0fdfa] border-l-4 border-l-[#0d9488] border border-[#ccfbf1] text-[#0f766e] hover:border-[#0d9488] hover:shadow-md'
+                              }`}
                             >
-                              <div className="flex justify-between items-start gap-1">
-                                <span className="px-1.5 py-0.5 bg-[#0052cc] text-white text-[9px] font-bold rounded uppercase tracking-wider">
-                                  Booked
-                                </span>
-                                <span className="text-[10px] font-bold text-[#0052cc]">
-                                  {block.startTime} – {block.endTime}
-                                </span>
-                              </div>
                               <div>
-                                <p className="text-xs font-bold text-[#191c1e] truncate">
-                                  {block.patientName}
-                                </p>
-                                <p className="text-[10px] text-[#434654]">{block.location}</p>
+                                <div className="flex justify-between items-start mb-1 gap-1">
+                                  <span
+                                    className={`text-[11px] font-bold flex items-center gap-1 ${
+                                      isPast ? 'text-slate-500' : 'text-[#0d9488]'
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        isPast ? 'bg-slate-400' : 'bg-[#0d9488]'
+                                      }`}
+                                    ></span>{' '}
+                                    {isPast ? 'Expired' : 'Available'}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-bold ${
+                                      isPast ? 'text-slate-400 line-through' : 'text-[#505f76]'
+                                    }`}
+                                  >
+                                    {block.startTime} – {block.endTime}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           );
-                        }
-
-                        return (
-                          <div
-                            key={block.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedBlock(block);
-                            }}
-                            style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
-                            className="absolute left-1 right-1 bg-white border border-[#0d9488]/40 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between z-10 hover:border-[#0d9488] hover:shadow-md transition-all cursor-pointer group/block"
-                          >
-                            <div>
-                              <div className="flex justify-between items-start mb-1 gap-1">
-                                <span className="text-[11px] font-bold text-[#0d9488] flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-[#0d9488]"></span>{' '}
-                                  Available
-                                </span>
-                                <span className="text-[10px] font-bold text-[#434654]">
-                                  {block.startTime} – {block.endTime}
-                                </span>
-                              </div>
-                              <p className="text-[11px] font-semibold text-[#191c1e] truncate">
-                                {block.location}
-                              </p>
-                            </div>
-
-                            {block.services && block.services.length > 0 && (
-                              <div className="flex gap-1 flex-wrap mt-2">
-                                {block.services.map((srv: string) => (
-                                  <span
-                                    key={srv}
-                                    className="bg-[#ccfbf1]/60 text-[#0d9488] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#0d9488]/20"
-                                  >
-                                    {srv}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -627,59 +884,187 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
                 })}
               </h3>
               <p className="text-xs text-[#434654]">
-                Showing scheduled availability and bookings for this date.
+                Drag across time rows or click any slot to add availability.
               </p>
             </div>
             <button
               onClick={() => handleOpenModal(formatDateISO(currentDate), 9)}
-              className="bg-[#0052cc] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#003d9b] transition-colors cursor-pointer"
+              className="bg-[#0052cc] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#003d9b] transition-colors cursor-pointer shadow-xs"
             >
               <Plus className="w-4 h-4" /> Add Slot
             </button>
           </div>
 
-          <div className="border border-[#c3c6d6]/40 rounded-xl divide-y divide-[#c3c6d6]/30 overflow-hidden">
-            {HOURS.map((hour) => {
-              const dateIso = formatDateISO(currentDate);
-              const hourBlocks = blocks.filter(
-                (b: AvailabilityBlock) =>
-                  (b.date === dateIso ||
-                    (b.isRecurring && new Date(b.date).getDay() === currentDate.getDay())) &&
-                  b.startHour <= hour &&
-                  b.startHour + b.durationHours > hour,
-              );
-
-              return (
-                <div
-                  key={hour}
-                  className="flex p-4 min-h-[72px] items-center hover:bg-[#f8f9fb] transition-colors"
-                >
-                  <div className="w-20 font-bold text-xs text-[#434654]">
-                    {formatHourLabel(hour)}
-                  </div>
-                  <div className="flex-1 flex gap-3 flex-wrap">
-                    {hourBlocks.length === 0 ? (
-                      <span className="text-xs text-[#c3c6d6] italic">No slots scheduled</span>
-                    ) : (
-                      hourBlocks.map((b: AvailabilityBlock) => (
-                        <div
-                          key={b.id}
-                          onClick={() => setSelectedBlock(b)}
-                          className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 cursor-pointer ${
-                            b.type === 'booked'
-                              ? 'bg-[#e6f0ff] border-[#0052cc]/40 text-[#0052cc]'
-                              : 'bg-[#ccfbf1]/50 border-[#0d9488]/40 text-[#0d9488]'
-                          }`}
-                        >
-                          <span className="w-2 h-2 rounded-full bg-current"></span>
-                          {b.startTime} - {b.endTime} ({b.location})
-                        </div>
-                      ))
-                    )}
-                  </div>
+          {/* Scrollable Day Timeline Grid */}
+          <div
+            ref={dayScrollRef}
+            className="relative border border-[#c3c6d6]/40 rounded-2xl overflow-hidden bg-white h-[calc(100vh-160px)] min-h-[660px] overflow-y-auto shadow-2xs"
+          >
+            {/* Current Time Indicator Red Line for Day View */}
+            {showTimeLine && formatDateISO(currentDate) === formatDateISO(nowTime) && (
+              <div
+                className="absolute left-16 right-0 z-20 pointer-events-none flex items-center"
+                style={{ top: `${timeLineTopPx}px` }}
+              >
+                <div className="w-3 h-3 rounded-full bg-rose-600 -ml-1.5 shadow-md flex items-center justify-center ring-4 ring-rose-100 shrink-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                 </div>
-              );
-            })}
+                <div className="h-0.5 flex-1 bg-rose-500 shadow-xs"></div>
+                <span className="px-2 py-0.5 bg-rose-600 text-white text-[9px] font-extrabold rounded-md shadow-xs mr-2 uppercase tracking-wider shrink-0">
+                  NOW {nowTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                </span>
+              </div>
+            )}
+
+            <div className="flex">
+              {/* Y-Axis Time Labels Column */}
+              <div className="w-16 shrink-0 border-r border-[#c3c6d6]/40 bg-[#f8f9fb]/50 flex flex-col z-10">
+                {HOURS.map((hour) => (
+                  <div
+                    key={hour}
+                    className="h-[64px] border-b border-[#c3c6d6]/60 pr-2 pt-1 text-right relative"
+                  >
+                    <span className="text-[10px] font-bold text-[#51606f]">
+                      {formatHourLabel(hour)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Single Day Column */}
+              <div className="flex-1 relative min-h-[1088px] flex flex-col">
+                {/* Hourly Interactive Rows */}
+                {HOURS.map((hour) => {
+                  const dateIso = formatDateISO(currentDate);
+                  const isPast = isPastTimeSlot(dateIso, hour);
+                  return (
+                    <div
+                      key={hour}
+                      onMouseDown={() => !isPast && handleMouseDown(dateIso, hour)}
+                      onMouseEnter={() => !isPast && handleMouseEnter(dateIso, hour)}
+                      onMouseUp={handleMouseUp}
+                      className={`h-[64px] border-b border-[#c3c6d6]/50 relative group/dayhour transition-colors select-none ${
+                        isPast
+                          ? 'bg-slate-100/50 cursor-not-allowed opacity-60'
+                          : 'hover:bg-[#0052cc]/[0.06] cursor-pointer'
+                      }`}
+                    >
+                      {/* Half-Hour Dashed Divider Line */}
+                      <div className="absolute top-8 left-0 right-0 border-b border-dashed border-[#c3c6d6]/30 pointer-events-none" />
+
+                      {/* Hover "+" icon button */}
+                      {!isPast && !isDragging && (
+                        <div className="absolute inset-0 opacity-0 group-hover/dayhour:opacity-100 flex items-center justify-center pointer-events-none z-0 transition-all">
+                          <span className="w-8 h-8 rounded-full bg-[#0052cc] hover:bg-[#0041a3] text-white shadow-md flex items-center justify-center transition-transform transform scale-90 group-hover/dayhour:scale-105">
+                            <Plus className="w-4 h-4" />
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Active Drag Selection Overlay Box */}
+                {isDragging &&
+                  dragDateIso === formatDateISO(currentDate) &&
+                  dragStartHour !== null &&
+                  dragCurrentHour !== null && (
+                    <div
+                      style={{
+                        top: `${(Math.min(dragStartHour, dragCurrentHour) - START_HOUR) * 64}px`,
+                        height: `${(Math.abs(dragCurrentHour - dragStartHour) + 1) * 64}px`,
+                      }}
+                      className="absolute left-1 right-1 bg-[#0052cc]/20 border-2 border-[#0052cc] rounded-xl z-20 pointer-events-none flex items-center justify-center shadow-md transition-all"
+                    >
+                      <span className="w-8 h-8 rounded-full bg-[#0052cc] text-white shadow-md flex items-center justify-center">
+                        <Plus className="w-4 h-4" />
+                      </span>
+                    </div>
+                  )}
+
+                {/* Render Day Blocks Overlay */}
+                {blocks
+                  .filter(
+                    (b: AvailabilityBlock) =>
+                      b.date === formatDateISO(currentDate) ||
+                      (b.isRecurring && new Date(b.date).getDay() === currentDate.getDay()),
+                  )
+                  .map((block: AvailabilityBlock) => {
+                    const topOffset = (block.startHour - START_HOUR) * 64;
+                    const heightPx = block.durationHours * 64;
+                    const isPast = checkIsBlockPast(block.date, block.endTime);
+
+                    if (block.type === 'booked') {
+                      const st = getStatusStyles(block.status, isPast);
+                      return (
+                        <div
+                          key={block.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBlock(block);
+                          }}
+                          style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
+                          className={`absolute left-2 right-2 rounded-xl p-3 shadow-2xs flex flex-col justify-between z-10 transition-all cursor-pointer ${st.card}`}
+                        >
+                          <div className="flex justify-between items-start gap-1">
+                            <span
+                              className={`px-2 py-0.5 text-[10px] font-extrabold rounded uppercase tracking-wider ${st.badge}`}
+                            >
+                              {st.label}
+                            </span>
+                            <span className={`text-xs font-bold ${st.text}`}>
+                              {block.startTime} – {block.endTime}
+                            </span>
+                          </div>
+                          <div>
+                            <p className={`text-sm font-bold truncate ${st.titleText}`}>
+                              {block.patientName}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={block.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedBlock(block);
+                        }}
+                        style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
+                        className={`absolute left-2 right-2 rounded-xl p-3 shadow-2xs flex flex-col justify-between z-10 transition-all cursor-pointer ${
+                          isPast
+                            ? 'bg-slate-100/80 border-l-4 border-l-slate-400 border border-slate-300 border-dashed text-slate-500 opacity-60'
+                            : 'bg-[#f0fdfa] border-l-4 border-l-[#0d9488] border border-[#ccfbf1] text-[#0f766e] hover:border-[#0d9488] hover:shadow-md'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start gap-1">
+                          <span
+                            className={`text-xs font-bold flex items-center gap-1.5 ${
+                              isPast ? 'text-slate-500' : 'text-[#0d9488]'
+                            }`}
+                          >
+                            <span
+                              className={`w-2.5 h-2.5 rounded-full ${
+                                isPast ? 'bg-slate-400' : 'bg-[#0d9488]'
+                              }`}
+                            ></span>{' '}
+                            {isPast ? 'Expired Slot' : 'Available Slot'}
+                          </span>
+                          <span
+                            className={`text-xs font-bold ${
+                              isPast ? 'text-slate-400 line-through' : 'text-[#434654]'
+                            }`}
+                          >
+                            {block.startTime} – {block.endTime}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -744,7 +1129,7 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
                             : 'bg-[#ccfbf1] text-[#0d9488]'
                         }`}
                       >
-                        {b.startTime} {b.location}
+                        {b.startTime} - {b.endTime}
                       </div>
                     ))}
                     {dayBlocks.length > 2 && (
@@ -782,7 +1167,7 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
                 <p className="font-bold text-[#191c1e] text-sm">
                   {selectedBlock.type === 'booked'
                     ? selectedBlock.patientName
-                    : selectedBlock.location}
+                    : 'Open Availability'}
                 </p>
                 <p className="mt-1">
                   📅 <strong className="text-[#191c1e]">{selectedBlock.date}</strong> (
@@ -802,6 +1187,54 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
                         {s}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedBlock.type === 'booked' && (
+                <div className="pt-2 border-t border-[#c3c6d6]/30 space-y-2">
+                  <p className="font-bold text-[#191c1e]">Update Appointment Status:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      {
+                        key: 'scheduled',
+                        label: 'Scheduled',
+                        activeColor: 'bg-[#0052cc] text-white',
+                      },
+                      {
+                        key: 'completed',
+                        label: 'Completed',
+                        activeColor: 'bg-emerald-600 text-white',
+                      },
+                      { key: 'no_show', label: 'No Show', activeColor: 'bg-amber-500 text-white' },
+                      {
+                        key: 'cancelled',
+                        label: 'Cancelled',
+                        activeColor: 'bg-rose-500 text-white',
+                      },
+                    ].map((st) => {
+                      const isActive = (selectedBlock.status || 'scheduled') === st.key;
+                      return (
+                        <button
+                          key={st.key}
+                          type="button"
+                          onClick={() =>
+                            handleUpdateBlockStatus(
+                              selectedBlock.id,
+                              st.key as 'scheduled' | 'completed' | 'no_show' | 'cancelled',
+                            )
+                          }
+                          className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-between border ${
+                            isActive
+                              ? `${st.activeColor} border-transparent shadow-2xs`
+                              : 'bg-white border-[#c3c6d6]/60 text-[#434654] hover:bg-slate-50'
+                          }`}
+                        >
+                          <span>{st.label}</span>
+                          {isActive && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -848,43 +1281,42 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
 
             {/* Modal Form */}
             <form onSubmit={handleSaveAvailability} className="p-6 space-y-5 text-left text-xs">
-              {/* Date & Location Selectors */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-bold text-[#191c1e] mb-1.5 block">Target Date</label>
-                  <input
-                    type="date"
-                    value={modalDate}
-                    onChange={(e) => setModalDate(e.target.value)}
-                    className="w-full bg-[#f8f9fb] border border-[#c3c6d6]/60 rounded-xl px-3 py-2.5 font-semibold text-[#191c1e] focus:outline-none focus:border-[#0052cc]"
-                  />
+              {/* Modal Validation Error Banner */}
+              {modalError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{modalError}</span>
                 </div>
+              )}
 
-                <div>
-                  <label className="font-bold text-[#191c1e] mb-1.5 block">Clinic Location</label>
-                  <select
-                    value={modalLocation}
-                    onChange={(e) => setModalLocation(e.target.value)}
-                    className="w-full bg-[#f8f9fb] border border-[#c3c6d6]/60 rounded-xl px-3 py-2.5 font-semibold text-[#191c1e] focus:outline-none focus:border-[#0052cc]"
-                  >
-                    <option value="MFP - Thane (400601)">MFP - Thane (400601)</option>
-                    <option value="Telehealth">Telehealth / Video Call</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Service Type */}
+              {/* Date Selector */}
               <div>
-                <label className="font-bold text-[#191c1e] mb-1.5 block">Service Type</label>
-                <select
-                  value={modalServiceType}
-                  onChange={(e) => setModalServiceType(e.target.value)}
+                <label className="font-bold text-[#191c1e] mb-1.5 block">Target Date</label>
+                <input
+                  type="date"
+                  value={modalDate}
+                  min={formatDateISO(nowTime)}
+                  onChange={(e) => setModalDate(e.target.value)}
                   className="w-full bg-[#f8f9fb] border border-[#c3c6d6]/60 rounded-xl px-3 py-2.5 font-semibold text-[#191c1e] focus:outline-none focus:border-[#0052cc]"
-                >
-                  <option value="One on One Service">One on One Service</option>
-                  <option value="Group Session">Group Session</option>
-                </select>
+                />
               </div>
+
+              {/* Appointment / Session Type */}
+              <CustomSelect
+                label="Appointment Type"
+                required
+                value={appointmentType}
+                onChange={setAppointmentType}
+                options={[
+                  { value: 'Follow Up Session', label: 'Follow Up Session (50 min)' },
+                  { value: 'Consultation / CBT', label: 'Consultation / CBT (50 min)' },
+                  {
+                    value: 'Initial Intake Assessment',
+                    label: 'Initial Intake Assessment (60 min)',
+                  },
+                  { value: 'General Therapy', label: 'General Counseling (50 min)' },
+                ]}
+              />
 
               {/* Start & End Time */}
               <div className="grid grid-cols-2 gap-4">
@@ -908,85 +1340,49 @@ export const WeeklyAvailabilityCalendar: React.FC = () => {
                 </div>
               </div>
 
-              {/* Recurrence Checkbox */}
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-[#c3c6d6]/40 hover:bg-[#f8f9fb] transition-colors">
-                <input
-                  type="checkbox"
-                  checked={isRecurring}
-                  onChange={(e) => setIsRecurring(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#0052cc] focus:ring-[#0052cc]"
-                />
-                <span className="font-semibold text-[#191c1e]">This Time Slot Recurs Weekly</span>
-              </label>
+              {/* Recurrence Section matching reference design */}
+              <div className="space-y-3 p-3.5 rounded-xl border border-[#c3c6d6]/40 bg-[#f8f9fb]/60">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#00a896] focus:ring-[#00a896] accent-[#00a896]"
+                  />
+                  <span className="font-semibold text-[#191c1e]">
+                    This Time Slot Recurs (daily, Weekly or monthly)
+                  </span>
+                </label>
 
-              {/* Service Availability Options */}
-              <div className="space-y-3 pt-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-extrabold text-[#191c1e]">Service Availability</span>
-                  <button
-                    type="button"
-                    onClick={() => setServicesEnabled({ followUp: true, consultation: true })}
-                    className="text-[11px] font-bold text-[#0052cc] hover:underline cursor-pointer"
-                  >
-                    Enable all
-                  </button>
-                </div>
+                {isRecurring && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#c3c6d6]/30">
+                    <CustomSelect
+                      label="Repeats"
+                      required
+                      value={repeatType}
+                      onChange={setRepeatType}
+                      options={[
+                        { value: 'Daily', label: 'Daily' },
+                        { value: 'Weekly', label: 'Weekly' },
+                        { value: 'Bi-Weekly', label: 'Bi-Weekly' },
+                        { value: 'Monthly', label: 'Monthly' },
+                      ]}
+                    />
 
-                <div className="space-y-2">
-                  <div className="bg-[#f8f9fb] border border-[#c3c6d6]/50 rounded-xl p-3 flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-[#191c1e]">Follow Up Session</p>
-                      <p className="text-[10px] text-[#434654]">50 min duration</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setServicesEnabled(
-                          (prev: { followUp: boolean; consultation: boolean }) => ({
-                            ...prev,
-                            followUp: !prev.followUp,
-                          }),
-                        )
-                      }
-                      className={`w-10 h-6 rounded-full transition-colors relative cursor-pointer ${
-                        servicesEnabled.followUp ? 'bg-[#0052cc]' : 'bg-slate-300'
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
-                          servicesEnabled.followUp ? 'left-5' : 'left-1'
-                        }`}
-                      ></span>
-                    </button>
+                    <CustomSelect
+                      label="Repeats (Select Frequency)"
+                      required
+                      value={repeatFrequency}
+                      onChange={setRepeatFrequency}
+                      options={[
+                        { value: 'Every 1 week', label: 'Every 1 week' },
+                        { value: 'Every 2 weeks', label: 'Every 2 weeks' },
+                        { value: 'Every 3 weeks', label: 'Every 3 weeks' },
+                        { value: 'Every 4 weeks', label: 'Every 4 weeks' },
+                      ]}
+                    />
                   </div>
-
-                  <div className="bg-[#f8f9fb] border border-[#c3c6d6]/50 rounded-xl p-3 flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-[#191c1e]">Consultation / CBT</p>
-                      <p className="text-[10px] text-[#434654]">50 min duration</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setServicesEnabled(
-                          (prev: { followUp: boolean; consultation: boolean }) => ({
-                            ...prev,
-                            consultation: !prev.consultation,
-                          }),
-                        )
-                      }
-                      className={`w-10 h-6 rounded-full transition-colors relative cursor-pointer ${
-                        servicesEnabled.consultation ? 'bg-[#0052cc]' : 'bg-slate-300'
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
-                          servicesEnabled.consultation ? 'left-5' : 'left-1'
-                        }`}
-                      ></span>
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Action Buttons */}

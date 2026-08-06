@@ -15,7 +15,13 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const PatientDashboardPage = lazy(() => import('@/pages/patient/PatientDashboardPage'));
 const BookAppointmentPage = lazy(() => import('@/pages/patient/BookAppointmentPage'));
 const TherapistDashboardPage = lazy(() => import('@/pages/therapist/TherapistDashboardPage'));
+const TherapistAppointmentsPage = lazy(() => import('@/pages/therapist/TherapistAppointmentsPage'));
 const ScheduleManagementPage = lazy(() => import('@/pages/therapist/ScheduleManagementPage'));
+const TherapistAvailabilityPage = lazy(() => import('@/pages/therapist/TherapistAvailabilityPage'));
+const TherapistPatientsPage = lazy(() => import('@/pages/therapist/TherapistPatientsPage'));
+// const TherapistMessagesPage = lazy(() => import('@/pages/therapist/TherapistMessagesPage'));
+const TherapistReportsPage = lazy(() => import('@/pages/therapist/TherapistReportsPage'));
+const TherapistSettingsPage = lazy(() => import('@/pages/therapist/TherapistSettingsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 export const router = createBrowserRouter([
@@ -89,10 +95,58 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: ROUTES.THERAPIST.APPOINTMENTS,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading appointments..." />}>
+            <TherapistAppointmentsPage />
+          </Suspense>
+        ),
+      },
+      {
         path: ROUTES.THERAPIST.SCHEDULE,
         element: (
-          <Suspense fallback={<PageSpinner label="Loading working shift rules..." />}>
+          <Suspense fallback={<PageSpinner label="Loading schedule management..." />}>
             <ScheduleManagementPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.THERAPIST.AVAILABILITY,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading working availability..." />}>
+            <TherapistAvailabilityPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.THERAPIST.PATIENTS,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading patient directory..." />}>
+            <TherapistPatientsPage />
+          </Suspense>
+        ),
+      },
+      // {
+      //   path: ROUTES.THERAPIST.MESSAGES,
+      //   element: (
+      //     <Suspense fallback={<PageSpinner label="Loading patient messages..." />}>
+      //       <TherapistMessagesPage />
+      //     </Suspense>
+      //   ),
+      // },
+      {
+        path: ROUTES.THERAPIST.REPORTS,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading clinical reports..." />}>
+            <TherapistReportsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.THERAPIST.SETTINGS,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading practice settings..." />}>
+            <TherapistSettingsPage />
           </Suspense>
         ),
       },

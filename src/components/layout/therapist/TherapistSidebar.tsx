@@ -68,7 +68,7 @@ export const TherapistSidebar: React.FC = () => {
 
       {/* Resource Illustration & Support Link */}
       <div className="p-4 mt-auto border-t border-[#c3c6d6]/30">
-        <div className="bg-[#e6f0ff] rounded-2xl p-4 text-center">
+        {/* <div className="bg-[#e6f0ff] rounded-2xl p-4 text-center">
           <img
             alt="Therapist workspace illustration"
             className="mx-auto mb-3 w-28 h-20 object-contain"
@@ -87,7 +87,7 @@ export const TherapistSidebar: React.FC = () => {
             View Resources
             <span className="material-symbols-outlined text-sm">open_in_new</span>
           </a>
-        </div>
+        </div> */}
 
         <div className="mt-4 flex items-center gap-3 px-2 text-[#434654]">
           <div className="w-8 h-8 rounded-full bg-[#f8f9fb] flex items-center justify-center text-[#434654] border border-[#c3c6d6]/50">

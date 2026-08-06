@@ -19,6 +19,7 @@ export const RecurringRuleSelector: React.FC<RecurringRuleSelectorProps> = ({
 
   const frequencies: Array<{ id: RecurrenceFrequency; label: string; description: string }> = [
     { id: 'SINGLE', label: 'One-Time Session', description: 'Single appointment only' },
+    { id: 'DAILY', label: 'Daily Series', description: 'Every consecutive day' },
     { id: 'WEEKLY', label: 'Weekly Series', description: `Every ${dayName}` },
     { id: 'BIWEEKLY', label: 'Bi-Weekly Series', description: `Every 2nd ${dayName}` },
     { id: 'MONTHLY', label: 'Monthly Series', description: 'Once per month' },

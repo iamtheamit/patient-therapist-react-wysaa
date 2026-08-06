@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, Video, CheckCircle, FileText, User as UserIcon } from 'lucide-react';
+import { Calendar, Clock, Video, FileText, User as UserIcon } from 'lucide-react';
 import type { TherapistAgendaItem } from '../types/therapist.types';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -17,8 +17,7 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
   const [selectedItemForNotes, setSelectedItemForNotes] = useState<TherapistAgendaItem | null>(
     null,
   );
-  const { mutate: updateStatus, isPending: isUpdatingStatus } =
-    useUpdateAppointmentStatus(therapistId);
+  const { mutate: updateStatus } = useUpdateAppointmentStatus(therapistId);
 
   if (isLoading) {
     return (
@@ -40,10 +39,6 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
       </div>
     );
   }
-
-  const handleMarkCompleted = (appointmentId: string) => {
-    updateStatus({ appointmentId, status: 'COMPLETED' });
-  };
 
   return (
     <>
@@ -121,17 +116,22 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
                     </a>
                   )}
 
-                  {isConfirmed && (
-                    <Button
-                      variant="success"
-                      size="sm"
-                      isLoading={isUpdatingStatus}
-                      leftIcon={<CheckCircle className="w-3.5 h-3.5" />}
-                      onClick={() => handleMarkCompleted(item.id)}
-                    >
-                      Complete
-                    </Button>
-                  )}
+                  <select
+                    value={item.status.toLowerCase()}
+                    onChange={(e) =>
+                      updateStatus({
+                        appointmentId: item.id,
+                        status: e.target.value as
+                          'scheduled' | 'completed' | 'no_show' | 'cancelled',
+                      })
+                    }
+                    className="bg-white border border-[#c3c6d6]/70 text-[#191c1e] rounded-lg px-2.5 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#0052cc]/30 cursor-pointer"
+                  >
+                    <option value="scheduled">scheduled</option>
+                    <option value="completed">completed</option>
+                    <option value="no_show">no_show</option>
+                    <option value="cancelled">cancelled</option>
+                  </select>
                 </div>
               </CardContent>
             </Card>

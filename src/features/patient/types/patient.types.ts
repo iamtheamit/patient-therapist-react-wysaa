@@ -1,4 +1,14 @@
-export type AppointmentStatus = 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'HELD';
+export type AppointmentStatus =
+  | 'SCHEDULED'
+  | 'CONFIRMED'
+  | 'COMPLETED'
+  | 'NO_SHOW'
+  | 'CANCELLED'
+  | 'HELD'
+  | 'scheduled'
+  | 'completed'
+  | 'no_show'
+  | 'cancelled';
 
 export interface TherapistSummary {
   id: string;
