@@ -7,6 +7,7 @@ export { TherapistStatsGrid } from './components/TherapistStatsGrid';
 export { AgendaList } from './components/AgendaList';
 export { ClinicalNotesModal } from './components/ClinicalNotesModal';
 export { WeeklyScheduleForm } from './components/WeeklyScheduleForm';
+export { WeeklyAvailabilityCalendar } from './components/WeeklyAvailabilityCalendar';
 export { useTherapistAgenda, useTherapistStats } from './hooks/useTherapistAgenda';
 export {
   useUpdateAppointmentStatus,

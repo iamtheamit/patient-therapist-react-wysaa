@@ -16,7 +16,7 @@ export const TherapistDashboardPage: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-[#191c1e] mb-1">
-            Welcome back, {therapistName} 👋
+            Welcome back, {therapistName}
           </h1>
           <p className="text-xs md:text-sm text-[#434654]">
             Here's an overview of your practice today.
@@ -344,41 +344,56 @@ export const TherapistDashboardPage: React.FC = () => {
             {/* Timeline Items List */}
             <div className="flex-1 overflow-y-auto pr-1 space-y-4">
               {/* Appt 1 */}
-              <div className="flex gap-3">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-1">
+              <div className="relative flex gap-3 items-start group">
+                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
                   10:00 AM
+                </div>
+                {/* Vertical Timeline Connector Line & Dot */}
+                <div className="flex flex-col items-center self-stretch shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#0d9488] ring-4 ring-[#ccfbf1] z-10 mt-2.5"></div>
+                  <div className="w-0.5 flex-1 bg-[#0d9488]/30 my-1"></div>
                 </div>
                 <div className="flex-1 bg-[#ccfbf1]/40 border border-[#0d9488]/30 rounded-xl p-3 shadow-2xs flex justify-between items-center">
                   <div>
                     <h5 className="font-bold text-[#0d9488] text-xs mb-0.5">Alex Patient</h5>
                     <p className="text-[11px] text-[#434654]">CBT Session</p>
                   </div>
-                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-[#0052cc]">
+                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-[#0052cc] cursor-pointer">
                     <span className="material-symbols-outlined text-sm">videocam</span>
                   </button>
                 </div>
               </div>
 
               {/* Appt 2 */}
-              <div className="flex gap-3">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-1">
+              <div className="relative flex gap-3 items-start group">
+                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
                   11:00 AM
+                </div>
+                {/* Vertical Timeline Connector Line & Dot */}
+                <div className="flex flex-col items-center self-stretch shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#0052cc] ring-4 ring-[#e6f0ff] z-10 mt-2.5"></div>
+                  <div className="w-0.5 flex-1 bg-[#0052cc]/30 my-1"></div>
                 </div>
                 <div className="flex-1 bg-[#e6f0ff]/50 border border-[#0052cc]/30 rounded-xl p-3 shadow-2xs flex justify-between items-center">
                   <div>
                     <h5 className="font-bold text-[#191c1e] text-xs mb-0.5">Jessica Miller</h5>
                     <p className="text-[11px] text-[#434654]">Mindfulness Therapy</p>
                   </div>
-                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-[#0052cc]">
+                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-[#0052cc] cursor-pointer">
                     <span className="material-symbols-outlined text-sm">videocam</span>
                   </button>
                 </div>
               </div>
 
               {/* Break */}
-              <div className="flex gap-3">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-1">
+              <div className="relative flex gap-3 items-start group">
+                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
                   01:00 PM
+                </div>
+                {/* Vertical Timeline Connector Line & Dot */}
+                <div className="flex flex-col items-center self-stretch shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-400 ring-4 ring-slate-100 z-10 mt-2.5"></div>
+                  <div className="w-0.5 flex-1 bg-slate-300 my-1"></div>
                 </div>
                 <div className="flex-1 bg-slate-50 border border-[#c3c6d6]/40 rounded-xl p-3 shadow-2xs flex justify-between items-center">
                   <div>
@@ -392,32 +407,42 @@ export const TherapistDashboardPage: React.FC = () => {
               </div>
 
               {/* Appt 3 */}
-              <div className="flex gap-3">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-1">
+              <div className="relative flex gap-3 items-start group">
+                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
                   02:30 PM
+                </div>
+                {/* Vertical Timeline Connector Line & Dot */}
+                <div className="flex flex-col items-center self-stretch shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-purple-600 ring-4 ring-purple-100 z-10 mt-2.5"></div>
+                  <div className="w-0.5 flex-1 bg-purple-300 my-1"></div>
                 </div>
                 <div className="flex-1 bg-purple-50 border border-purple-200 rounded-xl p-3 shadow-2xs flex justify-between items-center">
                   <div>
                     <h5 className="font-bold text-purple-900 text-xs mb-0.5">Michael Brown</h5>
                     <p className="text-[11px] text-[#434654]">Anxiety Management</p>
                   </div>
-                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-purple-600">
+                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-purple-600 cursor-pointer">
                     <span className="material-symbols-outlined text-sm">videocam</span>
                   </button>
                 </div>
               </div>
 
               {/* Appt 4 */}
-              <div className="flex gap-3">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-1">
+              <div className="relative flex gap-3 items-start group">
+                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
                   04:00 PM
+                </div>
+                {/* Vertical Timeline Connector Line & Dot */}
+                <div className="flex flex-col items-center self-stretch shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-100 z-10 mt-2.5"></div>
+                  <div className="w-0.5 flex-1 bg-gradient-to-b from-amber-300 to-transparent my-1"></div>
                 </div>
                 <div className="flex-1 bg-[#fef3c7]/50 border border-amber-300 rounded-xl p-3 shadow-2xs flex justify-between items-center">
                   <div>
                     <h5 className="font-bold text-amber-900 text-xs mb-0.5">David Wilson</h5>
                     <p className="text-[11px] text-[#434654]">Depression Support</p>
                   </div>
-                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-amber-600">
+                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-amber-600 cursor-pointer">
                     <span className="material-symbols-outlined text-sm">videocam</span>
                   </button>
                 </div>

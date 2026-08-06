@@ -14,7 +14,7 @@ export const PatientDashboardPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#191c1e] flex items-center gap-2">
-            Welcome back, {firstName}! <span className="text-3xl">👋</span>
+            Welcome back, {firstName}! <span className="text-3xl"></span>
           </h1>
           <p className="text-[#434654] mt-1 text-sm">
             Here's your therapy journey overview. Stay consistent and take care of yourself.
@@ -415,76 +415,6 @@ export const PatientDashboardPage: React.FC = () => {
               >
                 Continue Booking
               </Link>
-            </div>
-          </div>
-
-          {/* Quick Actions Grid */}
-          <div className="bg-white rounded-xl shadow-sm border border-[#c3c6d6]/30 p-5">
-            <h3 className="font-heading font-semibold text-[#191c1e] text-sm mb-4">
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                to={ROUTES.PATIENT.BOOK}
-                className="flex flex-col items-center justify-center p-4 border border-[#c3c6d6]/40 rounded-lg hover:border-[#003d9b] hover:bg-[#f3f4f6] transition-all group text-center"
-              >
-                <span className="material-symbols-outlined text-[#737685] group-hover:text-[#003d9b] mb-2 transition-colors">
-                  event_note
-                </span>
-                <span className="text-xs font-semibold text-[#434654] group-hover:text-[#191c1e]">
-                  Book
-                  <br />
-                  Session
-                </span>
-              </Link>
-
-              <Link
-                to={ROUTES.PATIENT.DASHBOARD}
-                className="flex flex-col items-center justify-center p-4 border border-[#c3c6d6]/40 rounded-lg hover:border-[#003d9b] hover:bg-[#f3f4f6] transition-all group text-center relative"
-              >
-                <span className="absolute top-2 right-2 w-4 h-4 bg-[#ba1a1a] text-white rounded-full text-[9px] flex items-center justify-center font-bold">
-                  1
-                </span>
-                <span className="material-symbols-outlined text-[#737685] group-hover:text-[#003d9b] mb-2 transition-colors">
-                  schedule
-                </span>
-                <span className="text-xs font-semibold text-[#434654] group-hover:text-[#191c1e]">
-                  View
-                  <br />
-                  My Holds
-                </span>
-              </Link>
-
-              <a
-                href="#messages"
-                className="flex flex-col items-center justify-center p-4 border border-[#c3c6d6]/40 rounded-lg hover:border-[#003d9b] hover:bg-[#f3f4f6] transition-all group text-center relative"
-              >
-                <span className="absolute top-2 right-2 w-4 h-4 bg-[#ba1a1a] text-white rounded-full text-[9px] flex items-center justify-center font-bold">
-                  2
-                </span>
-                <span className="material-symbols-outlined text-[#737685] group-hover:text-[#003d9b] mb-2 transition-colors">
-                  chat_bubble_outline
-                </span>
-                <span className="text-xs font-semibold text-[#434654] group-hover:text-[#191c1e]">
-                  Message
-                  <br />
-                  Therapist
-                </span>
-              </a>
-
-              <a
-                href="#payments"
-                className="flex flex-col items-center justify-center p-4 border border-[#c3c6d6]/40 rounded-lg hover:border-[#003d9b] hover:bg-[#f3f4f6] transition-all group text-center"
-              >
-                <span className="material-symbols-outlined text-[#737685] group-hover:text-[#003d9b] mb-2 transition-colors">
-                  receipt_long
-                </span>
-                <span className="text-xs font-semibold text-[#434654] group-hover:text-[#191c1e]">
-                  View
-                  <br />
-                  Invoices
-                </span>
-              </a>
             </div>
           </div>
         </div>
