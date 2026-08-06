@@ -20,7 +20,7 @@ export const useRegister = () => {
       addToast({
         type: 'success',
         title: 'Account Created',
-        message: `Welcome to Wysa Care, ${data.user.name}!`,
+        message: `Welcome to TherapySync, ${data.user.name}!`,
       });
 
       const destination =

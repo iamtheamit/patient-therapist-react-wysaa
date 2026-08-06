@@ -33,8 +33,10 @@ export const TherapistDashboardPage: React.FC = () => {
       {/* Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Therapist Portal — Agenda</h1>
-          <p className="mt-1 text-xs text-slate-400">
+          <h1 className="text-2xl font-heading font-extrabold text-[#191c1e]">
+            Therapist Portal — Agenda
+          </h1>
+          <p className="mt-1 text-xs text-[#505f76]">
             Welcome back, {user?.name || 'Doctor'}. Manage today's sessions and record clinical
             progress notes.
           </p>
@@ -53,13 +55,13 @@ export const TherapistDashboardPage: React.FC = () => {
       {/* Agenda Filter Tabs */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-teal-400" />
+          <h3 className="text-lg font-heading font-bold text-[#191c1e] flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-[#005237]" />
             <span>Scheduled Appointments</span>
           </h3>
 
           {/* Filter Pills */}
-          <div className="flex items-center space-x-1 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+          <div className="flex items-center space-x-1 p-1 bg-white border border-slate-200 rounded-xl shadow-sm">
             {(['ALL', 'CONFIRMED', 'COMPLETED'] as const).map((filter) => (
               <button
                 key={filter}
@@ -67,8 +69,8 @@ export const TherapistDashboardPage: React.FC = () => {
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-semibold transition',
                   activeFilter === filter
-                    ? 'bg-teal-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white',
+                    ? 'bg-[#005237] text-white shadow-sm'
+                    : 'text-[#505f76] hover:text-[#191c1e]',
                 )}
               >
                 {filter === 'ALL' ? 'All Sessions' : filter}

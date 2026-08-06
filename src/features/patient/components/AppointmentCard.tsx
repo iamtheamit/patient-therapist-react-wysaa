@@ -33,12 +33,14 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment })
 
   return (
     <>
-      <Card className="bg-slate-900/90 border-slate-800 hover:border-slate-700/80 transition-all text-left">
+      <Card className="bg-white border-slate-200 hover:border-slate-300 transition-all text-left shadow-sm">
         <CardContent className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h4 className="text-base font-bold text-white">{appointment.therapist.name}</h4>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h4 className="text-base font-heading font-bold text-[#191c1e]">
+                {appointment.therapist.name}
+              </h4>
+              <p className="text-xs text-[#505f76] mt-0.5 font-medium">
                 {appointment.therapist.specialization}
               </p>
             </div>
@@ -47,9 +49,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment })
             </Badge>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
-            <div className="flex items-center space-x-1.5 bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-700/50">
-              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="flex flex-wrap items-center gap-3 text-xs text-[#191c1e]">
+            <div className="flex items-center space-x-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 font-medium">
+              <Calendar className="w-3.5 h-3.5 text-[#005eb8]" />
               <span>
                 {startDate.toLocaleDateString('en-US', {
                   weekday: 'short',
@@ -59,8 +61,8 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment })
               </span>
             </div>
 
-            <div className="flex items-center space-x-1.5 bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-700/50">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex items-center space-x-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 font-medium">
+              <Clock className="w-3.5 h-3.5 text-[#005eb8]" />
               <span>
                 {startDate.toLocaleTimeString('en-US', {
                   hour: '2-digit',
@@ -71,13 +73,13 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment })
           </div>
 
           {appointment.notes && (
-            <p className="text-xs text-slate-400 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 italic">
+            <p className="text-xs text-[#505f76] bg-slate-50 p-3 rounded-lg border border-slate-200 italic">
               "{appointment.notes}"
             </p>
           )}
 
           {canCancel && (
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
               {appointment.meetingLink ? (
                 <a href={appointment.meetingLink} target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" size="sm" leftIcon={<Video className="w-3.5 h-3.5" />}>
@@ -91,7 +93,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment })
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                 leftIcon={<XCircle className="w-3.5 h-3.5" />}
                 onClick={() => setIsCancelModalOpen(true)}
               >
@@ -110,12 +112,13 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment })
         description="Are you sure you want to cancel this appointment? This action cannot be undone."
       >
         <div className="space-y-4 pt-2">
-          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1">
+          <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200 text-xs text-[#505f76] space-y-1">
             <p>
-              <strong className="text-white">Therapist:</strong> {appointment.therapist.name}
+              <strong className="text-[#191c1e]">Therapist:</strong> {appointment.therapist.name}
             </p>
             <p>
-              <strong className="text-white">Scheduled Time:</strong> {startDate.toLocaleString()}
+              <strong className="text-[#191c1e]">Scheduled Time:</strong>{' '}
+              {startDate.toLocaleString()}
             </p>
           </div>
 

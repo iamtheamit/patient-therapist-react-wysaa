@@ -30,7 +30,7 @@ export const patientApi = {
           endTime: new Date(tomorrow.setHours(11, 0, 0, 0)).toISOString(),
           status: 'CONFIRMED',
           notes: 'Focus on stress management and sleep anxiety exercises.',
-          meetingLink: 'https://meet.wysacare.example.com/cbt-session-101',
+          meetingLink: 'https://meet.therapysync.example.com/cbt-session-101',
           createdAt: now.toISOString(),
         },
         {
@@ -44,7 +44,7 @@ export const patientApi = {
           startTime: new Date(nextWeek.setHours(14, 30, 0, 0)).toISOString(),
           endTime: new Date(nextWeek.setHours(15, 30, 0, 0)).toISOString(),
           status: 'CONFIRMED',
-          meetingLink: 'https://meet.wysacare.example.com/mindfulness-102',
+          meetingLink: 'https://meet.therapysync.example.com/mindfulness-102',
           createdAt: now.toISOString(),
         },
         {

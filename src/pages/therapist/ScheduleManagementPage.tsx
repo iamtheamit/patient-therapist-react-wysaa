@@ -18,15 +18,17 @@ export const ScheduleManagementPage: React.FC = () => {
       <div className="space-y-4">
         <Link
           to={ROUTES.THERAPIST.DASHBOARD}
-          className="inline-flex items-center space-x-2 text-xs font-semibold text-slate-400 hover:text-white transition"
+          className="inline-flex items-center space-x-2 text-xs font-semibold text-[#505f76] hover:text-[#191c1e] transition"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Agenda</span>
         </Link>
 
         <div>
-          <h1 className="text-2xl font-black text-white">Working Hours & Availability Rules</h1>
-          <p className="mt-1 text-xs text-slate-400">
+          <h1 className="text-2xl font-heading font-extrabold text-[#191c1e]">
+            Working Hours & Availability Rules
+          </h1>
+          <p className="mt-1 text-xs text-[#505f76]">
             Define daily shifts, session lengths, and lunch break periods. Patients can only book
             slots within active shifts.
           </p>
@@ -34,7 +36,7 @@ export const ScheduleManagementPage: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="h-96 bg-slate-900/60 animate-pulse rounded-2xl border border-slate-800" />
+        <div className="h-96 bg-slate-100 animate-pulse rounded-2xl border border-slate-200" />
       ) : (
         <WeeklyScheduleForm initialConfig={config} therapistId={therapistId} />
       )}

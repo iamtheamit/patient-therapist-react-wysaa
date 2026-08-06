@@ -15,28 +15,32 @@ export const HoldCountdownBanner: React.FC<HoldCountdownBannerProps> = ({ second
   const isCritical = secondsRemaining < 15;
 
   const bannerStyles = isCritical
-    ? 'bg-rose-500/10 border-rose-500/40 text-rose-300 animate-pulse'
+    ? 'bg-rose-50 border-rose-300 text-rose-900 animate-pulse'
     : isUrgent
-      ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
-      : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300';
+      ? 'bg-amber-100 border-amber-300 text-amber-950'
+      : 'bg-[#fef3c7] border-amber-200/80 text-amber-900';
 
   return (
     <div
       className={cn(
-        'p-3.5 rounded-xl border flex items-center justify-between transition-colors shadow-lg text-xs font-semibold',
+        'p-3.5 rounded-lg border flex items-center justify-between transition-colors shadow-sm text-xs font-semibold',
         bannerStyles,
       )}
     >
       <div className="flex items-center space-x-2">
-        {isUrgent ? <ShieldAlert className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+        {isUrgent ? (
+          <ShieldAlert className="w-4 h-4 text-amber-600" />
+        ) : (
+          <Clock className="w-4 h-4 text-amber-700" />
+        )}
         <span>
           {isUrgent
-            ? 'Hold expiring soon! Complete checkout to secure this slot.'
+            ? 'Hold expiring soon! Complete booking to secure this slot.'
             : 'Temporary Slot Hold Active — Complete details before timer expires.'}
         </span>
       </div>
 
-      <div className="flex items-center space-x-1.5 font-mono text-sm font-bold bg-slate-950/60 px-3 py-1 rounded-lg border border-slate-800">
+      <div className="flex items-center space-x-1.5 font-mono text-sm font-bold bg-white text-amber-950 px-3 py-1 rounded-md border border-amber-200 shadow-sm">
         <span>{formattedTime}</span>
       </div>
     </div>

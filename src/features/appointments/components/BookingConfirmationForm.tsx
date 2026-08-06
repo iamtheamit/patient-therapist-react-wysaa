@@ -55,27 +55,27 @@ export const BookingConfirmationForm: React.FC<BookingConfirmationFormProps> = (
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-left max-w-2xl mx-auto">
       {/* Booking Summary Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-        <div className="flex items-center space-x-2 text-indigo-400 text-xs font-semibold">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
+        <div className="flex items-center space-x-2 text-[#005eb8] text-xs font-semibold">
           <ShieldCheck className="w-4 h-4" />
           <span>Appointment Summary</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+            <p className="text-[11px] uppercase tracking-wider text-[#505f76] font-semibold">
               Therapist
             </p>
-            <p className="text-sm font-bold text-white mt-0.5">{therapist.name}</p>
-            <p className="text-xs text-indigo-300">{therapist.specialization}</p>
+            <p className="text-sm font-heading font-bold text-[#191c1e] mt-0.5">{therapist.name}</p>
+            <p className="text-xs text-[#005eb8] font-semibold">{therapist.specialization}</p>
           </div>
 
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+            <p className="text-[11px] uppercase tracking-wider text-[#505f76] font-semibold">
               Date & Time
             </p>
-            <div className="flex items-center space-x-2 text-xs font-medium text-white mt-1">
-              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex items-center space-x-2 text-xs font-semibold text-[#191c1e] mt-1">
+              <Calendar className="w-3.5 h-3.5 text-[#005eb8]" />
               <span>
                 {startDate.toLocaleDateString('en-US', {
                   weekday: 'short',
@@ -84,8 +84,8 @@ export const BookingConfirmationForm: React.FC<BookingConfirmationFormProps> = (
                 })}
               </span>
             </div>
-            <div className="flex items-center space-x-2 text-xs font-medium text-slate-300 mt-0.5">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex items-center space-x-2 text-xs font-medium text-[#505f76] mt-0.5">
+              <Clock className="w-3.5 h-3.5 text-[#005eb8]" />
               <span>
                 {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </span>
@@ -103,7 +103,7 @@ export const BookingConfirmationForm: React.FC<BookingConfirmationFormProps> = (
 
       {/* Intake Notes Input */}
       <div className="space-y-2">
-        <label htmlFor="intakeNotes" className="block text-xs font-semibold text-slate-300">
+        <label htmlFor="intakeNotes" className="block text-xs font-semibold text-[#505f76]">
           Session Focus & Intake Notes (Optional)
         </label>
         <textarea
@@ -112,7 +112,7 @@ export const BookingConfirmationForm: React.FC<BookingConfirmationFormProps> = (
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Briefly describe what you would like to focus on during this session (e.g., anxiety management, sleep support)..."
-          className="w-full bg-slate-900 text-white placeholder-slate-500 text-xs rounded-xl border border-slate-800 p-3 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+          className="w-full bg-white text-[#191c1e] placeholder-slate-400 text-xs rounded-lg border border-slate-200 p-3 outline-none focus:border-[#005eb8] focus:ring-2 focus:ring-[#005eb8]/20 transition"
         />
       </div>
 

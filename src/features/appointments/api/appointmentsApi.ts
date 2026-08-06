@@ -142,7 +142,7 @@ export const appointmentsApi = {
         endTime: new Date(now.getTime() + 25 * 60 * 60 * 1000).toISOString(),
         status: 'CONFIRMED',
         notes: payload.notes,
-        meetingLink: 'https://meet.wysacare.example.com/new-session',
+        meetingLink: 'https://meet.therapysync.example.com/new-session',
         createdAt: now.toISOString(),
       };
     }

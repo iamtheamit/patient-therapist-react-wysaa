@@ -22,7 +22,7 @@ export const SlotGrid: React.FC<SlotGridProps> = ({
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="h-16 bg-slate-900/60 animate-pulse rounded-xl border border-slate-800"
+            className="h-16 bg-slate-100 animate-pulse rounded-lg border border-slate-200"
           />
         ))}
       </div>
@@ -31,8 +31,8 @@ export const SlotGrid: React.FC<SlotGridProps> = ({
 
   if (!slots || slots.length === 0) {
     return (
-      <div className="p-6 text-center bg-slate-900/50 border border-slate-800 rounded-xl">
-        <p className="text-xs text-slate-400">No time slots available for this selected date.</p>
+      <div className="p-6 text-center bg-slate-50 border border-slate-200 rounded-lg">
+        <p className="text-xs text-[#505f76]">No time slots available for this selected date.</p>
       </div>
     );
   }
@@ -56,20 +56,20 @@ export const SlotGrid: React.FC<SlotGridProps> = ({
             disabled={isDisabled}
             onClick={() => onSelectSlot(slot)}
             className={cn(
-              'p-3.5 rounded-xl border font-semibold text-xs transition-all flex flex-col items-center justify-center space-y-1 relative select-none',
+              'p-3.5 rounded-lg border font-semibold text-xs transition-all flex flex-col items-center justify-center space-y-1 relative select-none',
               isDisabled
-                ? 'bg-slate-950/40 text-slate-600 border-slate-900 cursor-not-allowed line-through'
+                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed line-through opacity-60'
                 : isSelected
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/25 ring-2 ring-indigo-500/30'
-                  : 'bg-slate-900 text-slate-200 border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800/80',
+                  ? 'bg-[#005eb8] text-white border-[#005eb8] shadow-md shadow-[#005eb8]/20 ring-2 ring-[#005eb8]/30'
+                  : 'bg-white text-[#005237] border-[#10b981] hover:bg-[#ecfdf5] hover:border-[#005237]',
             )}
           >
-            <Clock className="w-3.5 h-3.5 opacity-70" />
+            <Clock className="w-3.5 h-3.5 opacity-80" />
             <span>{formattedTime}</span>
 
             {isSelected && (
               <span className="absolute top-1 right-1 text-white">
-                <Check className="w-3 h-3" />
+                <Check className="w-3.5 h-3.5" />
               </span>
             )}
           </button>

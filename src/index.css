@@ -1,14 +1,50 @@
 @import 'tailwindcss';
 
+@theme {
+  --font-sans:
+    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Manrope', system-ui, sans-serif;
+
+  --color-clinical-primary: #005eb8;
+  --color-clinical-primary-dark: #00478d;
+  --color-clinical-primary-light: #c8daff;
+  --color-clinical-primary-container: #d6e3ff;
+
+  --color-clinical-secondary: #505f76;
+  --color-clinical-secondary-container: #d0e1fb;
+
+  --color-clinical-tertiary: #10b981;
+  --color-clinical-tertiary-dark: #005237;
+  --color-clinical-tertiary-container: #d1fae5;
+
+  --color-clinical-bg: #f7f9fb;
+  --color-clinical-surface: #ffffff;
+  --color-clinical-text: #191c1e;
+  --color-clinical-muted: #424752;
+  --color-clinical-outline: #e2e8f0;
+  --color-clinical-amber: #f59e0b;
+  --color-clinical-amber-bg: #fef3c7;
+}
+
 @layer base {
   :root {
-    --font-sans:
-      'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-      Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Manrope', system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading), 'Manrope', sans-serif;
   }
 
   body {
-    font-family: var(--font-sans);
-    @apply bg-slate-950 text-slate-100 antialiased min-h-screen selection:bg-indigo-500 selection:text-white;
+    font-family: var(--font-sans), 'Inter', sans-serif;
+    background-color: #f7f9fb;
+    color: #191c1e;
+    @apply antialiased min-h-screen selection:bg-[#005eb8] selection:text-white;
   }
 }

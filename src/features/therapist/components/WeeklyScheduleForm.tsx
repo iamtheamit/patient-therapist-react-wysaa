@@ -95,9 +95,9 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-left">
       {/* Session Duration Settings */}
-      <Card className="bg-slate-900/90 border-slate-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardContent className="p-6 space-y-4">
-          <div className="flex items-center space-x-2 text-teal-400 text-xs font-semibold">
+          <div className="flex items-center space-x-2 text-[#005237] text-xs font-semibold">
             <Clock className="w-4 h-4" />
             <span>Session Duration & Buffer Settings</span>
           </div>
@@ -106,7 +106,7 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
             <div>
               <label
                 htmlFor="slotDurationSelect"
-                className="block text-xs font-semibold text-slate-300 mb-1.5"
+                className="block text-xs font-semibold text-[#505f76] mb-1.5"
               >
                 Therapy Session Length
               </label>
@@ -116,7 +116,7 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
                 onChange={(e) =>
                   setConfig({ ...config, slotDurationMinutes: Number(e.target.value) })
                 }
-                className="w-full bg-slate-950 text-white text-xs rounded-xl border border-slate-800 p-3 outline-none focus:border-teal-500 transition"
+                className="w-full bg-white text-[#191c1e] text-xs rounded-lg border border-slate-200 p-3 outline-none focus:border-[#005eb8] focus:ring-2 focus:ring-[#005eb8]/20 transition"
               >
                 <option value={30}>30 Minutes</option>
                 <option value={45}>45 Minutes</option>
@@ -128,7 +128,7 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
             <div>
               <label
                 htmlFor="bufferDurationSelect"
-                className="block text-xs font-semibold text-slate-300 mb-1.5"
+                className="block text-xs font-semibold text-[#505f76] mb-1.5"
               >
                 Inter-Session Buffer Break
               </label>
@@ -138,7 +138,7 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
                 onChange={(e) =>
                   setConfig({ ...config, bufferDurationMinutes: Number(e.target.value) })
                 }
-                className="w-full bg-slate-950 text-white text-xs rounded-xl border border-slate-800 p-3 outline-none focus:border-teal-500 transition"
+                className="w-full bg-white text-[#191c1e] text-xs rounded-lg border border-slate-200 p-3 outline-none focus:border-[#005eb8] focus:ring-2 focus:ring-[#005eb8]/20 transition"
               >
                 <option value={0}>0 Minutes (Back-to-Back)</option>
                 <option value={10}>10 Minutes (Recommended)</option>
@@ -150,14 +150,14 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
       </Card>
 
       {/* Weekly Shift Rules Table */}
-      <Card className="bg-slate-900/90 border-slate-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-teal-400" />
+            <h3 className="text-sm font-heading font-bold text-[#191c1e] flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#005237]" />
               <span>Weekly Shift Rules</span>
             </h3>
-            <span className="text-xs text-slate-400">Configure daily working hours</span>
+            <span className="text-xs text-[#505f76]">Configure daily working hours</span>
           </div>
 
           <div className="space-y-3 pt-2">
@@ -165,10 +165,10 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
               <div
                 key={rule.day}
                 className={cn(
-                  'p-4 rounded-xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4',
+                  'p-4 rounded-lg border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4',
                   rule.isEnabled
-                    ? 'bg-slate-950/80 border-slate-800'
-                    : 'bg-slate-950/30 border-slate-900 opacity-60',
+                    ? 'bg-slate-50 border-slate-200'
+                    : 'bg-slate-100/50 border-slate-200 opacity-60',
                 )}
               >
                 <div className="flex items-center space-x-3 w-40">
@@ -177,54 +177,54 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
                     id={`check-${rule.day}`}
                     checked={rule.isEnabled}
                     onChange={() => handleRuleToggle(index)}
-                    className="w-4 h-4 accent-teal-500 rounded border-slate-700 cursor-pointer"
+                    className="w-4 h-4 accent-[#005237] rounded border-slate-300 cursor-pointer"
                   />
                   <label
                     htmlFor={`check-${rule.day}`}
-                    className="text-xs font-bold text-white cursor-pointer select-none"
+                    className="text-xs font-bold text-[#191c1e] cursor-pointer select-none"
                   >
                     {rule.day}
                   </label>
                 </div>
 
                 {rule.isEnabled ? (
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-[#191c1e]">
                     <div className="flex items-center space-x-1.5">
-                      <span className="text-slate-400 font-medium">Shift:</span>
+                      <span className="text-[#505f76] font-medium">Shift:</span>
                       <input
                         type="time"
                         value={rule.startTime}
                         onChange={(e) => handleTimeChange(index, 'startTime', e.target.value)}
-                        className="bg-slate-900 border border-slate-800 text-white rounded-lg px-2 py-1 outline-none focus:border-teal-500"
+                        className="bg-white border border-slate-200 text-[#191c1e] rounded-md px-2 py-1 outline-none focus:border-[#005eb8]"
                       />
                       <span>to</span>
                       <input
                         type="time"
                         value={rule.endTime}
                         onChange={(e) => handleTimeChange(index, 'endTime', e.target.value)}
-                        className="bg-slate-900 border border-slate-800 text-white rounded-lg px-2 py-1 outline-none focus:border-teal-500"
+                        className="bg-white border border-slate-200 text-[#191c1e] rounded-md px-2 py-1 outline-none focus:border-[#005eb8]"
                       />
                     </div>
 
-                    <div className="flex items-center space-x-1.5 md:border-l md:border-slate-800 md:pl-3">
-                      <span className="text-slate-400 font-medium">Break:</span>
+                    <div className="flex items-center space-x-1.5 md:border-l md:border-slate-200 md:pl-3">
+                      <span className="text-[#505f76] font-medium">Break:</span>
                       <input
                         type="time"
                         value={rule.breakStartTime || '12:00'}
                         onChange={(e) => handleTimeChange(index, 'breakStartTime', e.target.value)}
-                        className="bg-slate-900 border border-slate-800 text-white rounded-lg px-2 py-1 outline-none focus:border-teal-500"
+                        className="bg-white border border-slate-200 text-[#191c1e] rounded-md px-2 py-1 outline-none focus:border-[#005eb8]"
                       />
                       <span>to</span>
                       <input
                         type="time"
                         value={rule.breakEndTime || '13:00'}
                         onChange={(e) => handleTimeChange(index, 'breakEndTime', e.target.value)}
-                        className="bg-slate-900 border border-slate-800 text-white rounded-lg px-2 py-1 outline-none focus:border-teal-500"
+                        className="bg-white border border-slate-200 text-[#191c1e] rounded-md px-2 py-1 outline-none focus:border-[#005eb8]"
                       />
                     </div>
                   </div>
                 ) : (
-                  <span className="text-xs text-slate-500 italic">
+                  <span className="text-xs text-[#505f76] italic">
                     Off Day — No slots generated
                   </span>
                 )}
@@ -240,7 +240,7 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
           type="submit"
           variant="primary"
           size="md"
-          className="bg-teal-600 hover:bg-teal-500 border-teal-500/30"
+          className="bg-[#005237] hover:bg-[#00478d] border-transparent"
           isLoading={isPending}
           leftIcon={<Save className="w-4 h-4" />}
         >

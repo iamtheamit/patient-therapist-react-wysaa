@@ -39,16 +39,16 @@ export const RegisterForm: React.FC = () => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-left">
       {/* Role Selection Tabs */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-slate-300">Account Role</label>
-        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+        <label className="block text-xs font-semibold text-[#505f76]">Account Role</label>
+        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-50 border border-slate-200 rounded-lg">
           <button
             type="button"
             onClick={() => setValue('role', 'PATIENT', { shouldValidate: true })}
             className={cn(
-              'py-2 px-3 rounded-lg text-xs font-semibold transition',
+              'py-2 px-3 rounded-md text-xs font-semibold transition',
               selectedRole === 'PATIENT'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white',
+                ? 'bg-[#005eb8] text-white shadow-sm'
+                : 'text-[#505f76] hover:text-[#191c1e]',
             )}
           >
             Patient
@@ -57,10 +57,10 @@ export const RegisterForm: React.FC = () => {
             type="button"
             onClick={() => setValue('role', 'THERAPIST', { shouldValidate: true })}
             className={cn(
-              'py-2 px-3 rounded-lg text-xs font-semibold transition',
+              'py-2 px-3 rounded-md text-xs font-semibold transition',
               selectedRole === 'THERAPIST'
-                ? 'bg-teal-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white',
+                ? 'bg-[#005237] text-white shadow-sm'
+                : 'text-[#505f76] hover:text-[#191c1e]',
             )}
           >
             Therapist
@@ -108,7 +108,7 @@ export const RegisterForm: React.FC = () => {
       <div className="text-center pt-2">
         <Link
           to={ROUTES.AUTH.LOGIN}
-          className="text-xs text-indigo-400 hover:text-indigo-300 transition"
+          className="text-xs font-semibold text-[#005eb8] hover:text-[#00478d] transition"
         >
           Already have an account? Sign in
         </Link>

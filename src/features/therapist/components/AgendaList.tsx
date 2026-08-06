@@ -26,7 +26,7 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-28 bg-slate-900/60 animate-pulse rounded-2xl border border-slate-800"
+            className="h-28 bg-slate-100 animate-pulse rounded-2xl border border-slate-200"
           />
         ))}
       </div>
@@ -35,8 +35,8 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
 
   if (!items || items.length === 0) {
     return (
-      <div className="p-8 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
-        <p className="text-sm text-slate-400">No client appointments scheduled for this view.</p>
+      <div className="p-8 text-center bg-white border border-slate-200 rounded-2xl shadow-sm">
+        <p className="text-sm text-[#505f76]">No client appointments scheduled for this view.</p>
       </div>
     );
   }
@@ -56,17 +56,19 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
           return (
             <Card
               key={item.id}
-              className="bg-slate-900/90 border-slate-800 hover:border-slate-700/80 transition-all"
+              className="bg-white border-slate-200 hover:border-slate-300 transition-all shadow-sm"
             >
               <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#d1fae5] border border-[#a7f3d0] text-[#005237] flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
                     <UserIcon className="w-5 h-5" />
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center space-x-3">
-                      <h4 className="text-base font-bold text-white">{item.patient.name}</h4>
+                      <h4 className="text-base font-heading font-bold text-[#191c1e]">
+                        {item.patient.name}
+                      </h4>
                       <Badge
                         variant={isConfirmed ? 'success' : isCompleted ? 'info' : 'neutral'}
                         size="sm"
@@ -74,11 +76,11 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
                         {item.status}
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-400">{item.patient.email}</p>
+                    <p className="text-xs text-[#505f76]">{item.patient.email}</p>
 
-                    <div className="flex items-center space-x-3 text-xs text-slate-300 pt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-teal-400" />
+                    <div className="flex items-center space-x-3 text-xs text-[#505f76] pt-1">
+                      <span className="flex items-center gap-1 font-medium">
+                        <Calendar className="w-3.5 h-3.5 text-[#005237]" />
                         {startDate.toLocaleDateString('en-US', {
                           weekday: 'short',
                           month: 'short',
@@ -86,8 +88,8 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
                         })}
                       </span>
                       <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-teal-400" />
+                      <span className="flex items-center gap-1 font-medium">
+                        <Clock className="w-3.5 h-3.5 text-[#005237]" />
                         {startDate.toLocaleTimeString('en-US', {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -97,7 +99,7 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
+                <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                   <Button
                     variant="outline"
                     size="sm"
@@ -121,9 +123,8 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
 
                   {isConfirmed && (
                     <Button
-                      variant="primary"
+                      variant="success"
                       size="sm"
-                      className="bg-teal-600 hover:bg-teal-500 border-teal-500/30"
                       isLoading={isUpdatingStatus}
                       leftIcon={<CheckCircle className="w-3.5 h-3.5" />}
                       onClick={() => handleMarkCompleted(item.id)}

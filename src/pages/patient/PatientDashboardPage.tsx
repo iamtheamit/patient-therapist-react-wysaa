@@ -28,10 +28,10 @@ export const PatientDashboardPage: React.FC = () => {
       {/* Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">
+          <h1 className="text-2xl font-heading font-extrabold text-[#191c1e]">
             Welcome back, {user?.name || 'Patient'} 👋
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[#505f76]">
             Track your mental wellness schedule and manage upcoming therapy appointments.
           </p>
         </div>
@@ -52,8 +52,10 @@ export const PatientDashboardPage: React.FC = () => {
       {/* All Scheduled Sessions List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">Appointment History & Agenda</h3>
-          <span className="text-xs text-slate-400">
+          <h3 className="text-lg font-heading font-bold text-[#191c1e]">
+            Appointment History & Agenda
+          </h3>
+          <span className="text-xs text-[#505f76]">
             Showing {appointments?.length || 0} sessions
           </span>
         </div>
@@ -63,7 +65,7 @@ export const PatientDashboardPage: React.FC = () => {
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="h-40 bg-slate-900/60 animate-pulse rounded-2xl border border-slate-800"
+                className="h-40 bg-slate-100 animate-pulse rounded-2xl border border-slate-200"
               />
             ))}
           </div>
@@ -74,8 +76,8 @@ export const PatientDashboardPage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="p-8 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
-            <p className="text-sm text-slate-400">No appointments found in your history.</p>
+          <div className="p-8 text-center bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <p className="text-sm text-[#505f76]">No appointments found in your history.</p>
           </div>
         )}
       </div>

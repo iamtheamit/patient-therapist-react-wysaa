@@ -49,7 +49,7 @@ export const ClinicalNotesModal: React.FC<ClinicalNotesModalProps> = ({
         <div>
           <label
             htmlFor="clinicalNotesInput"
-            className="block text-xs font-semibold text-slate-300 mb-1.5"
+            className="block text-xs font-semibold text-[#505f76] mb-1.5"
           >
             Session Notes & Diagnosis Observations
           </label>
@@ -59,7 +59,7 @@ export const ClinicalNotesModal: React.FC<ClinicalNotesModalProps> = ({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Type clinical progress notes, CBT exercises, or prescription recommendations..."
-            className="w-full bg-slate-950 text-white placeholder-slate-500 text-xs rounded-xl border border-slate-800 p-3 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition"
+            className="w-full bg-white text-[#191c1e] placeholder-slate-400 text-xs rounded-lg border border-slate-200 p-3 outline-none focus:border-[#005eb8] focus:ring-2 focus:ring-[#005eb8]/20 transition"
           />
         </div>
 

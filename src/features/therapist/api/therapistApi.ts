@@ -35,13 +35,13 @@ export const therapistApi = {
           patient: {
             id: 'pat-1',
             name: 'Alex Patient',
-            email: 'alex.patient@wysa.com',
+            email: 'alex.patient@therapysync.com',
           },
           startTime: today10.toISOString(),
           endTime: new Date(today10.getTime() + 60 * 60 * 1000).toISOString(),
           status: 'CONFIRMED',
           notes: 'Patient reports improvement in anxiety symptoms. Review homework.',
-          meetingLink: 'https://meet.wysacare.example.com/therapist-session-1',
+          meetingLink: 'https://meet.therapysync.example.com/therapist-session-1',
           createdAt: now.toISOString(),
         },
         {
@@ -56,7 +56,7 @@ export const therapistApi = {
           endTime: new Date(today14.getTime() + 60 * 60 * 1000).toISOString(),
           status: 'CONFIRMED',
           notes: 'Initial evaluation session.',
-          meetingLink: 'https://meet.wysacare.example.com/therapist-session-2',
+          meetingLink: 'https://meet.therapysync.example.com/therapist-session-2',
           createdAt: now.toISOString(),
         },
         {

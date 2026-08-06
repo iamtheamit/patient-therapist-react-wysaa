@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
         })),
     }),
     {
-      name: 'wysa-auth-storage',
+      name: 'therapysync-auth-storage',
       storage: createJSONStorage(() => localStorage),
     },
   ),

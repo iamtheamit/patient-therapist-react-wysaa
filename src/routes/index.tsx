@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.AUTH.LOGIN,
         element: (
-          <Suspense fallback={<PageSpinner label="Loading authentication..." />}>
+          <Suspense fallback={<PageSpinner label="Loading..." />}>
             <LoginPage />
           </Suspense>
         ),
@@ -41,7 +41,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.AUTH.REGISTER,
         element: (
-          <Suspense fallback={<PageSpinner label="Loading portal registration..." />}>
+          <Suspense fallback={<PageSpinner label="Loading..." />}>
             <RegisterPage />
           </Suspense>
         ),
