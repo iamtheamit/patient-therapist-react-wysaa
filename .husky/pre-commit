@@ -1,1 +1,4 @@
+#!/usr/bin/env sh
+
+npm run typecheck || exit 1
 npx lint-staged
