@@ -22,6 +22,8 @@ export const QUERY_KEYS = {
     ROOT: ['schedules'] as const,
     THERAPIST_RULES: (therapistId: string) =>
       [...QUERY_KEYS.SCHEDULES.ROOT, 'therapist', therapistId, 'rules'] as const,
+    THERAPIST_CONFIG: (therapistId: string) =>
+      [...QUERY_KEYS.SCHEDULES.ROOT, 'therapist', therapistId, 'config'] as const,
     AVAILABLE_SLOTS: (therapistId: string, date: string) =>
       [...QUERY_KEYS.SCHEDULES.ROOT, 'slots', therapistId, date] as const,
   },

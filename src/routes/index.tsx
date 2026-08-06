@@ -5,7 +5,7 @@ import { ROUTES } from '@/config/routes';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { PatientLayout } from '@/layouts/PatientLayout';
 import { TherapistLayout } from '@/layouts/TherapistLayout';
-import { PageFallback } from '@/components/feedback/PageFallback';
+import { PageSpinner } from '@/components/feedback/PageSpinner';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
 
@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.AUTH.LOGIN,
         element: (
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSpinner label="Loading authentication..." />}>
             <LoginPage />
           </Suspense>
         ),
@@ -41,7 +41,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.AUTH.REGISTER,
         element: (
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSpinner label="Loading portal registration..." />}>
             <RegisterPage />
           </Suspense>
         ),
@@ -58,7 +58,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.PATIENT.DASHBOARD,
         element: (
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSpinner label="Loading patient dashboard..." />}>
             <PatientDashboardPage />
           </Suspense>
         ),
@@ -66,7 +66,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.PATIENT.BOOK,
         element: (
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSpinner label="Loading booking wizard..." />}>
             <BookAppointmentPage />
           </Suspense>
         ),
@@ -83,7 +83,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.THERAPIST.DASHBOARD,
         element: (
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSpinner label="Loading therapist agenda..." />}>
             <TherapistDashboardPage />
           </Suspense>
         ),
@@ -91,7 +91,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.THERAPIST.SCHEDULE,
         element: (
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSpinner label="Loading working shift rules..." />}>
             <ScheduleManagementPage />
           </Suspense>
         ),
@@ -101,7 +101,7 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.NOT_FOUND,
     element: (
-      <Suspense fallback={<PageFallback />}>
+      <Suspense fallback={<PageSpinner label="Loading page..." />}>
         <NotFoundPage />
       </Suspense>
     ),

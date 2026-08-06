@@ -1,13 +1,83 @@
 import React from 'react';
+import { Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuthStore } from '@/stores/authStore';
+import type { AuthState } from '@/stores/authStore';
+import {
+  PatientStatsGrid,
+  UpcomingSessionHero,
+  AppointmentCard,
+  usePatientAppointments,
+  usePatientStats,
+} from '@/features/patient';
+import { Button } from '@/components/ui/Button';
+import { ROUTES } from '@/config/routes';
 
 export const PatientDashboardPage: React.FC = () => {
+  const user = useAuthStore((state: AuthState) => state.user);
+  const patientId = user?.id || 'patient-user-1';
+
+  const { data: appointments, isLoading: isAppointmentsLoading } =
+    usePatientAppointments(patientId);
+  const { data: stats, isLoading: isStatsLoading } = usePatientStats(patientId);
+
+  const upcomingAppointment = appointments?.find((a) => a.status === 'CONFIRMED');
+
   return (
-    <div className="space-y-6">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-        <h1 className="text-2xl font-bold text-white">Patient Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Manage your upcoming therapy sessions and track active bookings.
-        </p>
+    <div className="space-y-8 text-left">
+      {/* Welcome Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-white">
+            Welcome back, {user?.name || 'Patient'} 👋
+          </h1>
+          <p className="mt-1 text-xs text-slate-400">
+            Track your mental wellness schedule and manage upcoming therapy appointments.
+          </p>
+        </div>
+
+        <Link to={ROUTES.PATIENT.BOOK}>
+          <Button variant="primary" size="md" leftIcon={<Plus className="w-4 h-4" />}>
+            Book New Session
+          </Button>
+        </Link>
+      </div>
+
+      {/* Quick Statistics Grid */}
+      <PatientStatsGrid stats={stats} isLoading={isStatsLoading} />
+
+      {/* Upcoming Session Hero */}
+      <UpcomingSessionHero appointment={upcomingAppointment} />
+
+      {/* All Scheduled Sessions List */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-white">Appointment History & Agenda</h3>
+          <span className="text-xs text-slate-400">
+            Showing {appointments?.length || 0} sessions
+          </span>
+        </div>
+
+        {isAppointmentsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-40 bg-slate-900/60 animate-pulse rounded-2xl border border-slate-800"
+              />
+            ))}
+          </div>
+        ) : appointments && appointments.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {appointments.map((appointment) => (
+              <AppointmentCard key={appointment.id} appointment={appointment} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
+            <p className="text-sm text-slate-400">No appointments found in your history.</p>
+          </div>
+        )}
       </div>
     </div>
   );
