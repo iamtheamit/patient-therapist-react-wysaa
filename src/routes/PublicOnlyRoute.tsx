@@ -2,18 +2,21 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import type { UserRole } from '@/types/auth';
 import { ROUTES } from '@/config/routes';
+import { useAuthStore } from '@/stores/authStore';
 
 interface PublicOnlyRouteProps {
   children: React.ReactNode;
 }
 
 export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({ children }) => {
-  const mockToken = localStorage.getItem('auth_token');
-  const mockRole = (localStorage.getItem('user_role') as UserRole) || 'PATIENT';
+  const { isAuthenticated, user, token } = useAuthStore();
 
-  if (mockToken) {
+  const hasToken = token || localStorage.getItem('auth_token');
+  const userRole = user?.role || (localStorage.getItem('user_role') as UserRole) || 'PATIENT';
+
+  if (isAuthenticated || hasToken) {
     const defaultDashboard =
-      mockRole === 'PATIENT' ? ROUTES.PATIENT.DASHBOARD : ROUTES.THERAPIST.DASHBOARD;
+      userRole === 'PATIENT' ? ROUTES.PATIENT.DASHBOARD : ROUTES.THERAPIST.DASHBOARD;
     return <Navigate to={defaultDashboard} replace />;
   }
 

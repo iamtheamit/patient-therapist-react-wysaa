@@ -1,9 +1,18 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
+import { useAuthStore } from '@/stores/authStore';
+import type { AuthState } from '@/stores/authStore';
 
 export const TherapistLayout: React.FC = () => {
   const navigate = useNavigate();
+  const logout = useAuthStore((state: AuthState) => state.logout);
+  const user = useAuthStore((state: AuthState) => state.user);
+
+  const handleSignOut = () => {
+    logout();
+    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -38,11 +47,12 @@ export const TherapistLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-4">
+            <span className="text-xs text-slate-400 font-medium">{user?.name || 'Therapist'}</span>
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20">
               Therapist Mode
             </span>
             <button
-              onClick={() => navigate(ROUTES.AUTH.LOGIN)}
+              onClick={handleSignOut}
               className="text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-md hover:bg-slate-800 transition"
             >
               Sign Out
