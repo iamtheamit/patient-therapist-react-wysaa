@@ -30,9 +30,18 @@ axiosClient.interceptors.request.use(
 // Response Interceptor: Transform errors & handle 401 unauthenticated session expiry
 axiosClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Return extracted data payload directly if standard backend envelope exists
+    // Return extracted data payload directly if standard backend envelope exists ({ status: true, message, data })
+    if (
+      response.data &&
+      typeof response.data === 'object' &&
+      'status' in response.data &&
+      'data' in response.data
+    ) {
+      return response.data.data;
+    }
     return response.data;
   },
+
   (
     error: AxiosError<{ message?: string; errorCode?: string; errors?: Record<string, string[]> }>,
   ) => {
