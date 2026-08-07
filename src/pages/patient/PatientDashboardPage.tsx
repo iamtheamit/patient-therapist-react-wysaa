@@ -29,77 +29,33 @@ export const PatientDashboardPage: React.FC = () => {
         </Link>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {/* Card 1 */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#c3c6d6]/30 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer group">
-          <div className="bg-[#0052cc]/20 text-[#003d9b] p-3 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
-            <span className="material-symbols-outlined text-2xl">event_available</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-[#434654] mb-0.5 truncate font-medium">Upcoming Sessions</p>
-            <p className="font-heading text-2xl font-bold text-[#191c1e]">2</p>
-            <p className="text-[10px] text-[#434654] truncate">Next 7 days</p>
-          </div>
-          <span className="material-symbols-outlined text-[#737685] group-hover:text-[#003d9b] transition-colors">
-            chevron_right
-          </span>
-        </div>
-
-        {/* Card 2 */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#c3c6d6]/30 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer group">
-          <div className="bg-[#a33500]/20 text-[#7b2600] p-3 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
-            <span className="material-symbols-outlined text-2xl">check_circle</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-[#434654] mb-0.5 truncate font-medium">Completed Sessions</p>
-            <p className="font-heading text-2xl font-bold text-[#191c1e]">8</p>
-            <p className="text-[10px] text-[#434654] truncate">All time</p>
-          </div>
-          <span className="material-symbols-outlined text-[#737685] group-hover:text-[#003d9b] transition-colors">
-            chevron_right
-          </span>
-        </div>
-
-        {/* Card 3 */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#c3c6d6]/30 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer group">
-          <div className="bg-purple-100 text-purple-700 p-3 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
-            <span className="material-symbols-outlined text-2xl">pending_actions</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-[#434654] mb-0.5 truncate font-medium">Active Holds</p>
-            <p className="font-heading text-2xl font-bold text-[#191c1e]">1</p>
-            <p className="text-[10px] text-[#434654] truncate">Expiring soon</p>
-          </div>
-          <span className="material-symbols-outlined text-[#737685] group-hover:text-[#003d9b] transition-colors">
-            chevron_right
-          </span>
-        </div>
-
-        {/* Card 4 */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#c3c6d6]/30 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer group">
-          <div className="bg-orange-100 text-orange-600 p-3 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
-            <span className="material-symbols-outlined text-2xl">star</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-[#434654] mb-0.5 truncate font-medium">Current Streak</p>
-            <p className="font-heading text-2xl font-bold text-[#191c1e]">5</p>
-            <p className="text-[10px] text-[#434654] truncate">Days in a row</p>
-          </div>
-          <span className="material-symbols-outlined text-[#737685] group-hover:text-[#003d9b] transition-colors">
-            chevron_right
-          </span>
-        </div>
-      </div>
-
       {/* Main Dashboard Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column (Hero Card & Appointments) */}
         <div className="lg:col-span-2 space-y-8">
           {/* Next Session Hero Card */}
           <div className="relative overflow-hidden rounded-xl bg-[#003d9b] text-white shadow-md">
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/40 via-transparent to-transparent"></div>
-            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-[#0052cc] rounded-full blur-3xl opacity-50"></div>
+            {/* ── Medical cross illustration layer ──────────────────── */}
+            {/* Large cross – top right, overflows corner */}
+            <div className="absolute -top-8 -right-8 w-52 h-52 opacity-[0.18] pointer-events-none">
+              {/* horizontal bar */}
+              <div className="absolute top-1/2 left-0 w-full h-[34%] -translate-y-1/2 bg-white rounded-2xl" />
+              {/* vertical bar */}
+              <div className="absolute left-1/2 top-0 h-full w-[34%] -translate-x-1/2 bg-white rounded-2xl" />
+            </div>
+            {/* Medium cross – bottom left */}
+            <div className="absolute -bottom-6 -left-6 w-36 h-36 opacity-[0.22] pointer-events-none">
+              <div className="absolute top-1/2 left-0 w-full h-[34%] -translate-y-1/2 bg-white rounded-xl" />
+              <div className="absolute left-1/2 top-0 h-full w-[34%] -translate-x-1/2 bg-white rounded-xl" />
+            </div>
+            {/* Small cross – top left, subtle */}
+            <div className="absolute top-8 left-10 w-10 h-10 opacity-[0.25] pointer-events-none">
+              <div className="absolute top-1/2 left-0 w-full h-[34%] -translate-y-1/2 bg-white rounded-md" />
+              <div className="absolute left-1/2 top-0 h-full w-[34%] -translate-x-1/2 bg-white rounded-md" />
+            </div>
+            {/* Soft glow blob behind the large cross */}
+            <div className="absolute -top-10 -right-10 w-64 h-64 rounded-full bg-[#0041a3]/70 blur-3xl pointer-events-none" />
+            {/* Content */}
             <div className="relative p-6 md:p-8 flex flex-col h-full z-10">
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-3">

@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import {
-  ArrowLeft,
   Calendar as CalendarIcon,
   Settings2,
   Sliders,
   CalendarX,
   CheckCircle2,
-  ToggleLeft,
-  ToggleRight,
   Plus,
   Trash2,
   AlertTriangle,
   Save,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
 import {
@@ -21,7 +18,7 @@ import {
   WeeklyAvailabilityCalendar,
   useTherapistScheduleConfig,
 } from '@/features/therapist';
-import { ROUTES } from '@/config/routes';
+
 import { useUIStore } from '@/stores/uiStore';
 import type { UIState } from '@/stores/uiStore';
 import { CustomSelect } from '@/components/ui/CustomSelect';
@@ -38,13 +35,15 @@ export const ScheduleManagementPage: React.FC = () => {
   const therapistId = user?.id || 'therapist-doc-1';
   const addToast = useUIStore((state: UIState) => state.addToast);
 
+  const [searchParams] = useSearchParams();
+  const initialView = (searchParams.get('view') as 'day' | 'week' | 'month') ?? 'week';
+
   const [activeTab, setActiveTab] = useState<'calendar' | 'rules' | 'availability' | 'exceptions'>(
     'calendar',
   );
   const { data: config, isLoading } = useTherapistScheduleConfig(therapistId);
 
   // Intake & Capacity Settings
-  const [isAcceptingPatients, setIsAcceptingPatients] = useState(true);
   const [maxPatientsPerDay, setMaxPatientsPerDay] = useState(6);
   const [sessionDuration, setSessionDuration] = useState(50);
   const [bufferDuration, setBufferDuration] = useState(10);
@@ -68,18 +67,6 @@ export const ScheduleManagementPage: React.FC = () => {
 
   const [newDate, setNewDate] = useState('');
   const [newReason, setNewReason] = useState('');
-
-  const handleToggleAccepting = () => {
-    const nextState = !isAcceptingPatients;
-    setIsAcceptingPatients(nextState);
-    addToast({
-      type: nextState ? 'success' : 'warning',
-      title: nextState ? 'Accepting New Patients' : 'New Intake Paused',
-      message: nextState
-        ? 'Your profile is now accepting new online bookings.'
-        : 'New patient bookings are temporarily paused.',
-    });
-  };
 
   const handleAddOverride = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,27 +110,15 @@ export const ScheduleManagementPage: React.FC = () => {
 
   return (
     <div className="space-y-4 text-left w-full">
-      {/* Navigation Header & Tab Switcher */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-[#c3c6d6]/30">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#c3c6d6]/40">
         <div>
-          <div className="flex items-center gap-3">
-            <Link
-              to={ROUTES.THERAPIST.DASHBOARD}
-              className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#505f76] hover:text-[#191c1e] transition"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Agenda</span>
-            </Link>
-            <span className="text-slate-300">|</span>
-            <h1 className="text-lg md:text-xl font-heading font-bold text-[#191c1e]">
-              Schedule & Availability
-            </h1>
-          </div>
-          {activeTab !== 'calendar' && (
-            <p className="mt-0.5 text-xs text-[#505f76]">
-              Manage weekly agenda, define shift rules, intake capacity, and vacation blockouts.
-            </p>
-          )}
+          <h1 className="text-2xl md:text-3xl font-heading font-bold text-[#191c1e]">
+            Schedule & Availability
+          </h1>
+          <p className="text-xs md:text-sm text-[#434654] mt-1">
+            Manage weekly agenda, define shift rules, intake capacity, and vacation blockouts.
+          </p>
         </div>
 
         {/* View Selector Tabs */}
@@ -203,7 +178,7 @@ export const ScheduleManagementPage: React.FC = () => {
       </div>
 
       {/* Tab 1: Weekly Calendar Grid */}
-      {activeTab === 'calendar' && <WeeklyAvailabilityCalendar />}
+      {activeTab === 'calendar' && <WeeklyAvailabilityCalendar initialView={initialView} />}
 
       {/* Tab 2: Working Shift Rules */}
       {activeTab === 'rules' && (
@@ -216,67 +191,9 @@ export const ScheduleManagementPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 3: Intake Status & Capacity Settings */}
+      {/* Tab 3: Capacity Settings */}
       {activeTab === 'availability' && (
         <div className="space-y-6 max-w-5xl">
-          {/* Intake Toggle */}
-          <div className="bg-white p-6 rounded-3xl border border-[#c3c6d6]/40 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl shrink-0 ${
-                  isAcceptingPatients
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-600 border border-amber-200'
-                }`}
-              >
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h3 className="text-base font-heading font-bold text-[#191c1e]">
-                    Accepting New Patients
-                  </h3>
-                  <span
-                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                      isAcceptingPatients
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {isAcceptingPatients ? 'Active' : 'Paused'}
-                  </span>
-                </div>
-                <p className="text-xs text-[#505f76] mt-1">
-                  {isAcceptingPatients
-                    ? 'Your profile is live on TherapySync. Patients can view open slots and book appointments.'
-                    : 'New intake is paused. Only existing clients can view and manage their recurring sessions.'}
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleToggleAccepting}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
-                isAcceptingPatients
-                  ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs'
-              }`}
-            >
-              {isAcceptingPatients ? (
-                <>
-                  <ToggleRight className="w-5 h-5 text-amber-600" />
-                  Pause New Intake
-                </>
-              ) : (
-                <>
-                  <ToggleLeft className="w-5 h-5 text-white" />
-                  Enable New Intake
-                </>
-              )}
-            </button>
-          </div>
-
           {/* Capacity Limits & Buffer Rules */}
           <div className="bg-white p-6 md:p-8 rounded-3xl border border-[#c3c6d6]/40 shadow-xs space-y-6">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, UserCheck, Clock, ArrowLeft } from 'lucide-react';
+import { Calendar, UserCheck, Clock, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
+import { useTherapistStatusStore } from '@/stores/therapistStatusStore';
 import {
   TherapistSelector,
   SlotGrid,
@@ -24,11 +25,14 @@ export const BookAppointmentPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state: AuthState) => state.user);
   const patientId = user?.id || 'patient-user-1';
+  const isSarahOnline = useTherapistStatusStore((state) => state.isOnline);
 
   const [step, setStep] = useState<BookingStep>(1);
   const [selectedTherapist, setSelectedTherapist] = useState<TherapistProfile | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
+
+  const isSelectedTherapistOnline = selectedTherapist?.id === 'therapist-1' ? isSarahOnline : true;
 
   const { data: therapists, isLoading: isTherapistsLoading } = useTherapists();
   const { data: slots, isLoading: isSlotsLoading } = useAvailableSlots(
@@ -194,10 +198,26 @@ export const BookAppointmentPage: React.FC = () => {
             <div className="bg-white border border-[#c3c6d6]/40 p-4 rounded-2xl flex items-center justify-between shadow-xs">
               <div>
                 <p className="text-xs text-[#434654]">Selected Practitioner</p>
-                <h4 className="text-base font-heading font-bold text-[#191c1e]">
-                  {selectedTherapist.name}
-                </h4>
-                <p className="text-xs text-[#003d9b] font-semibold">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-base font-heading font-bold text-[#191c1e]">
+                    {selectedTherapist.name}
+                  </h4>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                      isSelectedTherapistOnline
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isSelectedTherapistOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                      }`}
+                    />
+                    {isSelectedTherapistOnline ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+                <p className="text-xs text-[#003d9b] font-semibold mt-0.5">
                   {selectedTherapist.specialization}
                 </p>
               </div>
@@ -206,34 +226,56 @@ export const BookAppointmentPage: React.FC = () => {
               </Button>
             </div>
 
-            <div className="space-y-3">
-              <label
-                htmlFor="bookingDatePicker"
-                className="block text-xs font-semibold text-[#434654]"
-              >
-                Select Date
-              </label>
-              <input
-                id="bookingDatePicker"
-                type="date"
-                value={selectedDate}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-white text-[#191c1e] text-xs border border-[#c3c6d6]/50 rounded-lg px-4 py-2.5 outline-none focus:border-[#003d9b] focus:ring-2 focus:ring-[#003d9b]/20 transition"
-              />
-            </div>
+            {!isSelectedTherapistOnline ? (
+              <div className="p-6 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start gap-4 text-amber-900 shadow-2xs">
+                <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="text-sm font-heading font-bold text-amber-900">
+                    Therapist is Currently Offline
+                  </h4>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    {selectedTherapist.name} is currently offline and not accepting new slot
+                    bookings. Please select another therapist or check back when they switch online.
+                  </p>
+                  <div className="pt-2">
+                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+                      Choose Another Practitioner
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  <label
+                    htmlFor="bookingDatePicker"
+                    className="block text-xs font-semibold text-[#434654]"
+                  >
+                    Select Date
+                  </label>
+                  <input
+                    id="bookingDatePicker"
+                    type="date"
+                    value={selectedDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="bg-white text-[#191c1e] text-xs border border-[#c3c6d6]/50 rounded-lg px-4 py-2.5 outline-none focus:border-[#003d9b] focus:ring-2 focus:ring-[#003d9b]/20 transition"
+                  />
+                </div>
 
-            <div className="space-y-3">
-              <h3 className="text-sm font-heading font-bold text-[#191c1e]">
-                Available Slots for {selectedDate}
-              </h3>
-              <SlotGrid
-                slots={slots}
-                selectedSlotId={selectedSlot?.id || null}
-                onSelectSlot={handleSelectSlot}
-                isLoading={isSlotsLoading}
-              />
-            </div>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-heading font-bold text-[#191c1e]">
+                    Available Slots for {selectedDate}
+                  </h3>
+                  <SlotGrid
+                    slots={slots}
+                    selectedSlotId={selectedSlot?.id || null}
+                    onSelectSlot={handleSelectSlot}
+                    isLoading={isSlotsLoading}
+                  />
+                </div>
+              </>
+            )}
           </motion.div>
         )}
 

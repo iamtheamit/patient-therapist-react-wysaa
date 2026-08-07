@@ -3,6 +3,7 @@ import { Star, Award, Check } from 'lucide-react';
 import type { TherapistProfile } from '../types/appointments.types';
 import { Card, CardContent } from '@/components/ui/Card';
 import { cn } from '@/utils/cn';
+import { useTherapistStatusStore } from '@/stores/therapistStatusStore';
 
 interface TherapistSelectorProps {
   therapists?: TherapistProfile[];
@@ -17,6 +18,8 @@ export const TherapistSelector: React.FC<TherapistSelectorProps> = ({
   onSelectTherapist,
   isLoading,
 }) => {
+  const isSarahOnline = useTherapistStatusStore((state) => state.isOnline);
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -33,6 +36,8 @@ export const TherapistSelector: React.FC<TherapistSelectorProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
       {therapists?.map((therapist) => {
         const isSelected = selectedTherapistId === therapist.id;
+        // Check if therapist is online (Dr. Sarah Connor / therapist-1 tracks the main toggle)
+        const isOnline = therapist.id === 'therapist-1' ? isSarahOnline : true;
 
         return (
           <Card
@@ -43,19 +48,36 @@ export const TherapistSelector: React.FC<TherapistSelectorProps> = ({
               isSelected
                 ? 'border-[#005eb8] ring-2 ring-[#005eb8]/20 shadow-md'
                 : 'border-slate-200 hover:border-slate-300',
+              !isOnline && 'bg-slate-50/80 border-slate-300',
             )}
           >
             {isSelected && (
-              <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#005eb8] flex items-center justify-center text-white text-xs font-bold shadow-sm">
+              <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#005eb8] flex items-center justify-center text-white text-xs font-bold shadow-sm z-10">
                 <Check className="w-3.5 h-3.5" />
               </div>
             )}
 
             <CardContent className="p-5 space-y-3">
               <div>
-                <h4 className="text-base font-heading font-bold text-[#191c1e] pr-6">
-                  {therapist.name}
-                </h4>
+                <div className="flex items-center justify-between gap-2 pr-6">
+                  <h4 className="text-base font-heading font-bold text-[#191c1e]">
+                    {therapist.name}
+                  </h4>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 ${
+                      isOnline
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200/80'
+                        : 'bg-amber-100 text-amber-800 border border-amber-200/80'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                      }`}
+                    />
+                    {isOnline ? 'Online' : 'Offline'}
+                  </span>
+                </div>
                 <p className="text-xs font-semibold text-[#005eb8] mt-0.5">
                   {therapist.specialization}
                 </p>

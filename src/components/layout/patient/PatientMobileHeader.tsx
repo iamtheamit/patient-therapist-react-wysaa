@@ -34,18 +34,9 @@ export const PatientMobileHeader: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            aria-label="Notifications"
-            className="relative p-1.5 text-[#434654] hover:text-[#003d9b] transition-colors"
-          >
-            <span className="material-symbols-outlined text-xl">notifications</span>
-            <span className="absolute top-1 right-1 w-2 h-2 bg-[#ba1a1a] rounded-full"></span>
-          </button>
-
-          <button
-            type="button"
             aria-label="User menu"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-8 h-8 rounded-full bg-[#003d9b] text-white text-xs font-bold flex items-center justify-center border border-blue-200"
+            className="w-8 h-8 rounded-full bg-[#0052cc] text-white text-xs font-bold flex items-center justify-center border border-[#c3c6d6] shadow-sm"
           >
             {userInitial}
           </button>

@@ -185,9 +185,11 @@ const MONTH_NAMES = [
 const START_HOUR = 7;
 const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
 
-export const WeeklyAvailabilityCalendar: React.FC = () => {
+export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week' | 'month' }> = ({
+  initialView,
+}) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>(initialView ?? 'week');
   const [blocks, setBlocks] = useState<AvailabilityBlock[]>(generateInitialBlocks);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedBlock, setSelectedBlock] = useState<AvailabilityBlock | null>(null);

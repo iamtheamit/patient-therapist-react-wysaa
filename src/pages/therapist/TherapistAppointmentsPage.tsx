@@ -9,6 +9,7 @@ import {
   AlertCircle,
   XCircle,
   UserCheck,
+  Filter,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
@@ -16,8 +17,46 @@ import { useTherapistAgenda } from '@/features/therapist/hooks/useTherapistAgend
 import { ClinicalNotesModal } from '@/features/therapist/components/ClinicalNotesModal';
 import { useUIStore } from '@/stores/uiStore';
 import type { UIState } from '@/stores/uiStore';
+import DataTable from '@/components/common/DataTable';
+import type { ColumnDef } from '@/components/common/DataTable';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type StatusFilter = 'ALL' | 'scheduled' | 'completed' | 'no_show' | 'cancelled';
+
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+
+/** Returns today's date as YYYY-MM-DD */
+const todayISO = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * Normalises the freeform dateStr stored on an appointment
+ * (e.g. "Today", "Tomorrow", "Yesterday", "Aug 10, 2026")
+ * into a YYYY-MM-DD string so we can compare against the picker value.
+ */
+const normaliseDateStr = (dateStr: string): string => {
+  const today = new Date();
+  const norm = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const lower = dateStr.toLowerCase();
+  if (lower === 'today') return norm(today);
+  if (lower === 'tomorrow') {
+    const t = new Date(today);
+    t.setDate(t.getDate() + 1);
+    return norm(t);
+  }
+  if (lower === 'yesterday') {
+    const y = new Date(today);
+    y.setDate(y.getDate() - 1);
+    return norm(y);
+  }
+  // Attempt to parse freeform strings like "Aug 10, 2026"
+  const parsed = new Date(dateStr);
+  return isNaN(parsed.getTime()) ? dateStr : norm(parsed);
+};
 
 type AppointmentStatusType =
   'scheduled' | 'completed' | 'no_show' | 'cancelled' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
@@ -37,6 +76,136 @@ interface ExtendedAppointment {
   riskLevel: 'Low' | 'Moderate' | 'High';
 }
 
+// ─── Inline Status Dropdown ───────────────────────────────────────────────────
+// Renders a coloured pill-style <select> that changes status immediately.
+
+interface StatusSelectProps {
+  status: AppointmentStatusType;
+  onChange: (newStatus: AppointmentStatusType) => void;
+}
+
+const statusMeta: Record<
+  string,
+  {
+    label: string;
+    bg: string;
+    text: string;
+    border: string;
+    Icon: React.FC<{ className?: string }>;
+  }
+> = {
+  scheduled: {
+    label: 'Scheduled',
+    bg: 'bg-blue-50',
+    text: 'text-[#0052cc]',
+    border: 'border-blue-200',
+    Icon: ({ className }) => <Clock className={className} />,
+  },
+  CONFIRMED: {
+    label: 'Scheduled',
+    bg: 'bg-blue-50',
+    text: 'text-[#0052cc]',
+    border: 'border-blue-200',
+    Icon: ({ className }) => <Clock className={className} />,
+  },
+  completed: {
+    label: 'Completed',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+    border: 'border-emerald-200',
+    Icon: ({ className }) => <UserCheck className={className} />,
+  },
+  COMPLETED: {
+    label: 'Completed',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+    border: 'border-emerald-200',
+    Icon: ({ className }) => <UserCheck className={className} />,
+  },
+  no_show: {
+    label: 'No Show',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    border: 'border-amber-200',
+    Icon: ({ className }) => <AlertCircle className={className} />,
+  },
+  cancelled: {
+    label: 'Cancelled',
+    bg: 'bg-slate-100',
+    text: 'text-slate-600',
+    border: 'border-slate-200',
+    Icon: ({ className }) => <XCircle className={className} />,
+  },
+  CANCELLED: {
+    label: 'Cancelled',
+    bg: 'bg-slate-100',
+    text: 'text-slate-600',
+    border: 'border-slate-200',
+    Icon: ({ className }) => <XCircle className={className} />,
+  },
+};
+
+const StatusSelect: React.FC<StatusSelectProps> = ({ status, onChange }) => {
+  const meta = statusMeta[status] ?? statusMeta['scheduled'];
+  const { Icon } = meta;
+
+  return (
+    <div
+      className={`relative inline-flex items-center rounded-full border ${meta.border} ${meta.bg}`}
+    >
+      <span className={`pointer-events-none absolute left-2.5 flex items-center ${meta.text}`}>
+        <Icon className="w-3 h-3" />
+      </span>
+      <select
+        value={status}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => {
+          e.stopPropagation();
+          onChange(e.target.value as AppointmentStatusType);
+        }}
+        className={`appearance-none pl-6 pr-5 py-0.5 text-[10px] font-bold rounded-full bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0052cc]/30 cursor-pointer ${meta.text}`}
+        style={{ WebkitAppearance: 'none' }}
+      >
+        <option value="scheduled">Scheduled</option>
+        <option value="completed">Completed</option>
+        <option value="no_show">No Show</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      {/* Custom chevron */}
+      <span className={`pointer-events-none absolute right-1.5 ${meta.text}`}>
+        <svg className="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor">
+          <path
+            d="M2 3.5L5 7l3-3.5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </div>
+  );
+};
+
+// ─── Risk Badge ───────────────────────────────────────────────────────────────
+
+const RiskBadge: React.FC<{ level: 'Low' | 'Moderate' | 'High' }> = ({ level }) => {
+  const cls =
+    level === 'High'
+      ? 'bg-rose-100 text-rose-700'
+      : level === 'Moderate'
+        ? 'bg-amber-100 text-amber-700'
+        : 'bg-slate-100 text-slate-700';
+  return (
+    <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full ${cls}`}>
+      {level} Risk
+    </span>
+  );
+};
+
+// ─── Page Component ───────────────────────────────────────────────────────────
+
 export const TherapistAppointmentsPage: React.FC = () => {
   const user = useAuthStore((state: AuthState) => state.user);
   const therapistId = user?.id || 'therapist-doc-1';
@@ -46,13 +215,14 @@ export const TherapistAppointmentsPage: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  /** ISO date selected in the calendar picker; empty string = show all dates */
+  const [selectedDate, setSelectedDate] = useState<string>(todayISO());
   const [selectedAppointmentForNote, setSelectedAppointmentForNote] = useState<{
     id: string;
     patientName: string;
     existingNotes?: string;
   } | null>(null);
 
-  // Expanded mock data merged with live agenda
   const [appointmentsList, setAppointmentsList] = useState<ExtendedAppointment[]>([
     {
       id: 'app-therapist-1',
@@ -142,75 +312,140 @@ export const TherapistAppointmentsPage: React.FC = () => {
     },
   ]);
 
-  const filteredAppointments = useMemo(() => {
-    return appointmentsList.filter((app) => {
-      const matchesSearch =
-        app.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.patientEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.sessionType.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [appointmentsList, searchQuery, statusFilter]);
-
   const handleStatusChange = (id: string, newStatus: ExtendedAppointment['status']) => {
     setAppointmentsList((prev) =>
       prev.map((app) => (app.id === id ? { ...app, status: newStatus } : app)),
     );
     addToast({
       type: 'success',
-      title: 'Appointment Status Updated',
-      message: `Session status marked as ${newStatus.replace('_', ' ')}.`,
+      title: 'Status Updated',
+      message: `Session marked as ${newStatus.replace('_', ' ')}.`,
     });
   };
 
-  const getStatusBadge = (status: ExtendedAppointment['status']) => {
-    switch (status) {
-      case 'scheduled':
-      case 'CONFIRMED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-[#0052cc] border border-blue-200">
-            <Clock className="w-3.5 h-3.5" />
-            scheduled
-          </span>
-        );
-      case 'completed':
-      case 'COMPLETED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <UserCheck className="w-3.5 h-3.5" />
-            completed
-          </span>
-        );
-      case 'no_show':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            <AlertCircle className="w-3.5 h-3.5" />
-            no_show
-          </span>
-        );
-      case 'cancelled':
-      case 'CANCELLED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
-            <XCircle className="w-3.5 h-3.5" />
-            cancelled
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
-            {status}
-          </span>
-        );
-    }
-  };
+  const filteredAppointments = useMemo(() => {
+    return appointmentsList.filter((app) => {
+      const matchesSearch =
+        app.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.patientEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.sessionType.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
+      const matchesDate = !selectedDate || normaliseDateStr(app.dateStr) === selectedDate;
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [appointmentsList, searchQuery, statusFilter, selectedDate]);
+
+  // ── Column Definitions ────────────────────────────────────────────────────────
+  const columns: ColumnDef<ExtendedAppointment>[] = [
+    {
+      key: 'patientName',
+      header: 'Patient',
+      sortable: true,
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <img
+            src={
+              row.patientAvatar ||
+              'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
+            }
+            alt={row.patientName}
+            className="w-8 h-8 rounded-full object-cover border border-[#c3c6d6]/60 shrink-0"
+          />
+          <div>
+            <p className="text-xs font-bold text-[#191c1e] leading-tight">{row.patientName}</p>
+            <p className="text-[10px] text-[#505f76]">{row.patientEmail}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'sessionType',
+      header: 'Session Type',
+      sortable: true,
+      cell: (row) => (
+        <span className="text-xs font-semibold text-[#0052cc]">{row.sessionType}</span>
+      ),
+    },
+    {
+      key: 'dateStr',
+      header: 'Date',
+      sortable: true,
+      cell: (row) => (
+        <div className="flex items-center gap-1.5 text-xs text-[#434654]">
+          <Calendar className="w-3.5 h-3.5 text-[#0052cc] shrink-0" />
+          {row.dateStr}
+        </div>
+      ),
+    },
+    {
+      key: 'timeStr',
+      header: 'Time',
+      cell: (row) => (
+        <div className="flex items-center gap-1.5 text-xs text-[#434654]">
+          <Clock className="w-3.5 h-3.5 text-[#0052cc] shrink-0" />
+          {row.timeStr}
+          <span className="text-[10px] text-[#505f76]">({row.duration})</span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      // Status is now an EDITABLE coloured pill dropdown in the Status column
+      cell: (row) => (
+        <StatusSelect
+          status={row.status}
+          onChange={(newStatus) => handleStatusChange(row.id, newStatus)}
+        />
+      ),
+    },
+    {
+      key: 'riskLevel',
+      header: 'Risk',
+      sortable: true,
+      cell: (row) => <RiskBadge level={row.riskLevel} />,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          {row.meetingLink && (
+            <a
+              href={row.meetingLink}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="px-3 py-1.5 bg-[#0052cc] hover:bg-[#0041a3] text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 shadow-2xs"
+            >
+              <Video className="w-3 h-3" />
+              Launch
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedAppointmentForNote({
+                id: row.id,
+                patientName: row.patientName,
+                existingNotes: row.notes,
+              });
+            }}
+            className="px-3 py-1.5 bg-[#f8f9fb] hover:bg-slate-100 text-[#191c1e] border border-[#c3c6d6]/60 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+          >
+            <FileText className="w-3 h-3 text-[#0052cc]" />
+            Notes
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6 w-full text-left">
-      {/* Header Title */}
+      {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#c3c6d6]/40">
         <div>
           <h1 className="text-2xl md:text-3xl font-heading font-bold text-[#191c1e]">
@@ -221,218 +456,160 @@ export const TherapistAppointmentsPage: React.FC = () => {
             notes.
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              addToast({
-                type: 'info',
-                title: 'Export Schedule',
-                message: 'Downloading appointments CSV report...',
-              });
-            }}
-            className="px-4 py-2 bg-white text-[#0052cc] border border-[#0052cc]/30 rounded-xl text-xs font-semibold hover:bg-blue-50 transition shadow-2xs flex items-center gap-2 cursor-pointer"
-          >
-            <Calendar className="w-4 h-4 text-[#0052cc]" />
-            Export Roster
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() =>
+            addToast({
+              type: 'info',
+              title: 'Export Schedule',
+              message: 'Downloading appointments CSV report...',
+            })
+          }
+          className="px-4 py-2 bg-white text-[#0052cc] border border-[#0052cc]/30 rounded-xl text-xs font-semibold hover:bg-blue-50 transition shadow-2xs flex items-center gap-2 cursor-pointer self-start md:self-auto"
+        >
+          <Calendar className="w-4 h-4 text-[#0052cc]" />
+          Export Roster
+        </button>
       </div>
 
-      {/* KPI Stats Overview */}
+      {/* ── KPI Stats ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0052cc] flex items-center justify-center font-bold">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs text-[#505f76] font-medium">Today's Sessions</p>
-            <p className="text-xl font-heading font-bold text-[#191c1e]">2</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs text-[#505f76] font-medium">Pending Confirm</p>
-            <p className="text-xl font-heading font-bold text-[#191c1e]">1</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs text-[#505f76] font-medium">Completed This Week</p>
-            <p className="text-xl font-heading font-bold text-[#191c1e]">14</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-            <UserCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs text-[#505f76] font-medium">Active Roster</p>
-            <p className="text-xl font-heading font-bold text-[#191c1e]">18 Patients</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search patient name, email or therapy type..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#f8f9fb] border border-[#c3c6d6]/50 rounded-xl text-xs text-[#191c1e] placeholder:text-[#505f76] focus:outline-none focus:ring-2 focus:ring-[#0052cc]/30"
-          />
-        </div>
-
-        {/* Status Filters */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-semibold">
-          {(['ALL', 'scheduled', 'completed', 'no_show', 'cancelled'] as StatusFilter[]).map(
-            (status) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                  statusFilter === status
-                    ? 'bg-[#0052cc] text-white shadow-xs font-bold'
-                    : 'bg-[#f8f9fb] text-[#434654] hover:bg-slate-100'
-                }`}
-              >
-                {status === 'ALL' ? 'All Sessions' : status.replace('_', ' ')}
-              </button>
-            ),
-          )}
-        </div>
-      </div>
-
-      {/* Appointments List */}
-      <div className="space-y-4">
-        {filteredAppointments.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-[#c3c6d6]/40">
-            <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-[#191c1e]">No Appointments Found</h3>
-            <p className="text-xs text-[#505f76] mt-1 max-w-md mx-auto">
-              There are no appointments matching your search query or selected filter criteria.
-            </p>
-          </div>
-        ) : (
-          filteredAppointments.map((app) => (
+        {[
+          {
+            icon: Calendar,
+            label: "Today's Sessions",
+            value: '2',
+            bg: 'bg-blue-50',
+            iconCls: 'text-blue-600',
+          },
+          {
+            icon: Clock,
+            label: 'Pending Confirm',
+            value: '1',
+            bg: 'bg-amber-50',
+            iconCls: 'text-amber-600',
+          },
+          {
+            icon: CheckCircle2,
+            label: 'Completed This Week',
+            value: '14',
+            bg: 'bg-emerald-50',
+            iconCls: 'text-emerald-600',
+          },
+          {
+            icon: UserCheck,
+            label: 'Active Roster',
+            value: '18 Patients',
+            bg: 'bg-purple-50',
+            iconCls: 'text-purple-600',
+          },
+        ].map(({ icon: Icon, label, value, bg, iconCls }) => (
+          <div
+            key={label}
+            className="bg-white p-4 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-3"
+          >
             <div
-              key={app.id}
-              className="bg-white rounded-2xl p-5 border border-[#c3c6d6]/40 shadow-2xs hover:shadow-xs transition flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${bg} ${iconCls}`}
             >
-              {/* Left Info */}
-              <div className="flex items-start gap-4">
-                <img
-                  src={
-                    app.patientAvatar ||
-                    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
-                  }
-                  alt={app.patientName}
-                  className="w-12 h-12 rounded-full object-cover border border-[#c3c6d6]/60 shrink-0"
-                />
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-heading font-bold text-[#191c1e]">
-                      {app.patientName}
-                    </h3>
-                    {getStatusBadge(app.status)}
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        app.riskLevel === 'High'
-                          ? 'bg-rose-100 text-rose-700'
-                          : app.riskLevel === 'Moderate'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {app.riskLevel} Risk
-                    </span>
-                  </div>
-
-                  <p className="text-xs font-semibold text-[#0052cc] mt-0.5">{app.sessionType}</p>
-
-                  <div className="flex items-center gap-4 text-xs text-[#505f76] mt-2 flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-[#0052cc]" />
-                      {app.dateStr}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-[#0052cc]" />
-                      {app.timeStr} ({app.duration})
-                    </span>
-                  </div>
-
-                  {app.notes && (
-                    <div className="mt-2.5 p-2.5 bg-[#f8f9fb] rounded-xl border border-slate-100 text-xs text-[#434654] max-w-xl">
-                      <span className="font-semibold text-[#191c1e]">Clinical Note:</span>{' '}
-                      {app.notes}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Action Buttons & Status Selector */}
-              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 flex-wrap">
-                {app.meetingLink && (
-                  <a
-                    href={app.meetingLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-2 bg-[#0052cc] hover:bg-[#0041a3] text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
-                  >
-                    <Video className="w-4 h-4" />
-                    Launch Video
-                  </a>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedAppointmentForNote({
-                      id: app.id,
-                      patientName: app.patientName,
-                      existingNotes: app.notes,
-                    })
-                  }
-                  className="px-3.5 py-2 bg-[#f8f9fb] hover:bg-slate-200 text-[#191c1e] border border-[#c3c6d6]/60 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <FileText className="w-4 h-4 text-[#0052cc]" />
-                  Notes
-                </button>
-
-                {/* Therapist Status Update Dropdown */}
-                <select
-                  value={app.status}
-                  onChange={(e) =>
-                    handleStatusChange(app.id, e.target.value as AppointmentStatusType)
-                  }
-                  className="px-3 py-2 bg-white border border-[#c3c6d6]/70 text-[#191c1e] rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#0052cc]/30 cursor-pointer"
-                >
-                  <option value="scheduled">scheduled</option>
-                  <option value="completed">completed</option>
-                  <option value="no_show">no_show</option>
-                  <option value="cancelled">cancelled</option>
-                </select>
-              </div>
+              <Icon className="w-5 h-5" />
             </div>
-          ))
-        )}
+            <div>
+              <p className="text-xs text-[#505f76] font-medium">{label}</p>
+              <p className="text-xl font-heading font-bold text-[#191c1e]">{value}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Clinical Notes Modal */}
+      {/* ── Filter Bar ── */}
+      <div className="bg-white px-4 py-3.5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search patient name, email or therapy type..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#f8f9fb] border border-[#c3c6d6]/50 rounded-xl text-xs text-[#191c1e] placeholder:text-[#505f76] focus:outline-none focus:ring-2 focus:ring-[#0052cc]/30"
+            />
+          </div>
+
+          {/* ── Divider ── */}
+          <div className="hidden md:block w-px h-8 bg-[#c3c6d6]/40" />
+
+          {/* Calendar date picker */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Calendar className="w-4 h-4 text-[#0052cc] shrink-0" />
+            <div className="relative">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="pl-3 pr-3 py-2 bg-[#f8f9fb] border border-[#c3c6d6]/50 rounded-xl text-xs font-semibold text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#0052cc]/30 cursor-pointer"
+              />
+            </div>
+            {selectedDate && (
+              <button
+                type="button"
+                onClick={() => setSelectedDate('')}
+                className="text-[10px] font-bold text-[#0052cc] hover:underline whitespace-nowrap cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* ── Divider ── */}
+          <div className="hidden md:block w-px h-8 bg-[#c3c6d6]/40" />
+
+          {/* Status select dropdown */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Filter className="w-4 h-4 text-[#505f76] shrink-0" />
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                className="appearance-none pl-3 pr-8 py-2 bg-[#f8f9fb] border border-[#c3c6d6]/50 rounded-xl text-xs font-semibold text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#0052cc]/30 cursor-pointer"
+              >
+                <option value="ALL">All Status</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="completed">Completed</option>
+                <option value="no_show">No Show</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              {/* Custom chevron */}
+              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#505f76]">
+                <svg
+                  className="w-3 h-3"
+                  viewBox="0 0 10 10"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M2 3.5L5 7l3-3.5" />
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Appointments Table ── */}
+      <DataTable<ExtendedAppointment>
+        columns={columns}
+        data={filteredAppointments}
+        getRowKey={(row) => row.id}
+        emptyTitle="No Appointments Found"
+        emptyMessage="There are no appointments matching your current filters."
+        defaultPageSize={10}
+        pageSizeOptions={[5, 10, 20, 50]}
+      />
+
+      {/* ── Clinical Notes Modal ── */}
       {selectedAppointmentForNote && (
         <ClinicalNotesModal
           isOpen={!!selectedAppointmentForNote}

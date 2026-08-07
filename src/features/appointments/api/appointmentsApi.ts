@@ -8,6 +8,8 @@ import type { SlotHoldSession } from '../types/hold.types';
 import type { RecurringBookingPayload, RecurringBookingResponse } from '../types/recurring.types';
 import type { PatientAppointment } from '@/features/patient/types/patient.types';
 
+import { useTherapistStatusStore } from '@/stores/therapistStatusStore';
+
 export const appointmentsApi = {
   getTherapists: async (): Promise<TherapistProfile[]> => {
     try {
@@ -48,6 +50,12 @@ export const appointmentsApi = {
   },
 
   getAvailableSlots: async (therapistId: string, date: string): Promise<AvailableSlot[]> => {
+    // Check if therapist is offline (Dr. Sarah Connor / therapist-1)
+    const isOnline = useTherapistStatusStore.getState().isOnline;
+    if (therapistId === 'therapist-1' && !isOnline) {
+      return [];
+    }
+
     try {
       const response = await axiosClient.get<unknown, AvailableSlot[]>(
         `/therapists/${therapistId}/slots`,

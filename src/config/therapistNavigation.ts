@@ -29,12 +29,6 @@ export const THERAPIST_NAV_ITEMS: TherapistNavItem[] = [
     icon: 'calendar_month',
     href: ROUTES.THERAPIST.SCHEDULE,
   },
-  {
-    id: 'patients',
-    label: 'Patients',
-    icon: 'group',
-    href: ROUTES.THERAPIST.PATIENTS,
-  },
   // {
   //   id: 'messages',
   //   label: 'Messages',

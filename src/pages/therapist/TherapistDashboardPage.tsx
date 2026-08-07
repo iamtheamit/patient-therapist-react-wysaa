@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
 import { ROUTES } from '@/config/routes';
@@ -29,85 +29,6 @@ export const TherapistDashboardPage: React.FC = () => {
           <span className="material-symbols-outlined text-lg">event_available</span>
           Update Availability
         </button>
-      </div>
-
-      {/* 4 Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Today's Appointments */}
-        <div className="bg-white p-5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center justify-between group cursor-pointer hover:border-[#0052cc] transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-[#e6f0ff] text-[#0052cc] flex items-center justify-center">
-              <span className="material-symbols-outlined text-xl">calendar_today</span>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#434654] mb-0.5">Today's Appointments</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-[#191c1e]">5</span>
-                <span className="text-[11px] text-[#434654]">2 upcoming</span>
-              </div>
-            </div>
-          </div>
-          <span className="material-symbols-outlined text-[#c3c6d6] group-hover:text-[#0052cc] transition-colors">
-            chevron_right
-          </span>
-        </div>
-
-        {/* Card 2: Completed Today */}
-        <div className="bg-white p-5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center justify-between group cursor-pointer hover:border-[#14b8a6] transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-[#ccfbf1] text-[#0d9488] flex items-center justify-center">
-              <span className="material-symbols-outlined text-xl">check_circle</span>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#434654] mb-0.5">Completed Today</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-[#191c1e]">3</span>
-                <span className="text-[11px] text-[#434654]">This will update of day</span>
-              </div>
-            </div>
-          </div>
-          <span className="material-symbols-outlined text-[#c3c6d6] group-hover:text-[#0d9488] transition-colors">
-            chevron_right
-          </span>
-        </div>
-
-        {/* Card 3: Total Patients */}
-        <div className="bg-white p-5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center justify-between group cursor-pointer hover:border-purple-600 transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
-              <span className="material-symbols-outlined text-xl">group</span>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#434654] mb-0.5">Total Patients</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-[#191c1e]">48</span>
-                <span className="text-[11px] text-[#434654]">Active patients</span>
-              </div>
-            </div>
-          </div>
-          <span className="material-symbols-outlined text-[#c3c6d6] group-hover:text-purple-600 transition-colors">
-            chevron_right
-          </span>
-        </div>
-
-        {/* Card 4: This Week's Sessions */}
-        <div className="bg-white p-5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center justify-between group cursor-pointer hover:border-amber-500 transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-[#fef3c7] text-[#d97706] flex items-center justify-center">
-              <span className="material-symbols-outlined text-xl">star</span>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#434654] mb-0.5">This Week's Sessions</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-[#191c1e]">18</span>
-                <span className="text-[11px] text-[#434654]">Aug 4 – Aug 10</span>
-              </div>
-            </div>
-          </div>
-          <span className="material-symbols-outlined text-[#c3c6d6] group-hover:text-amber-500 transition-colors">
-            chevron_right
-          </span>
-        </div>
       </div>
 
       {/* Main 2-Column Dashboard Grid */}
@@ -325,13 +246,13 @@ export const TherapistDashboardPage: React.FC = () => {
           <section className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs p-6 flex flex-col h-[520px]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-heading font-bold text-[#191c1e]">Today's Schedule</h3>
-              <a
-                href="#schedule"
+              <Link
+                to={`${ROUTES.THERAPIST.SCHEDULE}?view=day`}
                 className="text-[#0052cc] text-xs font-bold flex items-center gap-1 hover:underline"
               >
                 View full calendar{' '}
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </a>
+              </Link>
             </div>
 
             <div className="flex items-center gap-2 text-xs font-semibold text-[#191c1e] pb-3 border-b border-[#c3c6d6]/30 mb-4">
