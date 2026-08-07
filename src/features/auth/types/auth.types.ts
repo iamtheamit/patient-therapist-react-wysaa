@@ -12,7 +12,16 @@ export interface RegisterCredentials {
   role: UserRole;
 }
 
+export interface BackendAuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+  user: User;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
+  refreshToken?: string;
 }

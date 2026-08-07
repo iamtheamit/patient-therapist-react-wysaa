@@ -1,32 +1,22 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
-import { useUIStore } from '@/stores/uiStore';
-import type { UIState } from '@/stores/uiStore';
-import { ROUTES } from '@/config/routes';
 import { Logo } from '@/components/common/Logo';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+
+import { useLogout } from '@/features/auth/hooks/useLogout';
 
 export const PatientMobileHeader: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const user = useAuthStore((state: AuthState) => state.user);
-  const logout = useAuthStore((state: AuthState) => state.logout);
-  const addToast = useUIStore((state: UIState) => state.addToast);
-  const navigate = useNavigate();
+  const { mutate: logoutMutate } = useLogout();
 
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'A';
 
   const handleSignOut = () => {
     setShowSignOutModal(false);
-    logout();
-    addToast({
-      type: 'info',
-      title: 'Signed Out',
-      message: 'Logged out successfully.',
-    });
-    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    logoutMutate();
   };
 
   return (

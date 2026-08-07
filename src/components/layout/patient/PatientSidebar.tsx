@@ -1,31 +1,20 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { PATIENT_NAV_ITEMS } from '@/config/patientNavigation';
 import { Logo } from '@/components/common/Logo';
 import { cn } from '@/utils/cn';
-import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
-import { useUIStore } from '@/stores/uiStore';
-import type { UIState } from '@/stores/uiStore';
-import { ROUTES } from '@/config/routes';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+
+import { useLogout } from '@/features/auth/hooks/useLogout';
 
 export const PatientSidebar: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const logout = useAuthStore((state: AuthState) => state.logout);
-  const addToast = useUIStore((state: UIState) => state.addToast);
+  const { mutate: logoutMutate } = useLogout();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   const handleSignOut = () => {
-    logout();
     setShowSignOutModal(false);
-    addToast({
-      type: 'info',
-      title: 'Signed Out',
-      message: 'You have been logged out securely.',
-    });
-    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    logoutMutate();
   };
 
   return (

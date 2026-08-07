@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { User as UserIcon, LogOut, Menu, X, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
-import { useUIStore } from '@/stores/uiStore';
-import type { UIState } from '@/stores/uiStore';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/utils/cn';
+
+import { useLogout } from '@/features/auth/hooks/useLogout';
 
 interface NavLinkItem {
   label: string;
@@ -17,11 +17,9 @@ interface NavLinkItem {
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   const user = useAuthStore((state: AuthState) => state.user);
-  const logout = useAuthStore((state: AuthState) => state.logout);
-  const addToast = useUIStore((state: UIState) => state.addToast);
+  const { mutate: logoutMutate } = useLogout();
 
   const isTherapist = user?.role === 'THERAPIST';
 
@@ -38,13 +36,7 @@ export const Navbar: React.FC = () => {
   const navLinks = isTherapist ? therapistLinks : patientLinks;
 
   const handleSignOut = () => {
-    logout();
-    addToast({
-      type: 'info',
-      title: 'Signed Out',
-      message: 'You have been logged out securely.',
-    });
-    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    logoutMutate();
   };
 
   return (
