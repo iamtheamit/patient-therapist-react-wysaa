@@ -30,37 +30,42 @@ export const PatientSidebar: React.FC = () => {
 
   return (
     <>
-      <aside className="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-[#f8f9fb] shadow-md border-r border-[#c3c6d6]/50 z-40">
+      <aside className="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-white shadow-md border-r border-[#c3c6d6]/50 z-40">
         {/* Brand Header matching Login Form */}
         <div className="p-6 border-b border-[#c3c6d6]/50">
           <Logo to="/patient/dashboard" subtitle="Patient Portal" />
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {PATIENT_NAV_ITEMS.map((item) => {
-            const isActive =
-              location.pathname === item.href ||
-              (item.href !== '#' &&
-                location.pathname.startsWith(item.href) &&
-                item.href !== '/patient/dashboard');
+            const isHashLink = item.href.includes('#');
+            const itemHash = isHashLink ? item.href.substring(item.href.indexOf('#')) : '';
+            const itemPath = isHashLink
+              ? item.href.substring(0, item.href.indexOf('#'))
+              : item.href;
+
+            const isActive = isHashLink
+              ? location.pathname === itemPath && location.hash === itemHash
+              : location.pathname === item.href &&
+                (!location.hash || location.hash === '#overview');
 
             return (
               <React.Fragment key={item.id}>
                 <Link
                   to={item.href}
                   className={cn(
-                    'flex items-center justify-between px-4 py-3 rounded-lg text-sm font-semibold transition-all group',
+                    'flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all group',
                     isActive
-                      ? 'bg-[#0052cc] text-white shadow-xs'
-                      : 'text-[#51606f] hover:bg-[#d5e4f6]/50 hover:text-[#576675]',
+                      ? 'bg-[#e6f0ff] text-[#0052cc] shadow-2xs'
+                      : 'text-[#434654] hover:bg-[#f8f9fb] hover:text-[#191c1e]',
                   )}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className={cn(
                         'material-symbols-outlined transition-all text-xl',
-                        isActive ? 'fill text-white' : 'group-hover:fill text-[#576675]',
+                        isActive ? 'fill text-[#0052cc]' : 'group-hover:fill text-[#434654]',
                       )}
                     >
                       {item.icon}
@@ -73,8 +78,8 @@ export const PatientSidebar: React.FC = () => {
                       className={cn(
                         'text-xs font-semibold px-2 py-0.5 rounded-full',
                         item.badgeVariant === 'error'
-                          ? 'bg-[#ba1a1a] text-white'
-                          : 'bg-[#d5e4f6] text-[#001848]',
+                          ? 'bg-[#ef4444] text-white'
+                          : 'bg-[#e6f0ff] text-[#0052cc]',
                       )}
                     >
                       {item.badgeCount}
@@ -82,7 +87,7 @@ export const PatientSidebar: React.FC = () => {
                   )}
                 </Link>
 
-                {item.dividerAfter && <div className="my-4 border-t border-[#c3c6d6]/30"></div>}
+                {item.dividerAfter && <div className="my-3 border-t border-[#c3c6d6]/30"></div>}
               </React.Fragment>
             );
           })}

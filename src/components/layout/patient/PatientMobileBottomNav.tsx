@@ -1,53 +1,51 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ROUTES } from '@/config/routes';
+import { PATIENT_NAV_ITEMS } from '@/config/patientNavigation';
 import { cn } from '@/utils/cn';
 
 export const PatientMobileBottomNav: React.FC = () => {
   const location = useLocation();
 
-  const mobileNavItems = [
-    {
-      id: 'home',
-      label: 'Home',
-      href: ROUTES.PATIENT.DASHBOARD,
-      icon: 'home',
-    },
-    {
-      id: 'book',
-      label: 'Book',
-      href: ROUTES.PATIENT.BOOK,
-      icon: 'calendar_month',
-    },
-    {
-      id: 'therapists',
-      label: 'Therapists',
-      href: ROUTES.PATIENT.BOOK,
-      icon: 'group',
-    },
-  ];
+  const mobileNavItems = PATIENT_NAV_ITEMS.filter((item) =>
+    ['dashboard', 'therapists', 'appointments', 'messages', 'profile'].includes(item.id),
+  );
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-3 py-2 bg-white shadow-[0px_-4px_20px_rgba(0,0,0,0.05)] border-t border-slate-200 rounded-t-2xl">
-      {mobileNavItems.map((item) => {
-        const isActive = location.pathname === item.href;
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#c3c6d6]/40 z-50 px-2 py-1 shadow-lg">
+      <div className="flex justify-around items-center">
+        {mobileNavItems.map((item) => {
+          const isHashLink = item.href.includes('#');
+          const itemHash = isHashLink ? item.href.substring(item.href.indexOf('#')) : '';
+          const itemPath = isHashLink ? item.href.substring(0, item.href.indexOf('#')) : item.href;
 
-        return (
-          <Link
-            key={item.id}
-            to={item.href}
-            className={cn(
-              'flex flex-col items-center justify-center px-5 py-1.5 rounded-full transition-all duration-150 active:scale-95',
-              isActive ? 'bg-[#d6e3ff] text-[#00478d]' : 'text-[#505f76] hover:text-[#191c1e]',
-            )}
-          >
-            <span className={cn('material-symbols-outlined text-xl', isActive && 'fill')}>
-              {item.icon}
-            </span>
-            <span className="font-semibold text-[10px] mt-0.5">{item.label}</span>
-          </Link>
-        );
-      })}
+          const isActive = isHashLink
+            ? location.pathname === itemPath && location.hash === itemHash
+            : location.pathname === item.href && (!location.hash || location.hash === '#overview');
+
+          return (
+            <Link
+              key={item.id}
+              to={item.href}
+              className={cn(
+                'flex flex-col items-center py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors relative',
+                isActive ? 'text-[#0052cc]' : 'text-[#51606f] hover:text-[#191c1e]',
+              )}
+            >
+              <div className="relative">
+                <span className={cn('material-symbols-outlined text-xl', isActive && 'fill')}>
+                  {item.icon}
+                </span>
+                {item.badgeCount !== undefined && (
+                  <span className="absolute -top-1 -right-2 bg-[#ef4444] text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">
+                    {item.badgeCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] mt-0.5">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 };

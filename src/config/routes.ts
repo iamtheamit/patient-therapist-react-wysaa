@@ -7,6 +7,10 @@ export const ROUTES = {
   PATIENT: {
     DASHBOARD: '/patient/dashboard',
     BOOK: '/patient/book',
+    MESSAGES: '/patient/messages',
+    PAYMENTS: '/patient/payments',
+    PROFILE: '/patient/profile',
+    SETTINGS: '/patient/settings',
   },
   THERAPIST: {
     DASHBOARD: '/therapist/dashboard',
@@ -14,7 +18,7 @@ export const ROUTES = {
     SCHEDULE: '/therapist/schedule',
     AVAILABILITY: '/therapist/availability',
     PATIENTS: '/therapist/patients',
-    // MESSAGES: '/therapist/messages',
+    MESSAGES: '/therapist/messages',
     REPORTS: '/therapist/reports',
     SETTINGS: '/therapist/settings',
   },
@@ -27,11 +31,15 @@ export type RoutePath =
   | typeof ROUTES.AUTH.REGISTER
   | typeof ROUTES.PATIENT.DASHBOARD
   | typeof ROUTES.PATIENT.BOOK
+  | typeof ROUTES.PATIENT.MESSAGES
+  | typeof ROUTES.PATIENT.PAYMENTS
+  | typeof ROUTES.PATIENT.PROFILE
+  | typeof ROUTES.PATIENT.SETTINGS
   | typeof ROUTES.THERAPIST.DASHBOARD
   | typeof ROUTES.THERAPIST.APPOINTMENTS
   | typeof ROUTES.THERAPIST.SCHEDULE
   | typeof ROUTES.THERAPIST.AVAILABILITY
   | typeof ROUTES.THERAPIST.PATIENTS
-  // | typeof ROUTES.THERAPIST.MESSAGES
+  | typeof ROUTES.THERAPIST.MESSAGES
   | typeof ROUTES.THERAPIST.REPORTS
   | typeof ROUTES.THERAPIST.SETTINGS;

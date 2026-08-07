@@ -6,6 +6,9 @@
 export { PatientStatsGrid } from './components/PatientStatsGrid';
 export { UpcomingSessionHero } from './components/UpcomingSessionHero';
 export { AppointmentCard } from './components/AppointmentCard';
+export { PatientAppointmentsTab } from './components/PatientAppointmentsTab';
+export { QuickTherapistSearch } from './components/QuickTherapistSearch';
+export { AppointmentBookingDrawer } from './components/AppointmentBookingDrawer';
 export { usePatientAppointments, usePatientStats } from './hooks/usePatientAppointments';
 export { useCancelAppointment } from './hooks/useCancelAppointment';
 export { patientApi } from './api/patientApi';

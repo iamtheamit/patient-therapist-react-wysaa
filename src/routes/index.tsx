@@ -14,12 +14,17 @@ const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const PatientDashboardPage = lazy(() => import('@/pages/patient/PatientDashboardPage'));
 const BookAppointmentPage = lazy(() => import('@/pages/patient/BookAppointmentPage'));
+const PatientMessagesPage = lazy(() => import('@/pages/patient/PatientMessagesPage'));
+const PatientPaymentsPage = lazy(() => import('@/pages/patient/PatientPaymentsPage'));
+const PatientProfilePage = lazy(() => import('@/pages/patient/PatientProfilePage'));
+const PatientSettingsPage = lazy(() => import('@/pages/patient/PatientSettingsPage'));
+
 const TherapistDashboardPage = lazy(() => import('@/pages/therapist/TherapistDashboardPage'));
 const TherapistAppointmentsPage = lazy(() => import('@/pages/therapist/TherapistAppointmentsPage'));
 const ScheduleManagementPage = lazy(() => import('@/pages/therapist/ScheduleManagementPage'));
 const TherapistAvailabilityPage = lazy(() => import('@/pages/therapist/TherapistAvailabilityPage'));
 const TherapistPatientsPage = lazy(() => import('@/pages/therapist/TherapistPatientsPage'));
-// const TherapistMessagesPage = lazy(() => import('@/pages/therapist/TherapistMessagesPage'));
+const TherapistMessagesPage = lazy(() => import('@/pages/therapist/TherapistMessagesPage'));
 const TherapistReportsPage = lazy(() => import('@/pages/therapist/TherapistReportsPage'));
 const TherapistSettingsPage = lazy(() => import('@/pages/therapist/TherapistSettingsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
@@ -77,6 +82,38 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+      {
+        path: ROUTES.PATIENT.MESSAGES,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading clinical messages..." />}>
+            <PatientMessagesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.PATIENT.PAYMENTS,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading billing & payments..." />}>
+            <PatientPaymentsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.PATIENT.PROFILE,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading patient profile..." />}>
+            <PatientProfilePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.PATIENT.SETTINGS,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading account settings..." />}>
+            <PatientSettingsPage />
+          </Suspense>
+        ),
+      },
     ],
   },
   {
@@ -126,14 +163,14 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
-      // {
-      //   path: ROUTES.THERAPIST.MESSAGES,
-      //   element: (
-      //     <Suspense fallback={<PageSpinner label="Loading patient messages..." />}>
-      //       <TherapistMessagesPage />
-      //     </Suspense>
-      //   ),
-      // },
+      {
+        path: ROUTES.THERAPIST.MESSAGES,
+        element: (
+          <Suspense fallback={<PageSpinner label="Loading patient messages..." />}>
+            <TherapistMessagesPage />
+          </Suspense>
+        ),
+      },
       {
         path: ROUTES.THERAPIST.REPORTS,
         element: (

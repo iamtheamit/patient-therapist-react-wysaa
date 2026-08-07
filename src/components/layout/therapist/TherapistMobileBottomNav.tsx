@@ -7,7 +7,7 @@ export const TherapistMobileBottomNav: React.FC = () => {
   const location = useLocation();
 
   const mobileNavItems = THERAPIST_NAV_ITEMS.filter((item) =>
-    ['dashboard', 'appointments', 'schedule', 'patients', 'messages'].includes(item.id),
+    ['dashboard', 'appointments', 'schedule', 'reports', 'settings'].includes(item.id),
   );
 
   return (

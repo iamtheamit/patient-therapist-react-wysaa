@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  ChevronUp,
-  ChevronDown,
-  ChevronsUpDown,
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ─── Column Definition ────────────────────────────────────────────────────────
 
@@ -183,8 +176,12 @@ function DataTable<T>({
             ) : visibleRows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length}>
-                  <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                    <AlertCircle className="w-10 h-10 text-slate-200" />
+                  <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                    <img
+                      src="/assets/no-records-found.png"
+                      alt="No Records Found"
+                      className="max-w-[160px] h-auto object-contain select-none"
+                    />
                     <div>
                       <p className="text-sm font-bold text-[#191c1e]">{emptyTitle}</p>
                       <p className="text-xs text-[#505f76] mt-1 max-w-xs mx-auto">{emptyMessage}</p>

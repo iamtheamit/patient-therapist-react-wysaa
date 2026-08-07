@@ -5,10 +5,10 @@ import { UserProfileBadge } from '@/components/common/UserProfileBadge';
 export const PatientDesktopHeader: React.FC = () => {
   const location = useLocation();
 
-  const getBreadcrumbTitle = (pathname: string) => {
-    if (pathname.includes('/book')) return 'Book Therapy Session';
-    if (pathname.includes('/appointments')) return 'My Appointments';
-    if (pathname.includes('/holds')) return 'My Holds';
+  const getBreadcrumbTitle = (pathname: string, hash: string) => {
+    if (hash === '#appointments') return 'My Appointments';
+    if (hash === '#holds') return 'My Holds';
+    if (hash === '#book' || pathname.includes('/book')) return 'Book Therapy Session';
     if (pathname.includes('/therapists')) return 'Therapists';
     if (pathname.includes('/messages')) return 'Messages';
     if (pathname.includes('/payments')) return 'Payments';
@@ -21,10 +21,12 @@ export const PatientDesktopHeader: React.FC = () => {
     <div className="hidden md:flex justify-between items-center px-4 sm:px-6 lg:px-8 xl:px-10 py-4 bg-white/80 backdrop-blur-sm sticky top-0 z-30 border-b border-[#c3c6d6]/30 w-full font-sans">
       {/* Left Side: Dynamic Portal Context / Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-[#51606f] font-semibold">
-        <span className="material-symbols-outlined text-base text-[#003d9b]">dashboard</span>
+        <span className="material-symbols-outlined text-base text-[#0052cc]">dashboard</span>
         <span>Patient Portal</span>
         <span className="text-[#c3c6d6]">/</span>
-        <span className="text-[#191c1e]">{getBreadcrumbTitle(location.pathname)}</span>
+        <span className="text-[#191c1e]">
+          {getBreadcrumbTitle(location.pathname, location.hash)}
+        </span>
       </div>
 
       {/* Right Side: Profile Info */}
