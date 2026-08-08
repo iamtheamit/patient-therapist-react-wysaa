@@ -3,6 +3,7 @@ import { ROUTES } from './routes';
 export interface TherapistNavItem {
   id: string;
   label: string;
+  shortLabel?: string;
   icon: string;
   href: string;
   badgeCount?: number;
@@ -20,12 +21,14 @@ export const THERAPIST_NAV_ITEMS: TherapistNavItem[] = [
   {
     id: 'appointments',
     label: 'My Appointments',
+    shortLabel: 'Appointments',
     icon: 'calendar_month',
     href: ROUTES.THERAPIST.APPOINTMENTS,
   },
   {
     id: 'schedule',
     label: 'Schedule & Availability',
+    shortLabel: 'Schedule',
     icon: 'event_available',
     href: ROUTES.THERAPIST.SCHEDULE,
     dividerAfter: true,

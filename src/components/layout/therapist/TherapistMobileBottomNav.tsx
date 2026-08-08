@@ -11,8 +11,8 @@ export const TherapistMobileBottomNav: React.FC = () => {
   );
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#c3c6d6]/40 z-50 px-2 py-1 shadow-lg">
-      <div className="flex justify-around items-center">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#c3c6d6]/40 z-50 px-1 py-1 shadow-lg">
+      <div className="grid grid-cols-5 items-center w-full max-w-lg mx-auto">
         {mobileNavItems.map((item) => {
           const isActive =
             location.pathname === item.href ||
@@ -25,12 +25,19 @@ export const TherapistMobileBottomNav: React.FC = () => {
               key={item.id}
               to={item.href}
               className={cn(
-                'flex flex-col items-center py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors relative',
-                isActive ? 'text-[#0052cc]' : 'text-[#51606f] hover:text-[#191c1e]',
+                'flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all relative text-center min-w-0',
+                isActive
+                  ? 'text-[#0052cc] font-bold bg-[#0052cc]/5'
+                  : 'text-[#51606f] font-medium hover:text-[#191c1e] hover:bg-slate-50',
               )}
             >
-              <div className="relative">
-                <span className={cn('material-symbols-outlined text-xl', isActive && 'fill')}>
+              <div className="relative flex items-center justify-center">
+                <span
+                  className={cn(
+                    'material-symbols-outlined text-xl transition-transform',
+                    isActive && 'fill scale-105',
+                  )}
+                >
                   {item.icon}
                 </span>
                 {item.badgeCount !== undefined && (
@@ -39,7 +46,9 @@ export const TherapistMobileBottomNav: React.FC = () => {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] mt-0.5">{item.label}</span>
+              <span className="text-[10px] leading-tight mt-1 truncate w-full px-0.5">
+                {item.shortLabel || item.label}
+              </span>
             </Link>
           );
         })}

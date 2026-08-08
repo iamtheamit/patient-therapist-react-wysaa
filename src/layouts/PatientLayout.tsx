@@ -9,7 +9,7 @@ import {
 
 export const PatientLayout: React.FC = () => {
   return (
-    <div className="bg-[#f8f9fb] text-[#191c1e] font-sans antialiased overflow-x-hidden flex min-h-screen w-full">
+    <div className="bg-[#f8f9fb] text-[#191c1e] font-sans antialiased overflow-x-hidden flex flex-col md:flex-row min-h-screen w-full">
       {/* Mobile Top Navigation */}
       <PatientMobileHeader />
 

@@ -37,7 +37,7 @@ export const ToastContainer: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-3 max-w-sm w-full pointer-events-none px-2 sm:px-0">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 md:top-auto md:bottom-6 md:left-auto md:right-6 md:translate-x-0 z-[100] flex flex-col items-center md:items-end space-y-2.5 max-w-sm w-[calc(100%-2rem)] md:w-full pointer-events-none">
       <AnimatePresence mode="sync">
         {toasts.map((toast: ToastNotification) => {
           const config = typeStyles[toast.type] || typeStyles.info;
@@ -47,17 +47,17 @@ export const ToastContainer: React.FC = () => {
             <motion.div
               key={toast.id}
               layout
-              initial={{ opacity: 0, y: 8, x: 24, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+              initial={{ opacity: 0, y: -16, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{
                 opacity: 0,
-                x: 24,
-                scale: 0.96,
-                transition: { duration: 0.08, ease: 'easeOut' },
+                y: -16,
+                scale: 0.95,
+                transition: { duration: 0.1, ease: 'easeOut' },
               }}
-              transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
               className={cn(
-                'pointer-events-auto relative flex items-start space-x-3.5 p-4 rounded-2xl border backdrop-blur-xl transition-all overflow-hidden shadow-xl',
+                'pointer-events-auto relative flex items-start space-x-3.5 p-4 rounded-2xl border backdrop-blur-xl transition-all overflow-hidden shadow-xl w-full',
                 config.card,
               )}
             >

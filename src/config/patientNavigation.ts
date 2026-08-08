@@ -3,6 +3,7 @@ import { ROUTES } from './routes';
 export interface PatientNavItem {
   id: string;
   label: string;
+  shortLabel?: string;
   href: string;
   icon: string;
   badgeCount?: number;
@@ -26,6 +27,7 @@ export const PATIENT_NAV_ITEMS: PatientNavItem[] = [
   {
     id: 'appointments',
     label: 'My Appointments',
+    shortLabel: 'Appointments',
     href: `${ROUTES.PATIENT.DASHBOARD}#appointments`,
     icon: 'calendar_month',
     dividerAfter: true,

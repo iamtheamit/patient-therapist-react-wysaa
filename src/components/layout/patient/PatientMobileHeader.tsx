@@ -25,7 +25,17 @@ export const PatientMobileHeader: React.FC = () => {
         <div className="flex justify-between items-center px-4 py-3 max-w-7xl mx-auto">
           <Logo to="/patient/dashboard" iconSize="text-2xl" textSize="text-lg" />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowSignOutModal(true)}
+              className="p-1.5 rounded-lg text-[#51606f] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer flex items-center justify-center"
+              title="Sign out"
+              aria-label="Sign out"
+            >
+              <span className="material-symbols-outlined text-xl">logout</span>
+            </button>
+
             <button
               type="button"
               aria-label="User menu"
