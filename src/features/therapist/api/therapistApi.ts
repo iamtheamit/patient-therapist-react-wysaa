@@ -5,7 +5,24 @@ import type {
   StatusUpdatePayload,
   ClinicalNotesPayload,
   TherapistScheduleConfig,
+  DayOfWeek,
+  DayScheduleRule,
 } from '../types/therapist.types';
+
+interface RawScheduleItem {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  slotDuration?: number;
+  isActive?: boolean;
+}
+
+interface RawScheduleResponse {
+  data?: RawScheduleItem[];
+  weeklyRules?: DayScheduleRule[];
+  slotDurationMinutes?: number;
+  bufferDurationMinutes?: number;
+}
 
 export const therapistApi = {
   getAgenda: async (therapistId: string, date?: string): Promise<TherapistAgendaItem[]> => {
@@ -94,10 +111,127 @@ export const therapistApi = {
 
   getScheduleConfig: async (therapistId: string): Promise<TherapistScheduleConfig> => {
     try {
-      const response = await axiosClient.get<unknown, TherapistScheduleConfig>(
+      const response = await axiosClient.get<unknown, RawScheduleResponse | RawScheduleItem[]>(
         `/therapists/${therapistId}/schedule-config`,
       );
-      return response;
+
+      const DAYS_OF_WEEK: DayOfWeek[] = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+      ];
+      const defaultRules: DayScheduleRule[] = [
+        {
+          day: 'Monday',
+          isEnabled: true,
+          startTime: '09:00',
+          endTime: '17:00',
+          breakStartTime: '12:00',
+          breakEndTime: '13:00',
+        },
+        {
+          day: 'Tuesday',
+          isEnabled: true,
+          startTime: '09:00',
+          endTime: '17:00',
+          breakStartTime: '12:00',
+          breakEndTime: '13:00',
+        },
+        {
+          day: 'Wednesday',
+          isEnabled: true,
+          startTime: '09:00',
+          endTime: '17:00',
+          breakStartTime: '12:00',
+          breakEndTime: '13:00',
+        },
+        {
+          day: 'Thursday',
+          isEnabled: true,
+          startTime: '09:00',
+          endTime: '17:00',
+          breakStartTime: '12:00',
+          breakEndTime: '13:00',
+        },
+        {
+          day: 'Friday',
+          isEnabled: true,
+          startTime: '09:00',
+          endTime: '16:00',
+          breakStartTime: '12:00',
+          breakEndTime: '13:00',
+        },
+        { day: 'Saturday', isEnabled: false, startTime: '10:00', endTime: '14:00' },
+        { day: 'Sunday', isEnabled: false, startTime: '10:00', endTime: '14:00' },
+      ];
+
+      // Handle direct weeklyRules object
+      if (response && !Array.isArray(response) && response.weeklyRules) {
+        return {
+          therapistId,
+          slotDurationMinutes: response.slotDurationMinutes ?? 50,
+          bufferDurationMinutes: response.bufferDurationMinutes ?? 10,
+          weeklyRules: response.weeklyRules,
+        };
+      }
+
+      // Handle raw DB records array (TherapistSchedule[]) returned from GET /api/v1/therapist/schedules
+      const dbItems: RawScheduleItem[] = Array.isArray(response)
+        ? response
+        : (response as RawScheduleResponse)?.data || [];
+
+      if (dbItems.length > 0) {
+        const slotDuration = dbItems[0]?.slotDuration ?? 50;
+        const ALL_DAYS: DayOfWeek[] = [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
+        ];
+        const weeklyRules: DayScheduleRule[] = ALL_DAYS.map((dayName) => {
+          const dayIndex = DAYS_OF_WEEK.indexOf(dayName);
+          const found = dbItems.find((item) => item.dayOfWeek === dayIndex);
+          if (found) {
+            return {
+              day: dayName,
+              isEnabled: found.isActive ?? true,
+              startTime: found.startTime || '09:00',
+              endTime: found.endTime || '17:00',
+              breakStartTime: '12:00',
+              breakEndTime: '13:00',
+            };
+          }
+          return {
+            day: dayName,
+            isEnabled: false,
+            startTime: '09:00',
+            endTime: '17:00',
+            breakStartTime: '12:00',
+            breakEndTime: '13:00',
+          };
+        });
+
+        return {
+          therapistId,
+          slotDurationMinutes: slotDuration,
+          bufferDurationMinutes: 10,
+          weeklyRules,
+        };
+      }
+
+      return {
+        therapistId,
+        slotDurationMinutes: 50,
+        bufferDurationMinutes: 10,
+        weeklyRules: defaultRules,
+      };
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 500));
       return {
@@ -156,11 +290,32 @@ export const therapistApi = {
     config: TherapistScheduleConfig,
   ): Promise<TherapistScheduleConfig> => {
     try {
-      const response = await axiosClient.put<unknown, TherapistScheduleConfig>(
+      const DAYS_OF_WEEK: DayOfWeek[] = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+      ];
+
+      // Clean senior payload: map weeklyRules to standard domain Schedule items
+      const schedules = (config.weeklyRules || [])
+        .filter((rule) => rule.isEnabled)
+        .map((rule) => ({
+          dayOfWeek: DAYS_OF_WEEK.indexOf(rule.day),
+          startTime: rule.startTime,
+          endTime: rule.endTime,
+          slotDuration: config.slotDurationMinutes || 30,
+          isActive: true,
+        }));
+
+      const response = await axiosClient.put<unknown, RawScheduleResponse>(
         `/therapists/${config.therapistId}/schedule-config`,
-        config,
+        { schedules },
       );
-      return response;
+      return response?.weeklyRules ? (response as TherapistScheduleConfig) : config;
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 600));
       return config;

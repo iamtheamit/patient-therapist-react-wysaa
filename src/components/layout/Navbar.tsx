@@ -113,10 +113,10 @@ export const Navbar: React.FC = () => {
 
             <button
               onClick={handleSignOut}
-              className="p-2 text-[#505f76] hover:text-[#191c1e] hover:bg-slate-100 rounded-lg transition"
+              className="p-2 text-rose-600 hover:text-white bg-rose-50/80 hover:bg-rose-600 border border-rose-200/70 hover:border-transparent rounded-xl transition-all duration-200 shadow-2xs hover:shadow-[0_4px_12px_rgba(225,29,72,0.3)] hover:-translate-y-0.5 cursor-pointer flex items-center justify-center group"
               title="Sign Out"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
             </button>
           </div>
         </div>
@@ -166,7 +166,7 @@ export const Navbar: React.FC = () => {
 
             <button
               onClick={handleSignOut}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-50 to-rose-100/60 hover:from-rose-600 hover:to-rose-700 text-rose-700 hover:text-white border border-rose-200/80 hover:border-transparent transition-all duration-300 shadow-2xs hover:shadow-[0_4px_12px_rgba(225,29,72,0.3)] cursor-pointer"
             >
               Sign Out
             </button>

@@ -177,15 +177,15 @@ export const QuickTherapistSearch: React.FC<QuickTherapistSearchProps> = ({
                 </div>
 
                 <Button
-                  variant="outline"
+                  variant="primary"
                   size="sm"
+                  pill
                   onClick={() => onSelectTherapist(therapist)}
-                  className="w-full justify-between bg-white text-[#003d9b] hover:bg-[#003d9b] hover:text-white border-[#003d9b]/30 font-semibold text-xs transition"
+                  className="w-full justify-between font-bold text-xs"
+                  leftIcon={<UserCheck className="w-3.5 h-3.5" />}
+                  rightIcon={<ChevronRight className="w-4 h-4" />}
                 >
-                  <span className="flex items-center gap-1.5">
-                    <UserCheck className="w-3.5 h-3.5" /> Book Session
-                  </span>
-                  <ChevronRight className="w-4 h-4" />
+                  Book Session
                 </Button>
               </div>
             );

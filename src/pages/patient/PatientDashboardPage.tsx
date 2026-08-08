@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  Calendar,
-  Clock,
-  Video,
-  Timer,
-  Plus,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { Calendar, Clock, Video, Timer, Plus, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
 import { ROUTES } from '@/config/routes';
@@ -17,6 +8,7 @@ import {
   PatientAppointmentsTab,
   QuickTherapistSearch,
   AppointmentBookingDrawer,
+  PatientScheduleCalendar,
 } from '@/features/patient';
 import type { TherapistProfile } from '@/features/appointments';
 import { Button } from '@/components/ui/Button';
@@ -64,7 +56,17 @@ export const PatientDashboardPage: React.FC = () => {
         </div>
 
         <Link to={ROUTES.PATIENT.BOOK}>
-          <Button variant="primary" size="sm" leftIcon={<Plus className="w-4 h-4" />}>
+          <Button
+            variant="gradient"
+            size="md"
+            pill
+            glow
+            leftIcon={
+              <span className="w-5 h-5 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center -ml-1 border border-white/20 transition-transform duration-300 group-hover:rotate-90">
+                <Plus className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+              </span>
+            }
+          >
             Book New Session
           </Button>
         </Link>
@@ -152,19 +154,25 @@ export const PatientDashboardPage: React.FC = () => {
                     />
                     <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
                       <Button
-                        variant="secondary"
-                        size="sm"
-                        leftIcon={<Video className="w-4 h-4 text-[#003d9b]" />}
-                        className="bg-white hover:bg-slate-50 text-[#003d9b] font-bold"
+                        variant="white"
+                        size="md"
+                        pill
+                        leftIcon={
+                          <span className="relative flex items-center justify-center">
+                            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75" />
+                            <Video className="w-4 h-4 text-[#003d9b] relative z-10" />
+                          </span>
+                        }
+                        className="font-extrabold text-[#003d9b]"
                       >
                         Join Session
                       </Button>
                       <Link
                         to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
-                        className="text-white hover:text-[#b2c5ff] transition-colors flex items-center gap-1 font-semibold text-xs whitespace-nowrap px-2"
+                        className="group/link px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all duration-200 flex items-center gap-1.5 font-bold text-xs whitespace-nowrap backdrop-blur-xs hover:translate-x-0.5"
                       >
-                        View Details
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <span>View Details</span>
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-0.5" />
                       </Link>
                     </div>
                   </div>
@@ -267,86 +275,8 @@ export const PatientDashboardPage: React.FC = () => {
 
           {/* Right Column (Calendar, Active Hold) */}
           <div className="space-y-6">
-            {/* Calendar Widget */}
-            <div className="bg-white rounded-2xl shadow-sm border border-[#c3c6d6]/40 p-5 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-heading font-bold text-sm text-[#191c1e]">Your Schedule</h3>
-                <Link
-                  to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
-                  className="text-[#003d9b] hover:text-[#0052cc] transition-colors text-xs font-bold flex items-center gap-1"
-                >
-                  View full calendar
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              <div className="flex justify-between items-center text-[#191c1e] text-xs font-bold">
-                <button
-                  type="button"
-                  className="p-1 hover:bg-[#f3f4f6] rounded-lg transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4 text-[#51606f]" />
-                </button>
-                <span>August 2026</span>
-                <button
-                  type="button"
-                  className="p-1 hover:bg-[#f3f4f6] rounded-lg transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4 text-[#51606f]" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                <div className="text-[#51606f] font-bold py-1 text-[11px]">Sun</div>
-                <div className="text-[#51606f] font-bold py-1 text-[11px]">Mon</div>
-                <div className="text-[#51606f] font-bold py-1 text-[11px]">Tue</div>
-                <div className="text-[#51606f] font-bold py-1 text-[11px]">Wed</div>
-                <div className="text-[#51606f] font-bold py-1 text-[11px]">Thu</div>
-                <div className="text-[#51606f] font-bold py-1 text-[11px]">Fri</div>
-                <div className="text-[#51606f] font-bold py-1 text-[11px]">Sat</div>
-
-                <div className="py-1.5 text-[#c3c6d6]">26</div>
-                <div className="py-1.5 text-[#c3c6d6]">27</div>
-                <div className="py-1.5 text-[#c3c6d6]">28</div>
-                <div className="py-1.5 text-[#c3c6d6]">29</div>
-                <div className="py-1.5 text-[#c3c6d6]">30</div>
-                <div className="py-1.5 text-[#c3c6d6]">31</div>
-
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">1</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">2</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">3</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">4</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">5</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">6</div>
-                <div className="py-1.5 bg-[#003d9b] text-white rounded font-bold cursor-pointer shadow-2xs relative">
-                  7
-                  <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
-                </div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">8</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">9</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">10</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">11</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">12</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer relative">
-                  13
-                  <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[#003d9b] rounded-full" />
-                </div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer">14</div>
-                <div className="py-1.5 hover:bg-[#f3f4f6] rounded cursor-pointer relative">
-                  15
-                  <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-emerald-500 rounded-full" />
-                </div>
-              </div>
-
-              <div className="flex gap-4 text-[11px] text-[#51606f] justify-center pt-3 border-t border-slate-100 font-medium">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-[#003d9b] rounded-full" /> Has appointment
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" /> Has hold
-                </div>
-              </div>
-            </div>
+            {/* Dynamic Interactive Calendar Widget */}
+            <PatientScheduleCalendar />
 
             {/* Active Hold Widget */}
             <div className="bg-white rounded-2xl shadow-sm border border-[#c3c6d6]/40 p-5 space-y-4">

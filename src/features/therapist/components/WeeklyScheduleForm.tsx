@@ -12,66 +12,70 @@ interface WeeklyScheduleFormProps {
   therapistId: string;
 }
 
+const DEFAULT_WEEKLY_RULES: DayScheduleRule[] = [
+  {
+    day: 'Monday',
+    isEnabled: true,
+    startTime: '09:00',
+    endTime: '17:00',
+    breakStartTime: '12:00',
+    breakEndTime: '13:00',
+  },
+  {
+    day: 'Tuesday',
+    isEnabled: true,
+    startTime: '09:00',
+    endTime: '17:00',
+    breakStartTime: '12:00',
+    breakEndTime: '13:00',
+  },
+  {
+    day: 'Wednesday',
+    isEnabled: true,
+    startTime: '09:00',
+    endTime: '17:00',
+    breakStartTime: '12:00',
+    breakEndTime: '13:00',
+  },
+  {
+    day: 'Thursday',
+    isEnabled: true,
+    startTime: '09:00',
+    endTime: '17:00',
+    breakStartTime: '12:00',
+    breakEndTime: '13:00',
+  },
+  {
+    day: 'Friday',
+    isEnabled: true,
+    startTime: '09:00',
+    endTime: '16:00',
+    breakStartTime: '12:00',
+    breakEndTime: '13:00',
+  },
+  { day: 'Saturday', isEnabled: false, startTime: '10:00', endTime: '14:00' },
+  { day: 'Sunday', isEnabled: false, startTime: '10:00', endTime: '14:00' },
+];
+
 export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
   initialConfig,
   therapistId,
 }) => {
-  const [config, setConfig] = useState<TherapistScheduleConfig>(
-    initialConfig || {
-      therapistId,
-      slotDurationMinutes: 50,
-      bufferDurationMinutes: 10,
-      weeklyRules: [
-        {
-          day: 'Monday',
-          isEnabled: true,
-          startTime: '09:00',
-          endTime: '17:00',
-          breakStartTime: '12:00',
-          breakEndTime: '13:00',
-        },
-        {
-          day: 'Tuesday',
-          isEnabled: true,
-          startTime: '09:00',
-          endTime: '17:00',
-          breakStartTime: '12:00',
-          breakEndTime: '13:00',
-        },
-        {
-          day: 'Wednesday',
-          isEnabled: true,
-          startTime: '09:00',
-          endTime: '17:00',
-          breakStartTime: '12:00',
-          breakEndTime: '13:00',
-        },
-        {
-          day: 'Thursday',
-          isEnabled: true,
-          startTime: '09:00',
-          endTime: '17:00',
-          breakStartTime: '12:00',
-          breakEndTime: '13:00',
-        },
-        {
-          day: 'Friday',
-          isEnabled: true,
-          startTime: '09:00',
-          endTime: '16:00',
-          breakStartTime: '12:00',
-          breakEndTime: '13:00',
-        },
-        { day: 'Saturday', isEnabled: false, startTime: '10:00', endTime: '14:00' },
-        { day: 'Sunday', isEnabled: false, startTime: '10:00', endTime: '14:00' },
-      ],
-    },
-  );
+  const [config, setConfig] = useState<TherapistScheduleConfig>(() => ({
+    therapistId,
+    slotDurationMinutes: initialConfig?.slotDurationMinutes ?? 50,
+    bufferDurationMinutes: initialConfig?.bufferDurationMinutes ?? 10,
+    weeklyRules:
+      initialConfig?.weeklyRules && initialConfig.weeklyRules.length > 0
+        ? initialConfig.weeklyRules
+        : DEFAULT_WEEKLY_RULES,
+  }));
 
   const { mutate: updateConfig, isPending } = useUpdateScheduleConfig(therapistId);
 
   const handleRuleToggle = (index: number) => {
-    const updatedRules = [...config.weeklyRules];
+    const currentRules = config.weeklyRules || DEFAULT_WEEKLY_RULES;
+    const updatedRules = [...currentRules];
     updatedRules[index] = {
       ...updatedRules[index],
       isEnabled: !updatedRules[index].isEnabled,
@@ -80,7 +84,8 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
   };
 
   const handleTimeChange = (index: number, field: keyof DayScheduleRule, value: string) => {
-    const updatedRules = [...config.weeklyRules];
+    const currentRules = config.weeklyRules || DEFAULT_WEEKLY_RULES;
+    const updatedRules = [...currentRules];
     updatedRules[index] = {
       ...updatedRules[index],
       [field]: value,
@@ -93,20 +98,24 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
     updateConfig(config);
   };
 
+  const slotDurationStr = (config.slotDurationMinutes ?? 50).toString();
+  const bufferDurationStr = (config.bufferDurationMinutes ?? 10).toString();
+  const weeklyRulesList = config.weeklyRules || DEFAULT_WEEKLY_RULES;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-left">
       {/* Session Duration Settings */}
-      <Card className="bg-white border-[#c3c6d6]/40 shadow-xs rounded-2xl">
-        <CardContent className="p-6 space-y-4">
+      <Card className="bg-white border-[#c3c6d6]/40 shadow-xs rounded-2xl !overflow-visible relative z-30">
+        <CardContent className="p-4 sm:p-6 space-y-4 !overflow-visible">
           <div className="flex items-center space-x-2 text-[#0052cc] text-xs font-bold uppercase tracking-wider">
             <Clock className="w-4 h-4" />
             <span>Session Duration & Buffer Settings</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 relative z-30">
             <CustomSelect
               label="Therapy Session Length"
-              value={config.slotDurationMinutes.toString()}
+              value={slotDurationStr}
               onChange={(val) => setConfig({ ...config, slotDurationMinutes: Number(val) })}
               options={[
                 { value: '30', label: '30 Minutes' },
@@ -118,7 +127,7 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
 
             <CustomSelect
               label="Inter-Session Buffer Break"
-              value={config.bufferDurationMinutes.toString()}
+              value={bufferDurationStr}
               onChange={(val) => setConfig({ ...config, bufferDurationMinutes: Number(val) })}
               options={[
                 { value: '0', label: '0 Minutes (Back-to-Back)' },
@@ -131,9 +140,9 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
       </Card>
 
       {/* Weekly Shift Rules Table */}
-      <Card className="bg-white border-[#c3c6d6]/40 shadow-xs rounded-2xl">
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
+      <Card className="bg-white border-[#c3c6d6]/40 shadow-xs rounded-2xl relative z-10">
+        <CardContent className="p-4 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
             <h3 className="text-sm font-heading font-bold text-[#191c1e] flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#0052cc]" />
               <span>Weekly Shift Rules</span>
@@ -144,17 +153,17 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
           </div>
 
           <div className="space-y-3 pt-2">
-            {config.weeklyRules.map((rule, index) => (
+            {weeklyRulesList.map((rule, index) => (
               <div
                 key={rule.day}
                 className={cn(
-                  'p-4 rounded-xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4',
+                  'p-3.5 sm:p-4 rounded-xl border transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4',
                   rule.isEnabled
                     ? 'bg-[#f8f9fb] border-[#c3c6d6]/40'
                     : 'bg-slate-100/50 border-slate-200 opacity-60',
                 )}
               >
-                <div className="flex items-center space-x-3 w-40">
+                <div className="flex items-center space-x-3 min-w-[120px]">
                   <input
                     type="checkbox"
                     id={`check-${rule.day}`}
@@ -171,38 +180,48 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
                 </div>
 
                 {rule.isEnabled ? (
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-[#191c1e]">
-                    <div className="flex items-center space-x-1.5">
-                      <span className="text-[#505f76] font-medium">Shift:</span>
+                  <div className="flex flex-col xl:flex-row gap-2.5 sm:gap-3 text-xs text-[#191c1e] w-full">
+                    {/* Shift Time Window */}
+                    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                      <span className="text-[#505f76] font-medium w-8 sm:w-10 shrink-0 text-[11px] sm:text-xs">
+                        Shift:
+                      </span>
                       <input
                         type="time"
                         value={rule.startTime}
                         onChange={(e) => handleTimeChange(index, 'startTime', e.target.value)}
-                        className="bg-white border border-[#c3c6d6]/60 text-[#191c1e] font-semibold rounded-lg px-2.5 py-1.5 outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20"
+                        className="bg-white border border-[#c3c6d6]/60 text-[#191c1e] font-semibold rounded-lg px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-[11px] sm:text-xs outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20 shrink-0 w-[102px] sm:w-auto"
                       />
-                      <span className="text-[#505f76]">to</span>
+                      <span className="text-[#505f76] px-0.5 shrink-0 text-[11px] sm:text-xs">
+                        to
+                      </span>
                       <input
                         type="time"
                         value={rule.endTime}
                         onChange={(e) => handleTimeChange(index, 'endTime', e.target.value)}
-                        className="bg-white border border-[#c3c6d6]/60 text-[#191c1e] font-semibold rounded-lg px-2.5 py-1.5 outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20"
+                        className="bg-white border border-[#c3c6d6]/60 text-[#191c1e] font-semibold rounded-lg px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-[11px] sm:text-xs outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20 shrink-0 w-[102px] sm:w-auto"
                       />
                     </div>
 
-                    <div className="flex items-center space-x-1.5 md:border-l md:border-[#c3c6d6]/40 md:pl-3">
-                      <span className="text-[#505f76] font-medium">Break:</span>
+                    {/* Break Time Window */}
+                    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 xl:border-l xl:border-[#c3c6d6]/40 xl:pl-3">
+                      <span className="text-[#505f76] font-medium w-8 sm:w-10 shrink-0 text-[11px] sm:text-xs">
+                        Break:
+                      </span>
                       <input
                         type="time"
                         value={rule.breakStartTime || '12:00'}
                         onChange={(e) => handleTimeChange(index, 'breakStartTime', e.target.value)}
-                        className="bg-white border border-[#c3c6d6]/60 text-[#191c1e] font-semibold rounded-lg px-2.5 py-1.5 outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20"
+                        className="bg-white border border-[#c3c6d6]/60 text-[#191c1e] font-semibold rounded-lg px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-[11px] sm:text-xs outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20 shrink-0 w-[102px] sm:w-auto"
                       />
-                      <span className="text-[#505f76]">to</span>
+                      <span className="text-[#505f76] px-0.5 shrink-0 text-[11px] sm:text-xs">
+                        to
+                      </span>
                       <input
                         type="time"
                         value={rule.breakEndTime || '13:00'}
                         onChange={(e) => handleTimeChange(index, 'breakEndTime', e.target.value)}
-                        className="bg-white border border-[#c3c6d6]/60 text-[#191c1e] font-semibold rounded-lg px-2.5 py-1.5 outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20"
+                        className="bg-white border border-[#c3c6d6]/60 text-[#191c1e] font-semibold rounded-lg px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-[11px] sm:text-xs outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20 shrink-0 w-[102px] sm:w-auto"
                       />
                     </div>
                   </div>

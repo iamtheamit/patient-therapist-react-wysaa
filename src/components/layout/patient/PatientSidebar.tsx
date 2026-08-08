@@ -87,14 +87,21 @@ export const PatientSidebar: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowSignOutModal(true)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-rose-50 text-rose-700 hover:bg-rose-100/80 border border-rose-200/80 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer group"
+            className="relative group w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-rose-50/80 via-rose-50/50 to-rose-100/60 hover:from-rose-600 hover:via-rose-600 hover:to-rose-700 text-rose-700 hover:text-white border border-rose-200/80 hover:border-transparent rounded-xl text-xs font-bold transition-all duration-300 shadow-2xs hover:shadow-[0_6px_20px_rgba(225,29,72,0.35)] hover:-translate-y-0.5 cursor-pointer overflow-hidden"
           >
-            <div className="flex items-center gap-2.5">
-              <span className="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-0.5">
+            {/* Diagonal shine effect on hover */}
+            <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+
+            <div className="flex items-center gap-2.5 relative z-10">
+              <span className="material-symbols-outlined text-lg transition-transform duration-300 group-hover:-translate-x-1 group-hover:scale-110">
                 logout
               </span>
-              <span>Sign Out</span>
+              <span className="tracking-wide">Sign Out</span>
             </div>
+
+            <span className="material-symbols-outlined text-base opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-300 relative z-10">
+              chevron_right
+            </span>
           </button>
         </div>
       </aside>

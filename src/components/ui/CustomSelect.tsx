@@ -52,7 +52,10 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   };
 
   return (
-    <div className={cn('relative w-full text-left', className)} ref={containerRef}>
+    <div
+      className={cn('relative w-full text-left', isOpen ? 'z-50' : 'z-10', className)}
+      ref={containerRef}
+    >
       {label && (
         <label htmlFor={id} className="block text-xs font-bold text-[#191c1e] mb-1.5">
           {label} {required && <span className="text-rose-500">*</span>}

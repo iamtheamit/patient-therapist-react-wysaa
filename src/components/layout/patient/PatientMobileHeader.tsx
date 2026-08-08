@@ -29,11 +29,13 @@ export const PatientMobileHeader: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowSignOutModal(true)}
-              className="p-1.5 rounded-lg text-[#51606f] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer flex items-center justify-center"
+              className="p-2 rounded-xl text-rose-600 hover:text-white bg-rose-50/80 hover:bg-rose-600 border border-rose-200/70 hover:border-transparent transition-all duration-250 cursor-pointer flex items-center justify-center shadow-2xs hover:shadow-[0_4px_12px_rgba(225,29,72,0.3)] active:scale-95 group"
               title="Sign out"
               aria-label="Sign out"
             >
-              <span className="material-symbols-outlined text-xl">logout</span>
+              <span className="material-symbols-outlined text-lg transition-transform duration-200 group-hover:-translate-x-0.5">
+                logout
+              </span>
             </button>
 
             <button
@@ -59,11 +61,20 @@ export const PatientMobileHeader: React.FC = () => {
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setShowSignOutModal(true)}
-              className="w-full text-left py-2 px-3 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold flex items-center justify-between cursor-pointer"
+              className="relative group w-full flex items-center justify-between py-2.5 px-3.5 bg-gradient-to-r from-rose-50/90 to-rose-100/60 hover:from-rose-600 hover:to-rose-700 text-rose-700 hover:text-white border border-rose-200/80 hover:border-transparent rounded-xl text-xs font-bold transition-all duration-300 shadow-2xs hover:shadow-[0_6px_18px_rgba(225,29,72,0.3)] cursor-pointer overflow-hidden"
             >
-              <span>Sign Out</span>
-              <span className="material-symbols-outlined text-base">logout</span>
+              <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+              <div className="flex items-center gap-2 relative z-10">
+                <span className="material-symbols-outlined text-base transition-transform duration-300 group-hover:-translate-x-0.5">
+                  logout
+                </span>
+                <span>Sign Out</span>
+              </div>
+              <span className="material-symbols-outlined text-sm opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-300 relative z-10">
+                chevron_right
+              </span>
             </button>
           </div>
         )}
