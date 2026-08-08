@@ -56,19 +56,21 @@ export const LoginForm: React.FC = () => {
               id="illustration-patient"
               alt="Patient Telehealth"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZyrRvwXY5RvExmj7FRLRGQRmCK6L8wf7AN6FRnwITrRzoG3Zobtw7FHHNGAvb3PTmCZKlo26tPOncXiG6CjJe5xhRUk_UvNVftrTM7ajU3aO_y2g5n2Bj5Uj6wpPYQr2KsZr_OFk7VbHpQqCB-PX47xmneLP4UcF-Y_4a8zY9gg2Dq0QKtn_Lvrp0dT9WfbWmxfUktXbQm2ery4iR1vEIGxlcD8LzNnJ9gsdhkDjwIHVa4nqpFJPS"
-              className={`w-full h-auto max-h-[380px] object-contain transition-all duration-500 ${activeRole === 'patient'
+              className={`w-full h-auto max-h-[380px] object-contain transition-all duration-500 ${
+                activeRole === 'patient'
                   ? 'opacity-100 scale-100'
                   : 'opacity-0 scale-95 pointer-events-none absolute'
-                }`}
+              }`}
             />
             <img
               id="illustration-therapist"
               alt="Therapist Workspace"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRcqZ_cWcJP0_QPztZej0X2YO3FiryQP9-flJurY6OGmooSV1ihprykFJtNQgpMufZq6v-ImUHxqT1R-vtJPjVuKbEp5BFnufVV0kNfWT99TJ3XIVhna4e7t-PpZcCS9WPnqmgF8QwwTPS09uxF__cUge3coo3RwY9lj5JlwRPNTck49GlmJJK4-XHY-RDi_lvSp6a4iOD7uMmKz5W4WGe_Ue_AffQlVM-WfTHK6IC5UyRWmddMhU6"
-              className={`w-full h-auto max-h-[380px] object-contain transition-all duration-500 ${activeRole === 'therapist'
+              className={`w-full h-auto max-h-[380px] object-contain transition-all duration-500 ${
+                activeRole === 'therapist'
                   ? 'opacity-100 scale-100'
                   : 'opacity-0 scale-95 pointer-events-none absolute'
-                }`}
+              }`}
             />
           </div>
         </div>
@@ -89,10 +91,11 @@ export const LoginForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleRoleSelect('patient')}
-                className={`py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${activeRole === 'patient'
+                className={`py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeRole === 'patient'
                     ? 'bg-white text-[#005eb8] shadow-sm font-bold'
                     : 'text-[#505f76] hover:text-[#191c1e]'
-                  }`}
+                }`}
               >
                 <span className="material-symbols-outlined text-[18px]">person</span>
                 Patient
@@ -101,10 +104,11 @@ export const LoginForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleRoleSelect('therapist')}
-                className={`py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${activeRole === 'therapist'
+                className={`py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeRole === 'therapist'
                     ? 'bg-white text-[#005eb8] shadow-sm font-bold'
                     : 'text-[#505f76] hover:text-[#191c1e]'
-                  }`}
+                }`}
               >
                 <span className="material-symbols-outlined text-[18px]">medical_services</span>
                 Therapist
