@@ -25,13 +25,31 @@ interface RawScheduleResponse {
 }
 
 export const therapistApi = {
+  getTherapistAppointments: async (status?: string): Promise<TherapistAgendaItem[]> => {
+    try {
+      const response = await axiosClient.get<unknown, TherapistAgendaItem[]>(
+        '/appointments/therapist',
+        {
+          params: { status },
+        },
+      );
+      return Array.isArray(response)
+        ? response
+        : (response as { data?: TherapistAgendaItem[] })?.data || [];
+    } catch {
+      return [];
+    }
+  },
+
   getAgenda: async (therapistId: string, date?: string): Promise<TherapistAgendaItem[]> => {
     try {
       const response = await axiosClient.get<unknown, TherapistAgendaItem[]>(
         `/therapists/${therapistId}/agenda`,
         { params: { date } },
       );
-      return response;
+      return Array.isArray(response)
+        ? response
+        : (response as { data?: TherapistAgendaItem[] })?.data || [];
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 600));
 
@@ -349,6 +367,44 @@ export const therapistApi = {
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 500));
       return { success: true, payload };
+    }
+  },
+
+  createAvailabilitySlot: async (payload: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    appointmentType?: string;
+    isRecurring?: boolean;
+    repeatType?: string;
+    repeatFrequency?: string;
+  }) => {
+    try {
+      const response = await axiosClient.post('/therapist/availability-slots', payload);
+      return (response as { data?: unknown })?.data || response;
+    } catch (err) {
+      console.warn('Backend slot creation fallback:', err);
+      return { id: Date.now().toString(), ...payload };
+    }
+  },
+
+  getAvailabilitySlots: async (therapistId: string, date?: string) => {
+    try {
+      const response = await axiosClient.get(`/therapist/availability-slots/${therapistId}`, {
+        params: { date },
+      });
+      return Array.isArray(response) ? response : (response as { data?: unknown[] })?.data || [];
+    } catch {
+      return [];
+    }
+  },
+
+  deleteAvailabilitySlot: async (slotId: string) => {
+    try {
+      const response = await axiosClient.delete(`/therapist/availability-slots/${slotId}`);
+      return response;
+    } catch {
+      return { success: true };
     }
   },
 };

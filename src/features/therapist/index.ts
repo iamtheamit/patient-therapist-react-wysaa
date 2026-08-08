@@ -14,5 +14,6 @@ export {
   useUpdateClinicalNotes,
 } from './hooks/useUpdateAppointmentStatus';
 export { useTherapistScheduleConfig, useUpdateScheduleConfig } from './hooks/useTherapistSchedule';
+export { useTherapistCalendar } from './hooks/useTherapistCalendar';
 export { therapistApi } from './api/therapistApi';
 export * from './types/therapist.types';

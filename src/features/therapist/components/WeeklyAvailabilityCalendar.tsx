@@ -12,7 +12,23 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import {
+  AppointmentTypeEnum,
+  RepeatTypeEnum,
+  RepeatFrequencyEnum,
+  APPOINTMENT_TYPE_OPTIONS,
+  REPEAT_TYPE_OPTIONS,
+  REPEAT_FREQUENCY_OPTIONS,
+} from '../types/enums';
 import { useNow } from '@/hooks/useNow';
+import { useAuthStore } from '@/stores/authStore';
+import { useTherapistCalendar } from '../hooks/useTherapistCalendar';
+import {
+  validatePastTimeSlot,
+  validateTimeRange,
+  validateSlotOverlap,
+  validateShiftWindowBounds,
+} from '../utils/calendarValidation';
 
 export interface AvailabilityBlock {
   id: string;
@@ -56,117 +72,6 @@ const addDays = (d: Date, days: number): Date => {
   return result;
 };
 
-// Initial dynamic sample blocks anchored around current date
-const generateInitialBlocks = (): AvailabilityBlock[] => {
-  const today = new Date();
-  const monday = getMondayOfWeek(today);
-
-  const monStr = formatDateISO(monday);
-  const tueStr = formatDateISO(addDays(monday, 1));
-  const wedStr = formatDateISO(addDays(monday, 2));
-  const thuStr = formatDateISO(addDays(monday, 3));
-  const friStr = formatDateISO(addDays(monday, 4));
-
-  return [
-    {
-      id: '1',
-      date: monStr,
-      startTime: '09:00',
-      endTime: '12:00',
-      startHour: 9,
-      durationHours: 3,
-      location: 'MFP - Thane',
-      type: 'available',
-      services: ['Follow Up', 'Consultation'],
-      isRecurring: true,
-    },
-    {
-      id: '2',
-      date: tueStr,
-      startTime: '10:00',
-      endTime: '12:00',
-      startHour: 10,
-      durationHours: 2,
-      location: 'Telehealth',
-      type: 'available',
-      services: ['CBT Therapy'],
-      isRecurring: true,
-    },
-    {
-      id: '3',
-      date: tueStr,
-      startTime: '12:30',
-      endTime: '13:30',
-      startHour: 12.5,
-      durationHours: 1,
-      location: 'Telehealth',
-      type: 'booked',
-      status: 'completed',
-      patientName: 'Alex Patient - CBT Session',
-    },
-    {
-      id: '4',
-      date: wedStr,
-      startTime: '09:00',
-      endTime: '13:00',
-      startHour: 9,
-      durationHours: 4,
-      location: 'MFP - Thane',
-      type: 'available',
-      services: ['Consultation', 'Anxiety Care'],
-      isRecurring: true,
-    },
-    {
-      id: '5',
-      date: wedStr,
-      startTime: '14:00',
-      endTime: '15:00',
-      startHour: 14,
-      durationHours: 1,
-      location: 'Telehealth',
-      type: 'booked',
-      status: 'no_show',
-      patientName: 'Michael Brown - Consult (No Show)',
-    },
-    {
-      id: '6',
-      date: thuStr,
-      startTime: '11:00',
-      endTime: '12:00',
-      startHour: 11,
-      durationHours: 1,
-      location: 'Online Clinic',
-      type: 'booked',
-      status: 'cancelled',
-      patientName: 'Emma Watson - Cancelled Appt',
-    },
-    {
-      id: '7',
-      date: friStr,
-      startTime: '10:00',
-      endTime: '11:30',
-      startHour: 10,
-      durationHours: 1.5,
-      location: 'Telehealth',
-      type: 'booked',
-      status: 'scheduled',
-      patientName: 'Sarah Jenkins - CBT Session',
-    },
-    {
-      id: '8',
-      date: friStr,
-      startTime: '13:00',
-      endTime: '16:00',
-      startHour: 13,
-      durationHours: 3,
-      location: 'Online Clinic',
-      type: 'available',
-      services: ['Mindfulness'],
-      isRecurring: true,
-    },
-  ];
-};
-
 const MONTH_NAMES = [
   'January',
   'February',
@@ -185,14 +90,41 @@ const MONTH_NAMES = [
 const START_HOUR = 7;
 const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
 
-export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week' | 'month' }> = ({
-  initialView,
-}) => {
+export const WeeklyAvailabilityCalendar: React.FC<{
+  initialView?: 'day' | 'week' | 'month';
+  therapistId?: string;
+}> = ({ initialView, therapistId: therapistIdProp }) => {
+  const user = useAuthStore((state) => state.user);
+  const therapistId = therapistIdProp || user?.id || 'therapist-doc-1';
+
+  const {
+    appointmentBlocks,
+    customSlotBlocks,
+    scheduleConfig,
+    updateStatus,
+    createAvailabilitySlot,
+    deleteAvailabilitySlot,
+  } = useTherapistCalendar(therapistId);
+
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>(initialView ?? 'week');
-  const [blocks, setBlocks] = useState<AvailabilityBlock[]>(generateInitialBlocks);
+  const [localBlocks, setLocalBlocks] = useState<AvailabilityBlock[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedBlock, setSelectedBlock] = useState<AvailabilityBlock | null>(null);
+
+  // Combine API appointment blocks, custom availability slots from DB, and local blocks (deduplicating by unique ID)
+  const blocks: AvailabilityBlock[] = React.useMemo(() => {
+    const combined = [...appointmentBlocks, ...(customSlotBlocks || []), ...localBlocks];
+    const seenIds = new Set<string>();
+    const result: AvailabilityBlock[] = [];
+    for (const block of combined) {
+      if (!seenIds.has(block.id)) {
+        seenIds.add(block.id);
+        result.push(block);
+      }
+    }
+    return result;
+  }, [appointmentBlocks, customSlotBlocks, localBlocks]);
 
   // Real-time Live Clock Hook (precision minute boundary timer)
   const nowTime = useNow();
@@ -203,10 +135,10 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
   const [modalDate, setModalDate] = useState<string>(formatDateISO(new Date()));
   const [modalStartTime, setModalStartTime] = useState<string>('09:00');
   const [modalEndTime, setModalEndTime] = useState<string>('10:00');
-  const [appointmentType, setAppointmentType] = useState<string>('Follow Up Session');
+  const [appointmentType, setAppointmentType] = useState<string>(AppointmentTypeEnum.FOLLOW_UP);
   const [isRecurring, setIsRecurring] = useState<boolean>(true);
-  const [repeatType, setRepeatType] = useState<string>('Weekly');
-  const [repeatFrequency, setRepeatFrequency] = useState<string>('Every 1 week');
+  const [repeatType, setRepeatType] = useState<string>(RepeatTypeEnum.WEEKLY);
+  const [repeatFrequency, setRepeatFrequency] = useState<string>(RepeatFrequencyEnum.EVERY_1_WEEK);
 
   // Interactive Drag Selection State
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -256,8 +188,7 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, currentDate]);
 
-  // Past slot validation & notice state
-  const [pastSlotNotice, setPastSlotNotice] = useState<string | null>(null);
+  // Validation & modal state
   const [modalError, setModalError] = useState<string | null>(null);
 
   const isPastTimeSlot = (dateIso: string, hour: number): boolean => {
@@ -273,20 +204,9 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
     return targetDate <= nowTime;
   };
 
-  const getStatusStyles = (
-    status?: 'scheduled' | 'completed' | 'no_show' | 'cancelled',
-    isPast?: boolean,
-  ) => {
-    const currentStatus = status || (isPast ? 'completed' : 'scheduled');
-    switch (currentStatus) {
-      case 'scheduled':
-        return {
-          card: 'bg-[#eff6ff] border-l-4 border-l-[#0052cc] border border-[#bfdbfe] text-[#1e40af] hover:shadow-md',
-          badge: 'bg-[#0052cc] text-white',
-          text: 'text-[#0052cc]',
-          titleText: 'text-[#1e40af]',
-          label: 'Scheduled',
-        };
+  const getStatusStyles = (status?: string, isPast?: boolean) => {
+    const rawStatus = (status || (isPast ? 'completed' : 'scheduled')).toLowerCase();
+    switch (rawStatus) {
       case 'completed':
         return {
           card: 'bg-[#f0fdf4] border-l-4 border-l-emerald-600 border border-emerald-200 text-emerald-900 hover:shadow-md',
@@ -311,22 +231,42 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
           titleText: 'text-rose-950 line-through',
           label: 'Cancelled',
         };
+      case 'scheduled':
+      case 'confirmed':
+      case 'held':
+      default:
+        return {
+          card: 'bg-[#eff6ff] border-l-4 border-l-[#0052cc] border border-[#bfdbfe] text-[#1e40af] hover:shadow-md',
+          badge: 'bg-[#0052cc] text-white',
+          text: 'text-[#0052cc]',
+          titleText: 'text-[#1e40af]',
+          label: rawStatus === 'confirmed' ? 'Confirmed' : 'Scheduled',
+        };
     }
   };
 
-  const handleUpdateBlockStatus = (
+  const handleUpdateBlockStatus = async (
     blockId: string,
     newStatus: 'scheduled' | 'completed' | 'no_show' | 'cancelled',
   ) => {
-    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, status: newStatus } : b)));
+    setLocalBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, status: newStatus } : b)));
     if (selectedBlock && selectedBlock.id === blockId) {
       setSelectedBlock((prev) => (prev ? { ...prev, status: newStatus } : null));
     }
-  };
 
-  const triggerPastSlotNotice = () => {
-    setPastSlotNotice('Cannot create availability or book slots in the past.');
-    setTimeout(() => setPastSlotNotice(null), 3500);
+    const backendStatusMap: Record<string, string> = {
+      scheduled: 'SCHEDULED',
+      completed: 'COMPLETED',
+      no_show: 'NO_SHOW',
+      cancelled: 'CANCELLED',
+    };
+    const mappedStatus = (backendStatusMap[newStatus] ||
+      'SCHEDULED') as import('@/features/patient/types/patient.types').AppointmentStatus;
+    try {
+      await updateStatus({ appointmentId: blockId, status: mappedStatus });
+    } catch {
+      // Fallback
+    }
   };
 
   // Navigation handlers
@@ -365,26 +305,25 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
     defaultEndHour?: number,
   ) => {
     const targetIso = targetDateIso || formatDateISO(currentDate);
-    if (isPastTimeSlot(targetIso, defaultStartHour)) {
-      triggerPastSlotNotice();
-      return;
-    }
-    setModalError(null);
-    setModalDate(targetIso);
     const startH = defaultStartHour;
     const endH = defaultEndHour !== undefined ? defaultEndHour : defaultStartHour + 1;
     const startStr = `${startH.toString().padStart(2, '0')}:00`;
     const endStr = `${endH.toString().padStart(2, '0')}:00`;
+
+    setModalDate(targetIso);
     setModalStartTime(startStr);
     setModalEndTime(endStr);
+
+    if (isPastTimeSlot(targetIso, defaultStartHour)) {
+      setModalError('Cannot create availability or book slots in the past.');
+    } else {
+      setModalError(null);
+    }
+
     setIsModalOpen(true);
   };
 
   const handleMouseDown = (dateIso: string, hour: number) => {
-    if (isPastTimeSlot(dateIso, hour)) {
-      triggerPastSlotNotice();
-      return;
-    }
     setIsDragging(true);
     setDragDateIso(dateIso);
     setDragStartHour(hour);
@@ -421,28 +360,49 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging, dragDateIso, dragStartHour, dragCurrentHour]);
 
-  const handleSaveAvailability = (e: React.FormEvent) => {
+  const handleSaveAvailability = async (e: React.FormEvent) => {
     e.preventDefault();
     setModalError(null);
 
-    const [year, month, day] = modalDate.split('-').map(Number);
-    const [startH, startM] = modalStartTime.split(':').map((n) => parseInt(n, 10) || 0);
-    const [endH, endM] = modalEndTime.split(':').map((n) => parseInt(n, 10) || 0);
-
-    const startDateTime = new Date(year, month - 1, day, startH, startM);
-    const endDateTime = new Date(year, month - 1, day, endH, endM);
-
-    if (startDateTime < nowTime) {
-      setModalError('Cannot create availability or book slots in the past.');
+    // 1. Past slot check
+    const pastCheck = validatePastTimeSlot(modalDate, modalStartTime, nowTime);
+    if (!pastCheck.isValid) {
+      setModalError(pastCheck.error || 'Cannot create availability or book slots in the past.');
       return;
     }
 
-    if (endDateTime <= startDateTime) {
-      setModalError('End time must be after start time.');
+    // 2. Time range check
+    const rangeCheck = validateTimeRange(modalStartTime, modalEndTime, 15);
+    if (!rangeCheck.isValid) {
+      setModalError(rangeCheck.error || 'End time must be after start time.');
       return;
     }
 
-    const duration = Math.max(1, endH - startH);
+    // 3. Shift window bounds check
+    const shiftCheck = validateShiftWindowBounds(
+      modalDate,
+      modalStartTime,
+      modalEndTime,
+      scheduleConfig?.weeklyRules,
+    );
+    if (!shiftCheck.isValid) {
+      setModalError(shiftCheck.error || 'Slot falls outside defined shift hours.');
+      return;
+    }
+
+    // 4. Overlap check
+    const overlapCheck = validateSlotOverlap(
+      { date: modalDate, startTime: modalStartTime, endTime: modalEndTime },
+      blocks,
+    );
+    if (!overlapCheck.isValid) {
+      setModalError(overlapCheck.error || 'Time slot overlaps with an existing slot.');
+      return;
+    }
+
+    const [startH] = modalStartTime.split(':').map((n) => parseInt(n, 10) || 0);
+    const [endH] = modalEndTime.split(':').map((n) => parseInt(n, 10) || 0);
+    const duration = Math.max(0.5, endH - startH);
 
     const newBlock: AvailabilityBlock = {
       id: Date.now().toString(),
@@ -459,15 +419,36 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
       repeatFrequency: isRecurring ? repeatFrequency : undefined,
     };
 
-    setBlocks((prev: AvailabilityBlock[]) => [...prev, newBlock]);
+    setLocalBlocks((prev: AvailabilityBlock[]) => [...prev, newBlock]);
+
+    // Persist custom date availability slot to backend API
+    try {
+      await createAvailabilitySlot({
+        date: modalDate,
+        startTime: modalStartTime,
+        endTime: modalEndTime,
+        appointmentType,
+        isRecurring,
+        repeatType: isRecurring ? repeatType : undefined,
+        repeatFrequency: isRecurring ? repeatFrequency : undefined,
+      });
+    } catch {
+      // Fallback local state update
+    }
+
     setIsModalOpen(false);
   };
 
-  const handleDeleteBlock = (blockId: string) => {
-    setBlocks((prev: AvailabilityBlock[]) =>
+  const handleDeleteBlock = async (blockId: string) => {
+    setLocalBlocks((prev: AvailabilityBlock[]) =>
       prev.filter((b: AvailabilityBlock) => b.id !== blockId),
     );
     setSelectedBlock(null);
+    try {
+      await deleteAvailabilitySlot(blockId);
+    } catch {
+      // Fallback local state deletion
+    }
   };
 
   const formatHourLabel = (hour: number) => {
@@ -478,21 +459,6 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
 
   return (
     <div className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex flex-col w-full overflow-hidden">
-      {/* Floating Past Slot Warning Toast Banner */}
-      {pastSlotNotice && (
-        <div className="fixed top-20 right-6 z-50 bg-rose-600 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-top-4 duration-200">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{pastSlotNotice}</span>
-          <button
-            type="button"
-            onClick={() => setPastSlotNotice(null)}
-            className="ml-2 hover:opacity-80 cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Calendar Header Bar */}
       <div className="p-4 md:p-6 border-b border-[#c3c6d6]/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#f8f9fb]">
         {/* Left: All-in-One Unified Date Selector & Navigation Bar */}
@@ -739,26 +705,26 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
                           return (
                             <div
                               key={hour}
-                              onMouseDown={() =>
-                                !day.isWeekend && !isPast && handleMouseDown(day.iso, hour)
-                              }
-                              onMouseEnter={() =>
-                                !day.isWeekend && !isPast && handleMouseEnter(day.iso, hour)
-                              }
+                              onMouseDown={() => handleMouseDown(day.iso, hour)}
+                              onMouseEnter={() => handleMouseEnter(day.iso, hour)}
                               onMouseUp={handleMouseUp}
-                              className={`h-[64px] border-b border-[#c3c6d6]/50 relative group/hour transition-colors select-none ${
-                                day.isWeekend || isPast
-                                  ? 'bg-slate-100/40 cursor-not-allowed opacity-60'
-                                  : 'hover:bg-[#0052cc]/[0.06] cursor-pointer'
+                              className={`h-[64px] border-b border-[#c3c6d6]/50 relative group/hour transition-colors select-none cursor-pointer ${
+                                isPast
+                                  ? 'bg-slate-100/30 opacity-70 hover:bg-rose-50/40'
+                                  : 'hover:bg-[#0052cc]/[0.06]'
                               }`}
                             >
                               {/* Half-Hour Dashed Divider Line */}
                               <div className="absolute top-8 left-0 right-0 border-b border-dashed border-[#c3c6d6]/30 pointer-events-none" />
 
-                              {/* Hover "+" icon hint (no text) */}
-                              {!day.isWeekend && !isPast && !isDragging && (
+                              {/* Hover "+" icon hint */}
+                              {!isDragging && (
                                 <div className="absolute inset-0 opacity-0 group-hover/hour:opacity-100 flex items-center justify-center pointer-events-none z-0 transition-all">
-                                  <span className="w-8 h-8 rounded-full bg-[#0052cc] hover:bg-[#0041a3] text-white shadow-md flex items-center justify-center transition-transform transform scale-90 group-hover/hour:scale-105">
+                                  <span
+                                    className={`w-8 h-8 rounded-full text-white shadow-md flex items-center justify-center transition-transform transform scale-90 group-hover/hour:scale-105 ${
+                                      isPast ? 'bg-slate-400' : 'bg-[#0052cc] hover:bg-[#0041a3]'
+                                    }`}
+                                  >
                                     <Plus className="w-4 h-4" />
                                   </span>
                                 </div>
@@ -942,22 +908,26 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
                   return (
                     <div
                       key={hour}
-                      onMouseDown={() => !isPast && handleMouseDown(dateIso, hour)}
-                      onMouseEnter={() => !isPast && handleMouseEnter(dateIso, hour)}
+                      onMouseDown={() => handleMouseDown(dateIso, hour)}
+                      onMouseEnter={() => handleMouseEnter(dateIso, hour)}
                       onMouseUp={handleMouseUp}
-                      className={`h-[64px] border-b border-[#c3c6d6]/50 relative group/dayhour transition-colors select-none ${
+                      className={`h-[64px] border-b border-[#c3c6d6]/50 relative group/dayhour transition-colors select-none cursor-pointer ${
                         isPast
-                          ? 'bg-slate-100/50 cursor-not-allowed opacity-60'
-                          : 'hover:bg-[#0052cc]/[0.06] cursor-pointer'
+                          ? 'bg-slate-100/30 opacity-70 hover:bg-rose-50/40'
+                          : 'hover:bg-[#0052cc]/[0.06]'
                       }`}
                     >
                       {/* Half-Hour Dashed Divider Line */}
                       <div className="absolute top-8 left-0 right-0 border-b border-dashed border-[#c3c6d6]/30 pointer-events-none" />
 
                       {/* Hover "+" icon button */}
-                      {!isPast && !isDragging && (
+                      {!isDragging && (
                         <div className="absolute inset-0 opacity-0 group-hover/dayhour:opacity-100 flex items-center justify-center pointer-events-none z-0 transition-all">
-                          <span className="w-8 h-8 rounded-full bg-[#0052cc] hover:bg-[#0041a3] text-white shadow-md flex items-center justify-center transition-transform transform scale-90 group-hover/dayhour:scale-105">
+                          <span
+                            className={`w-8 h-8 rounded-full text-white shadow-md flex items-center justify-center transition-transform transform scale-90 group-hover/dayhour:scale-105 ${
+                              isPast ? 'bg-slate-400' : 'bg-[#0052cc] hover:bg-[#0041a3]'
+                            }`}
+                          >
                             <Plus className="w-4 h-4" />
                           </span>
                         </div>
@@ -1149,8 +1119,8 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
 
       {/* Interactive Block Detail / Delete Modal */}
       {selectedBlock && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] max-h-[90vh] overflow-y-auto flex flex-col my-auto">
             <div className="p-5 border-b border-[#c3c6d6]/30 flex justify-between items-center bg-[#f8f9fb]">
               <h3 className="font-bold text-base text-[#191c1e]">
                 {selectedBlock.type === 'booked' ? 'Booked Session' : 'Availability Block'}
@@ -1264,8 +1234,8 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
 
       {/* Interactive Modal: Add Availability */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[540px] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[540px] max-h-[90vh] overflow-y-auto flex flex-col my-auto animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b border-[#c3c6d6]/30 bg-[#f8f9fb]">
               <h3 className="font-heading font-extrabold text-lg text-[#191c1e] flex items-center gap-2">
@@ -1298,7 +1268,10 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
                   type="date"
                   value={modalDate}
                   min={formatDateISO(nowTime)}
-                  onChange={(e) => setModalDate(e.target.value)}
+                  onChange={(e) => {
+                    setModalDate(e.target.value);
+                    setModalError(null);
+                  }}
                   className="w-full bg-[#f8f9fb] border border-[#c3c6d6]/60 rounded-xl px-3 py-2.5 font-semibold text-[#191c1e] focus:outline-none focus:border-[#0052cc]"
                 />
               </div>
@@ -1309,15 +1282,7 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
                 required
                 value={appointmentType}
                 onChange={setAppointmentType}
-                options={[
-                  { value: 'Follow Up Session', label: 'Follow Up Session (50 min)' },
-                  { value: 'Consultation / CBT', label: 'Consultation / CBT (50 min)' },
-                  {
-                    value: 'Initial Intake Assessment',
-                    label: 'Initial Intake Assessment (60 min)',
-                  },
-                  { value: 'General Therapy', label: 'General Counseling (50 min)' },
-                ]}
+                options={APPOINTMENT_TYPE_OPTIONS}
               />
 
               {/* Start & End Time */}
@@ -1327,7 +1292,10 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
                   <input
                     type="time"
                     value={modalStartTime}
-                    onChange={(e) => setModalStartTime(e.target.value)}
+                    onChange={(e) => {
+                      setModalStartTime(e.target.value);
+                      setModalError(null);
+                    }}
                     className="w-full bg-[#f8f9fb] border border-[#c3c6d6]/60 rounded-xl px-3 py-2.5 font-semibold text-[#191c1e] focus:outline-none focus:border-[#0052cc]"
                   />
                 </div>
@@ -1336,7 +1304,10 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
                   <input
                     type="time"
                     value={modalEndTime}
-                    onChange={(e) => setModalEndTime(e.target.value)}
+                    onChange={(e) => {
+                      setModalEndTime(e.target.value);
+                      setModalError(null);
+                    }}
                     className="w-full bg-[#f8f9fb] border border-[#c3c6d6]/60 rounded-xl px-3 py-2.5 font-semibold text-[#191c1e] focus:outline-none focus:border-[#0052cc]"
                   />
                 </div>
@@ -1363,12 +1334,7 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
                       required
                       value={repeatType}
                       onChange={setRepeatType}
-                      options={[
-                        { value: 'Daily', label: 'Daily' },
-                        { value: 'Weekly', label: 'Weekly' },
-                        { value: 'Bi-Weekly', label: 'Bi-Weekly' },
-                        { value: 'Monthly', label: 'Monthly' },
-                      ]}
+                      options={REPEAT_TYPE_OPTIONS}
                     />
 
                     <CustomSelect
@@ -1376,12 +1342,7 @@ export const WeeklyAvailabilityCalendar: React.FC<{ initialView?: 'day' | 'week'
                       required
                       value={repeatFrequency}
                       onChange={setRepeatFrequency}
-                      options={[
-                        { value: 'Every 1 week', label: 'Every 1 week' },
-                        { value: 'Every 2 weeks', label: 'Every 2 weeks' },
-                        { value: 'Every 3 weeks', label: 'Every 3 weeks' },
-                        { value: 'Every 4 weeks', label: 'Every 4 weeks' },
-                      ]}
+                      options={REPEAT_FREQUENCY_OPTIONS}
                     />
                   </div>
                 )}
