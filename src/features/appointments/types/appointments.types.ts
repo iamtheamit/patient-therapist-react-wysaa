@@ -21,6 +21,8 @@ export interface BookAppointmentPayload {
   patientId: string;
   therapistId: string;
   slotId: string;
+  holdId?: string;
+  therapistName?: string;
   notes?: string;
 }
 

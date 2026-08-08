@@ -10,6 +10,8 @@ const ALLOWED_TRANSITIONS: Record<ExtendedAppointmentStatus, ExtendedAppointment
   COMPLETED: [],
   CANCELLED: [],
   NO_SHOW: [],
+  HOLD_EXPIRED: [],
+  PAYMENT_FAILED: [],
   scheduled: ['completed', 'cancelled', 'no_show'],
   completed: [],
   no_show: [],
@@ -41,6 +43,10 @@ export const getStatusBadgeConfig = (status: ExtendedAppointmentStatus) => {
       return { variant: 'error' as const, label: 'Cancelled' };
     case 'HELD':
       return { variant: 'warning' as const, label: 'Held Lock' };
+    case 'HOLD_EXPIRED':
+      return { variant: 'neutral' as const, label: 'Expired Hold' };
+    case 'PAYMENT_FAILED':
+      return { variant: 'error' as const, label: 'Payment Failed' };
     case 'NO_SHOW':
     case 'no_show':
       return { variant: 'error' as const, label: 'No-Show' };

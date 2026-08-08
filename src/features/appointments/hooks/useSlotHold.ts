@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { appointmentsApi } from '../api/appointmentsApi';
 import type { SlotHoldSession } from '../types/hold.types';
+import type { AvailableSlot } from '../types/appointments.types';
 import { useUIStore } from '@/stores/uiStore';
 import type { UIState } from '@/stores/uiStore';
+import { env } from '@/config/env';
 
 export const useSlotHold = () => {
   const [holdSession, setHoldSession] = useState<SlotHoldSession | null>(null);
@@ -33,10 +35,15 @@ export const useSlotHold = () => {
     setIsHolding(false);
   }, [holdSession, clearTimer]);
 
-  const startHold = async (slotId: string, therapistId: string) => {
+  const startHold = async (slot: AvailableSlot, therapistId: string) => {
     try {
       setIsHolding(true);
-      const session = await appointmentsApi.holdSlot(slotId, therapistId);
+      const session = await appointmentsApi.holdSlot(
+        slot.id,
+        therapistId,
+        slot.startTime,
+        slot.endTime,
+      );
       setHoldSession(session);
 
       const initialRemaining = Math.max(0, Math.floor((session.expiresAt - Date.now()) / 1000));
@@ -52,10 +59,11 @@ export const useSlotHold = () => {
           clearTimer();
           setHoldSession(null);
           setIsHolding(false);
+          const holdMinutes = Math.floor(env.VITE_SLOT_HOLD_DURATION_SECONDS / 60);
           addToast({
             type: 'warning',
             title: 'Slot Reservation Expired',
-            message: 'Your 5-minute slot hold has expired. Please choose a slot again.',
+            message: `Your ${holdMinutes}-minute slot hold has expired. Please choose a slot again.`,
           });
         }
       }, 1000);

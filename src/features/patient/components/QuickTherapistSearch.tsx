@@ -53,6 +53,7 @@ export const QuickTherapistSearch: React.FC<QuickTherapistSearchProps> = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All Specialties');
+  const [searchDate, setSearchDate] = useState(new Date().toISOString().split('T')[0]);
 
   const filteredTherapists = useMemo(() => {
     return therapists.filter((t) => {
@@ -75,7 +76,7 @@ export const QuickTherapistSearch: React.FC<QuickTherapistSearchProps> = ({
             Find &amp; Book a Therapist
           </h3>
           <p className="text-xs text-[#51606f] mt-0.5">
-            Search licensed practitioners and select your preferred date &amp; time.
+            Select your preferred date &amp; search licensed practitioners with open slots.
           </p>
         </div>
 
@@ -86,6 +87,18 @@ export const QuickTherapistSearch: React.FC<QuickTherapistSearchProps> = ({
 
       {/* Filters Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
+        {/* Preferred Date selection */}
+        <div className="relative sm:w-48 shrink-0">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#003d9b]" />
+          <input
+            type="date"
+            min={new Date().toISOString().split('T')[0]}
+            value={searchDate}
+            onChange={(e) => setSearchDate(e.target.value)}
+            className="w-full pl-9 pr-3 py-2.5 bg-[#e8f0fe] border border-[#003d9b]/40 rounded-xl text-xs font-bold text-[#003d9b] focus:outline-none focus:ring-1 focus:ring-[#003d9b] cursor-pointer"
+          />
+        </div>
+
         {/* Search input */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737685]" />
@@ -99,7 +112,7 @@ export const QuickTherapistSearch: React.FC<QuickTherapistSearchProps> = ({
         </div>
 
         {/* Specialty dropdown */}
-        <div className="relative sm:w-64">
+        <div className="relative sm:w-60">
           <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737685]" />
           <select
             value={selectedSpecialty}

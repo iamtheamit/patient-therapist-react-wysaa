@@ -8,7 +8,7 @@ export { SlotGrid } from './components/SlotGrid';
 export { BookingConfirmationForm } from './components/BookingConfirmationForm';
 export { HoldCountdownBanner } from './components/HoldCountdownBanner';
 export { RecurringRuleSelector } from './components/RecurringRuleSelector';
-export { useTherapists, useAvailableSlots } from './hooks/useTherapists';
+export { useTherapists, useAvailableSlots, useDateAvailability } from './hooks/useTherapists';
 export { useBookAppointment, useBookRecurringAppointment } from './hooks/useBookAppointment';
 export { useSlotHold } from './hooks/useSlotHold';
 export { appointmentsApi } from './api/appointmentsApi';

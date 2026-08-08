@@ -1,14 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
   Search,
-  Filter,
   Star,
-  CheckCircle2,
   Calendar,
   Clock,
   UserCheck,
   ShieldCheck,
-  Award,
   ArrowLeft,
   LayoutGrid,
   List,
@@ -75,6 +72,124 @@ const TherapistAvatar: React.FC<{ url?: string; name: string; size?: string }> =
   );
 };
 
+// Directory Therapist Card Component with Per-Date Slot Check & Disabled State
+const TherapistDirectoryCardItem: React.FC<{
+  therapist: TherapistProfile;
+  selectedDate: string;
+  isSarahOnline: boolean;
+  onViewProfile: (therapist: TherapistProfile) => void;
+  onBookSession: (therapist: TherapistProfile) => void;
+}> = ({ therapist, selectedDate, isSarahOnline, onViewProfile, onBookSession }) => {
+  const { data: slots = [], isLoading } = useAvailableSlots(therapist.id, selectedDate);
+  const openSlotsCount = slots.filter((s) => s.isAvailable).length;
+  const isOnline = therapist.id === 'therapist-1' ? isSarahOnline : true;
+  const isTopRated = (therapist.rating || 0) >= 4.8;
+  const hasSlotsAvailable = openSlotsCount > 0;
+
+  const formattedDate = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  return (
+    <div className="bg-white rounded-xl border border-outline-variant/50 hover:border-primary/30 transition-colors duration-200 text-left group">
+      {/* Main content row */}
+      <div className="p-5 flex gap-4">
+        {/* Avatar column */}
+        <div className="relative shrink-0 pt-0.5">
+          <TherapistAvatar url={therapist.avatarUrl} name={therapist.name} size="w-12 h-12" />
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-white ${
+              isOnline ? 'bg-emerald-500' : 'bg-on-surface-variant/30'
+            }`}
+          />
+        </div>
+
+        {/* Info column */}
+        <div className="flex-1 min-w-0 space-y-2">
+          {/* Name + credentials row */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="font-heading font-semibold text-sm text-on-surface leading-tight truncate">
+                {therapist.name}
+              </h3>
+              <p className="text-xs text-primary font-medium mt-0.5 truncate">
+                {therapist.specialization}
+              </p>
+            </div>
+            {isTopRated && (
+              <span className="shrink-0 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/70 px-2 py-0.5 rounded-md flex items-center gap-1">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                Top Rated
+              </span>
+            )}
+          </div>
+
+          {/* Meta row — clean inline text, not pill badges */}
+          <div className="flex items-center gap-3 text-xs text-secondary">
+            <span className="flex items-center gap-1">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <span className="font-semibold text-on-surface">{therapist.rating}</span>
+            </span>
+            <span className="w-px h-3 bg-outline-variant/60" />
+            <span>{therapist.experienceYears || 5}+ yrs experience</span>
+            <span className="w-px h-3 bg-outline-variant/60" />
+            <span>50 min session</span>
+          </div>
+
+          {/* Bio — plain text, no fake quote styling */}
+          <p className="text-xs text-secondary leading-relaxed line-clamp-2">
+            {therapist.bio ||
+              'Specialized clinical psychologist focused on evidence-based cognitive and behavioral therapies.'}
+          </p>
+        </div>
+      </div>
+
+      {/* Footer — availability + actions */}
+      <div className="px-5 py-3 border-t border-outline-variant/30 flex items-center justify-between gap-4">
+        {/* Left: availability + price */}
+        <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-1.5 text-secondary">
+            <Calendar className="w-3.5 h-3.5 text-on-surface-variant" />
+            <span>{formattedDate}</span>
+            {isLoading ? (
+              <span className="text-on-surface-variant animate-pulse ml-1">checking…</span>
+            ) : hasSlotsAvailable ? (
+              <span className="text-emerald-700 font-semibold ml-1">
+                · {openSlotsCount} slot{openSlotsCount !== 1 ? 's' : ''} open
+              </span>
+            ) : (
+              <span className="text-on-surface-variant font-medium ml-1">· No availability</span>
+            )}
+          </div>
+          <span className="w-px h-3.5 bg-outline-variant/40 hidden sm:block" />
+          <span className="hidden sm:inline text-secondary">
+            <span className="font-semibold text-on-surface">$150</span> / visit
+          </span>
+        </div>
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="ghost" size="sm" onClick={() => onViewProfile(therapist)}>
+            View Profile
+          </Button>
+
+          {hasSlotsAvailable ? (
+            <Button variant="primary" size="sm" onClick={() => onBookSession(therapist)}>
+              Book Session
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" disabled className="opacity-50 pointer-events-none">
+              Unavailable
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const BookAppointmentPage: React.FC = () => {
   const user = useAuthStore((state: AuthState) => state.user);
   const patientId = user?.id || 'patient-user-1';
@@ -96,12 +211,31 @@ export const BookAppointmentPage: React.FC = () => {
   const [bookingStep, setBookingStep] = useState<'directory' | 'slots' | 'confirm'>('directory');
   const [profileModalTherapist, setProfileModalTherapist] = useState<TherapistProfile | null>(null);
 
+  const next7Days = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const isoDate = d.toISOString().split('T')[0];
+      const dayName =
+        i === 0
+          ? 'Today'
+          : i === 1
+            ? 'Tomorrow'
+            : d.toLocaleDateString('en-US', { weekday: 'short' });
+      const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      days.push({ isoDate, dayName, monthDay, fullDate: d });
+    }
+    return days;
+  }, []);
+
   const { data: slots = [], isLoading: isSlotsLoading } = useAvailableSlots(
     selectedTherapist?.id || '',
     selectedDate,
   );
 
-  const { secondsRemaining, isHolding, startHold, releaseHold } = useSlotHold();
+  const { secondsRemaining, isHolding, startHold, releaseHold, holdSession } = useSlotHold();
 
   const filteredTherapists = useMemo(() => {
     const list = therapists.filter((t) => {
@@ -143,7 +277,7 @@ export const BookAppointmentPage: React.FC = () => {
   const handleSelectSlot = async (slot: AvailableSlot) => {
     setSelectedSlot(slot);
     if (selectedTherapist) {
-      await startHold(slot.id, selectedTherapist.id);
+      await startHold(slot, selectedTherapist.id);
     }
     setBookingStep('confirm');
   };
@@ -164,153 +298,169 @@ export const BookAppointmentPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 text-left w-full">
-      {/* Clean Page Title Header - Consistent across all steps */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#c3c6d6]/30 pb-4">
+    <div className="space-y-6 text-left w-full">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-outline-variant/30 pb-4">
         <div>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#191c1e]">
+          <h1 className="font-heading text-2xl font-bold text-on-surface">
             {bookingStep === 'directory'
               ? 'Find a Therapist'
               : bookingStep === 'slots'
                 ? 'Select Appointment Slot'
-                : 'Confirm Therapy Booking'}
+                : 'Confirm Booking'}
           </h1>
-          <p className="text-[#51606f] mt-1 text-xs">
-            Discover licensed psychologists and board-certified therapists verified by TherapySync.
+          <p className="text-secondary mt-1 text-sm">
+            Browse verified practitioners and book your next session.
           </p>
         </div>
 
         {bookingStep !== 'directory' && (
-          <div className="flex items-center gap-3 self-start md:self-auto">
+          <div className="flex items-center gap-2 self-start md:self-auto">
             <button
               onClick={handleBackToDirectory}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-[#003d9b] bg-[#f0f4ff] hover:bg-[#d5e4f6] rounded-xl transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5 rounded-lg transition cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Directory
+              <ArrowLeft className="w-3.5 h-3.5" /> Back
             </button>
-            <span className="text-xs font-semibold text-[#51606f] bg-white border border-[#c3c6d6]/40 px-3 py-1.5 rounded-xl shadow-2xs">
-              Step {bookingStep === 'slots' ? '1 of 2' : '2 of 2'}
+            <span className="text-xs font-medium text-secondary bg-surface-container-low border border-outline-variant/40 px-2.5 py-1 rounded-md tabular-nums">
+              Step {bookingStep === 'slots' ? '1' : '2'} of 2
             </span>
           </div>
         )}
       </div>
 
-      {/* Directory Filter Toolbar - Only on Directory step */}
+      {/* Directory Filter Toolbar */}
       {bookingStep === 'directory' && (
-        <div className="bg-white rounded-2xl border border-[#c3c6d6]/40 p-6 shadow-sm space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Search Field */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737685]" />
+        <div className="bg-white rounded-xl border border-outline-variant/40 p-5 space-y-3">
+          <div className="flex flex-col md:flex-row md:items-end gap-3">
+            {/* Date picker */}
+            <div className="shrink-0 md:w-48">
+              <label className="text-[11px] font-semibold text-secondary uppercase tracking-wider mb-1 block">
+                Session Date
+              </label>
               <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search practitioner by name, clinical focus, or condition..."
-                className="w-full pl-10 pr-10 py-2.5 bg-[#f8f9ff] border border-[#c3c6d6]/60 rounded-xl text-xs font-medium text-[#191c1e] focus:outline-none focus:border-[#003d9b] focus:ring-1 focus:ring-[#003d9b] transition"
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full px-3 py-2 bg-surface-container-low border border-outline-variant/60 rounded-lg text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition cursor-pointer"
               />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
             </div>
 
-            {/* Online Now & Top Rated Toggles & Sort & Layout */}
-            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+            {/* Search */}
+            <div className="relative flex-1">
+              <label className="text-[11px] font-semibold text-secondary uppercase tracking-wider mb-1 block">
+                Search
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Name or specialization…"
+                  className="w-full pl-9 pr-9 py-2 bg-surface-container-low border border-outline-variant/60 rounded-lg text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Quick filters + sort + layout */}
+            <div className="flex items-end gap-2 flex-wrap sm:flex-nowrap">
               <button
                 type="button"
                 onClick={() => setShowOnlineOnly(!showOnlineOnly)}
-                className={`px-4 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
+                className={`px-3 py-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
                   showOnlineOnly
                     ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                    : 'bg-[#f8f9ff] border-[#c3c6d6]/60 text-[#51606f] hover:text-[#191c1e]'
+                    : 'bg-surface-container-low border-outline-variant/60 text-secondary hover:text-on-surface hover:border-outline-variant'
                 }`}
               >
                 <span
-                  className={`w-2 h-2 rounded-full ${
-                    showOnlineOnly ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    showOnlineOnly ? 'bg-emerald-500' : 'bg-outline-variant'
                   }`}
                 />
-                Online Now
+                Online
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowTopRatedOnly(!showTopRatedOnly)}
-                className={`px-4 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
+                className={`px-3 py-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
                   showTopRatedOnly
-                    ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-2xs'
-                    : 'bg-[#f8f9ff] border-[#c3c6d6]/60 text-[#51606f] hover:text-[#191c1e]'
+                    ? 'bg-amber-50 border-amber-300 text-amber-800'
+                    : 'bg-surface-container-low border-outline-variant/60 text-secondary hover:text-on-surface hover:border-outline-variant'
                 }`}
               >
                 <Star
-                  className={`w-3.5 h-3.5 ${
-                    showTopRatedOnly ? 'fill-amber-500 text-amber-500' : 'text-slate-400'
+                  className={`w-3 h-3 ${
+                    showTopRatedOnly ? 'fill-amber-500 text-amber-500' : 'text-outline-variant'
                   }`}
                 />
                 Top Rated
               </button>
 
-              {/* Sort Dropdown */}
-              <div className="flex items-center gap-1.5 bg-[#f8f9ff] border border-[#c3c6d6]/60 px-3 py-2 rounded-xl text-xs font-medium text-[#51606f]">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-[#003d9b]" />
+              {/* Sort */}
+              <div className="flex items-center gap-1.5 bg-surface-container-low border border-outline-variant/60 px-3 py-2 rounded-lg text-xs text-secondary">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-outline" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as 'rating' | 'experience' | 'name')}
-                  className="bg-transparent text-[#191c1e] font-semibold focus:outline-none cursor-pointer"
+                  className="bg-transparent text-on-surface font-medium focus:outline-none cursor-pointer text-xs"
                 >
-                  <option value="rating">Top Rated</option>
-                  <option value="experience">Most Experienced</option>
-                  <option value="name">Name (A-Z)</option>
+                  <option value="rating">Rating</option>
+                  <option value="experience">Experience</option>
+                  <option value="name">Name</option>
                 </select>
               </div>
 
-              {/* Layout Toggle */}
-              <div className="hidden sm:flex items-center bg-[#f8f9ff] border border-[#c3c6d6]/60 p-1 rounded-xl">
+              {/* Layout toggle */}
+              <div className="hidden sm:flex items-center bg-surface-container-low border border-outline-variant/60 p-0.5 rounded-lg">
                 <button
                   onClick={() => setLayoutMode('list')}
-                  className={`p-1.5 rounded-lg transition ${
+                  className={`p-1.5 rounded-md transition ${
                     layoutMode === 'list'
-                      ? 'bg-[#003d9b] text-white'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-primary text-white'
+                      : 'text-outline hover:text-on-surface'
                   }`}
                   title="List View"
                 >
-                  <List className="w-4 h-4" />
+                  <List className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setLayoutMode('grid')}
-                  className={`p-1.5 rounded-lg transition ${
+                  className={`p-1.5 rounded-md transition ${
                     layoutMode === 'grid'
-                      ? 'bg-[#003d9b] text-white'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-primary text-white'
+                      : 'text-outline hover:text-on-surface'
                   }`}
                   title="Grid View"
                 >
-                  <LayoutGrid className="w-4 h-4" />
+                  <LayoutGrid className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Specialty Filter Pills */}
-          <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              <span className="text-xs font-bold text-[#51606f] shrink-0 mr-1 flex items-center gap-1">
-                <Filter className="w-3.5 h-3.5" /> Specialty:
-              </span>
+          {/* Specialty filter row */}
+          <div className="flex items-center justify-between pt-2 border-t border-outline-variant/20">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
               {SPECIALTY_FILTERS.map((spec) => (
                 <button
                   key={spec}
                   onClick={() => setSelectedSpecialty(spec)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition cursor-pointer ${
                     selectedSpecialty === spec
-                      ? 'bg-[#003d9b] text-white shadow-xs'
-                      : 'bg-[#f8f9ff] text-[#51606f] border border-[#c3c6d6]/40 hover:bg-slate-100 hover:text-[#191c1e]'
+                      ? 'bg-primary text-white'
+                      : 'text-secondary hover:bg-surface-container-low hover:text-on-surface'
                   }`}
                 >
                   {spec}
@@ -318,8 +468,8 @@ export const BookAppointmentPage: React.FC = () => {
               ))}
             </div>
 
-            <span className="text-xs font-bold text-[#003d9b] shrink-0 hidden md:block">
-              {filteredTherapists.length} Practitioners Found
+            <span className="text-xs text-secondary shrink-0 hidden md:block tabular-nums">
+              {filteredTherapists.length} result{filteredTherapists.length !== 1 ? 's' : ''}
             </span>
           </div>
         </div>
@@ -327,10 +477,23 @@ export const BookAppointmentPage: React.FC = () => {
 
       {/* ACTIVE STEP VIEW */}
       {bookingStep === 'directory' ? (
-        /* STEP 1: Practitioner Directory Cards (Full Width) */
         isTherapistsLoading ? (
-          <div className="p-12 text-center bg-white rounded-2xl border border-[#c3c6d6]/40 text-xs text-[#51606f] animate-pulse">
-            Loading verified practitioners...
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-xl border border-outline-variant/40 p-5 animate-pulse"
+              >
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 rounded-full bg-surface-container-high shrink-0" />
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-3.5 bg-surface-container-high rounded w-2/5" />
+                    <div className="h-3 bg-surface-container-low rounded w-1/3" />
+                    <div className="h-3 bg-surface-container-low rounded w-4/5" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredTherapists.length === 0 ? (
           <EmptyState
@@ -352,110 +515,16 @@ export const BookAppointmentPage: React.FC = () => {
                 : 'space-y-4 w-full'
             }
           >
-            {filteredTherapists.map((therapist) => {
-              const isOnline = therapist.id === 'therapist-1' ? isSarahOnline : true;
-              const isTopRated = (therapist.rating || 0) >= 4.8;
-              return (
-                <div
-                  key={therapist.id}
-                  className="bg-white rounded-2xl border border-[#c3c6d6]/50 p-6 shadow-sm hover:shadow-md hover:border-[#003d9b]/40 transition-all text-left flex flex-col justify-between gap-5 group"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="relative shrink-0">
-                      <TherapistAvatar
-                        url={therapist.avatarUrl}
-                        name={therapist.name}
-                        size="w-14 h-14"
-                      />
-                      <span
-                        className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${
-                          isOnline ? 'bg-emerald-500' : 'bg-slate-300'
-                        }`}
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <h3 className="font-heading font-bold text-base text-[#191c1e] group-hover:text-[#003d9b] transition truncate">
-                          {therapist.name}
-                        </h3>
-                        <div className="flex items-center gap-1.5">
-                          {isTopRated && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/80">
-                              <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                              Top Rated
-                            </span>
-                          )}
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            Verified
-                          </span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs font-semibold text-[#003d9b] truncate">
-                        {therapist.specialization}
-                      </p>
-
-                      {/* Ratings & Tags */}
-                      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-[#51606f]">
-                        <span className="flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60 text-xs">
-                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          {therapist.rating} (128 reviews)
-                        </span>
-
-                        <span className="flex items-center gap-1 bg-[#f8f9ff] px-2 py-0.5 rounded border border-slate-200 text-[11px] font-medium">
-                          <Award className="w-3 h-3 text-[#003d9b]" />
-                          {therapist.experienceYears || 8}+ Yrs Exp
-                        </span>
-
-                        <span className="flex items-center gap-1 text-[11px] text-[#51606f]">
-                          <Clock className="w-3 h-3 text-[#003d9b]" />
-                          50 min
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bio snippet */}
-                  <p className="text-xs text-[#51606f] leading-relaxed line-clamp-2 bg-[#f8f9ff] p-3 rounded-xl border border-slate-100 italic">
-                    "
-                    {therapist.bio ||
-                      'Specialized clinical psychologist focused on evidence-based cognitive and behavioral therapies.'}
-                    "
-                  </p>
-
-                  {/* Card Footer Actions - Clean Baseline Alignment & Standard Button Components */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-slate-100 gap-3">
-                    <div className="shrink-0">
-                      <span className="text-[11px] text-[#51606f] block">Session Fee</span>
-                      <span className="font-heading font-bold text-base text-[#191c1e]">
-                        $150 <span className="text-[11px] font-normal text-[#51606f]">/ visit</span>
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setProfileModalTherapist(therapist)}
-                      >
-                        View Profile
-                      </Button>
-
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        leftIcon={<UserCheck className="w-3.5 h-3.5" />}
-                        onClick={() => handleStartBooking(therapist)}
-                      >
-                        Book Session
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {filteredTherapists.map((therapist) => (
+              <TherapistDirectoryCardItem
+                key={therapist.id}
+                therapist={therapist}
+                selectedDate={selectedDate}
+                isSarahOnline={isSarahOnline}
+                onViewProfile={(t) => setProfileModalTherapist(t)}
+                onBookSession={(t) => handleStartBooking(t)}
+              />
+            ))}
           </div>
         )
       ) : (
@@ -483,29 +552,102 @@ export const BookAppointmentPage: React.FC = () => {
                   </Button>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#191c1e] flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#003d9b]" /> Select Preferred Session Date
-                  </label>
-                  <input
-                    type="date"
-                    min={new Date().toISOString().split('T')[0]}
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="px-4 py-2.5 bg-[#f8f9ff] border border-[#c3c6d6]/60 rounded-xl text-xs font-medium text-[#191c1e] focus:outline-none focus:border-[#003d9b]"
-                  />
+                {/* 7-Day Interactive Date Navigation Bar */}
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="text-xs font-bold text-[#191c1e] flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-[#003d9b]" /> Select Session Date
+                    </label>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <span className="text-[11px] font-semibold text-[#51606f]">Custom Date:</span>
+                      <input
+                        type="date"
+                        min={new Date().toISOString().split('T')[0]}
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="px-2.5 py-1 bg-[#f8f9ff] border border-[#c3c6d6]/60 rounded-lg text-xs font-medium text-[#191c1e] focus:outline-none focus:border-[#003d9b]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Date Pill Cards Carousel */}
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 overflow-x-auto pb-1">
+                    {next7Days.map((day) => {
+                      const isSelected = selectedDate === day.isoDate;
+                      return (
+                        <button
+                          key={day.isoDate}
+                          type="button"
+                          onClick={() => setSelectedDate(day.isoDate)}
+                          className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#003d9b] text-white border-[#003d9b] shadow-md shadow-[#003d9b]/20 ring-2 ring-[#003d9b]/30'
+                              : 'bg-[#f8f9ff] text-[#191c1e] border-[#c3c6d6]/50 hover:bg-slate-100 hover:border-[#003d9b]/40'
+                          }`}
+                        >
+                          <span
+                            className={`text-[10px] uppercase tracking-wider font-bold ${
+                              isSelected ? 'text-blue-100' : 'text-[#51606f]'
+                            }`}
+                          >
+                            {day.dayName}
+                          </span>
+                          <span className="text-xs font-extrabold mt-0.5">{day.monthDay}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="font-bold text-sm text-[#191c1e]">
-                    Available Slots for {selectedDate}
-                  </h3>
+                {/* Available Slots Section */}
+                <div className="space-y-4 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-[#191c1e] flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-[#003d9b]" />
+                      Available Slots for{' '}
+                      <span className="text-[#003d9b] font-extrabold">
+                        {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </h3>
+                    {!isSlotsLoading && slots.filter((s) => s.isAvailable).length > 0 && (
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+                        {slots.filter((s) => s.isAvailable).length} Open Slots
+                      </span>
+                    )}
+                  </div>
+
                   <SlotGrid
                     slots={slots}
                     selectedSlotId={selectedSlot?.id || null}
                     onSelectSlot={handleSelectSlot}
                     isLoading={isSlotsLoading}
                   />
+
+                  {!isSlotsLoading && slots.length === 0 && (
+                    <div className="bg-[#f8f9ff] border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                      <div className="text-xs text-[#51606f]">
+                        <p className="font-semibold text-[#191c1e]">
+                          No open slots found for this date.
+                        </p>
+                        <p>Try selecting another date from the bar above.</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const current = new Date(selectedDate + 'T00:00:00');
+                          current.setDate(current.getDate() + 1);
+                          setSelectedDate(current.toISOString().split('T')[0]);
+                        }}
+                      >
+                        Check Next Day &rarr;
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -521,6 +663,7 @@ export const BookAppointmentPage: React.FC = () => {
                     patientId={patientId}
                     therapist={selectedTherapist}
                     slot={selectedSlot}
+                    holdId={holdSession?.holdId}
                     onBack={handleBackToSlots}
                   />
                 </div>

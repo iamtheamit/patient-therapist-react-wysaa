@@ -7,11 +7,13 @@ import { z } from 'zod';
 const envSchema = z.object({
   VITE_API_BASE_URL: z.string().url().default('https://api.wysacare.example.com/v1'),
   VITE_APP_ENV: z.enum(['development', 'staging', 'production', 'test']).default('development'),
+  VITE_SLOT_HOLD_DURATION_SECONDS: z.coerce.number().int().positive().default(300),
 });
 
 const _env = envSchema.safeParse({
   VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
   VITE_APP_ENV: import.meta.env.VITE_APP_ENV,
+  VITE_SLOT_HOLD_DURATION_SECONDS: import.meta.env.VITE_SLOT_HOLD_DURATION_SECONDS,
 });
 
 if (!_env.success) {

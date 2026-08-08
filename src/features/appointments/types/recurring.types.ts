@@ -9,6 +9,9 @@ export interface RecurringBookingPayload {
   patientId: string;
   therapistId: string;
   baseSlotId: string;
+  startTime: string;
+  endTime: string;
+  recurrenceEndDate: string;
   recurringRule: RecurringRule;
   notes?: string;
 }

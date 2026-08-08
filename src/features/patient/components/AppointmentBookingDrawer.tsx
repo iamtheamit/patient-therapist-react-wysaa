@@ -37,7 +37,7 @@ export const AppointmentBookingDrawer: React.FC<AppointmentBookingDrawerProps> =
     selectedDate,
   );
 
-  const { secondsRemaining, isHolding, startHold, releaseHold } = useSlotHold();
+  const { secondsRemaining, isHolding, startHold, releaseHold, holdSession } = useSlotHold();
 
   // Reset state when modal closes
   const handleClose = async () => {
@@ -52,7 +52,7 @@ export const AppointmentBookingDrawer: React.FC<AppointmentBookingDrawerProps> =
   const handleSelectSlot = async (slot: AvailableSlot) => {
     setSelectedSlot(slot);
     if (therapist) {
-      await startHold(slot.id, therapist.id);
+      await startHold(slot, therapist.id);
     }
     setStep('confirm');
   };
@@ -150,6 +150,7 @@ export const AppointmentBookingDrawer: React.FC<AppointmentBookingDrawerProps> =
               therapist={therapist}
               slot={selectedSlot}
               patientId={patientId}
+              holdId={holdSession?.holdId}
               onBack={handleBackToSlots}
             />
           )

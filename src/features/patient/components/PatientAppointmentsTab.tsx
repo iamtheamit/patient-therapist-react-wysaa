@@ -5,7 +5,7 @@ import { usePatientAppointments } from '../hooks/usePatientAppointments';
 import { AppointmentCard } from './AppointmentCard';
 import { EmptyState } from '@/components/common/EmptyState';
 
-export type FilterTab = 'all' | 'upcoming' | 'past' | 'holds';
+export type FilterTab = 'all' | 'upcoming' | 'past' | 'holds' | 'failed';
 
 export const PatientAppointmentsTab: React.FC = () => {
   const user = useAuthStore((state: AuthState) => state.user);
@@ -26,10 +26,17 @@ export const PatientAppointmentsTab: React.FC = () => {
         );
       }
       if (activeTab === 'past') {
-        return apptDate < now || appt.status === 'COMPLETED' || appt.status === 'CANCELLED';
+        return (
+          (apptDate < now || appt.status === 'COMPLETED' || appt.status === 'CANCELLED') &&
+          appt.status !== 'HOLD_EXPIRED' &&
+          appt.status !== 'PAYMENT_FAILED'
+        );
       }
       if (activeTab === 'holds') {
         return appt.status === 'HELD';
+      }
+      if (activeTab === 'failed') {
+        return appt.status === 'HOLD_EXPIRED' || appt.status === 'PAYMENT_FAILED';
       }
       return true;
     });
@@ -37,14 +44,32 @@ export const PatientAppointmentsTab: React.FC = () => {
 
   const upcomingCount = useMemo(() => {
     const now = new Date();
-    return appointments.filter((a) => new Date(a.startTime) >= now && a.status !== 'CANCELLED')
-      .length;
+    return appointments.filter(
+      (a) =>
+        new Date(a.startTime) >= now &&
+        a.status !== 'CANCELLED' &&
+        a.status !== 'HOLD_EXPIRED' &&
+        a.status !== 'PAYMENT_FAILED',
+    ).length;
   }, [appointments]);
 
   const pastCount = useMemo(() => {
     const now = new Date();
-    return appointments.filter((a) => new Date(a.startTime) < now || a.status === 'COMPLETED')
+    return appointments.filter(
+      (a) =>
+        (new Date(a.startTime) < now || a.status === 'COMPLETED') &&
+        a.status !== 'HOLD_EXPIRED' &&
+        a.status !== 'PAYMENT_FAILED',
+    ).length;
+  }, [appointments]);
+
+  const failedCount = useMemo(() => {
+    return appointments.filter((a) => a.status === 'HOLD_EXPIRED' || a.status === 'PAYMENT_FAILED')
       .length;
+  }, [appointments]);
+
+  const activeHoldsCount = useMemo(() => {
+    return appointments.filter((a) => a.status === 'HELD').length;
   }, [appointments]);
 
   return (
@@ -94,7 +119,18 @@ export const PatientAppointmentsTab: React.FC = () => {
                 : 'text-[#51606f] hover:text-[#191c1e] hover:bg-white/60'
             }`}
           >
-            Active Holds
+            Active Holds ({activeHoldsCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('failed')}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              activeTab === 'failed'
+                ? 'bg-[#003d9b] text-white shadow-xs'
+                : 'text-[#51606f] hover:text-[#191c1e] hover:bg-white/60'
+            }`}
+          >
+            Failed ({failedCount})
           </button>
         </div>
       </div>

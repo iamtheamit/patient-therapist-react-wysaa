@@ -5,6 +5,8 @@ export type AppointmentStatus =
   | 'NO_SHOW'
   | 'CANCELLED'
   | 'HELD'
+  | 'HOLD_EXPIRED'
+  | 'PAYMENT_FAILED'
   | 'scheduled'
   | 'completed'
   | 'no_show'

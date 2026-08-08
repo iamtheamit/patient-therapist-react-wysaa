@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { axiosClient } from '@/api/axiosClient';
 import type {
   TherapistAgendaItem,
@@ -33,9 +34,16 @@ export const therapistApi = {
           params: { status },
         },
       );
-      return Array.isArray(response)
+      const items = Array.isArray(response)
         ? response
-        : (response as { data?: TherapistAgendaItem[] })?.data || [];
+        : (response as any)?.items || (response as { data?: TherapistAgendaItem[] })?.data || [];
+      return items.map((item: any) => {
+        const rawStatus = item.status || item.appointmentStatus || 'SCHEDULED';
+        return {
+          ...item,
+          status: rawStatus === 'HOLD' ? 'HELD' : rawStatus,
+        };
+      });
     } catch {
       return [];
     }
@@ -49,7 +57,7 @@ export const therapistApi = {
       );
       return Array.isArray(response)
         ? response
-        : (response as { data?: TherapistAgendaItem[] })?.data || [];
+        : (response as any)?.items || (response as { data?: TherapistAgendaItem[] })?.data || [];
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 600));
 
@@ -393,7 +401,9 @@ export const therapistApi = {
       const response = await axiosClient.get(`/therapist/availability-slots/${therapistId}`, {
         params: { date },
       });
-      return Array.isArray(response) ? response : (response as { data?: unknown[] })?.data || [];
+      return Array.isArray(response)
+        ? response
+        : (response as any)?.items || (response as { data?: unknown[] })?.data || [];
     } catch {
       return [];
     }

@@ -1,13 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { axiosClient } from '@/api/axiosClient';
 import type { PatientAppointment, PatientDashboardStats } from '../types/patient.types';
 
 export const patientApi = {
   getAppointments: async (patientId: string): Promise<PatientAppointment[]> => {
     try {
-      const response = await axiosClient.get<unknown, PatientAppointment[]>(
-        `/patients/${patientId}/appointments`,
-      );
-      return response;
+      const response = await axiosClient.get<unknown, any>('/appointments/patient');
+      const items = Array.isArray(response) ? response : (response as any)?.items || [];
+      return items.map((appt: any) => {
+        const rawStatus = appt.status || appt.appointmentStatus || 'SCHEDULED';
+        return {
+          ...appt,
+          status: rawStatus === 'HOLD' ? 'HELD' : rawStatus,
+        };
+      });
     } catch {
       // Mock Fallback for local demo resilience
       await new Promise((resolve) => setTimeout(resolve, 600));

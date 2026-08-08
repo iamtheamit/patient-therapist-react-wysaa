@@ -15,5 +15,16 @@ export const useAvailableSlots = (therapistId: string, date: string) => {
     queryKey: QUERY_KEYS.SCHEDULES.AVAILABLE_SLOTS(therapistId, date),
     queryFn: () => appointmentsApi.getAvailableSlots(therapistId, date),
     enabled: Boolean(therapistId && date),
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+};
+
+export const useDateAvailability = (date: string, therapistId?: string) => {
+  const targetTherapistId = therapistId || 'therapist-1';
+  return useQuery<AvailableSlot[]>({
+    queryKey: ['availability', 'directory-date', targetTherapistId, date],
+    queryFn: () => appointmentsApi.getAvailableSlots(targetTherapistId, date),
+    enabled: Boolean(date),
   });
 };

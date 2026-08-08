@@ -21,6 +21,7 @@ interface BookingConfirmationFormProps {
   patientId: string;
   therapist: TherapistProfile;
   slot: AvailableSlot;
+  holdId?: string;
   onBack: () => void;
 }
 
@@ -32,10 +33,44 @@ const QUICK_FOCUS_TOPICS = [
   'Relationship & Family Counseling',
 ];
 
+function calculateRecurrenceEndDate(
+  startTimeStr: string,
+  frequency: string,
+  occurrencesCount: number,
+): string {
+  const start = new Date(startTimeStr);
+  const end = new Date(start);
+  if (occurrencesCount <= 1) {
+    return start.toISOString();
+  }
+
+  const count = occurrencesCount - 1;
+  switch (frequency) {
+    case 'DAILY':
+      end.setDate(start.getDate() + count);
+      break;
+    case 'WEEKLY':
+      end.setDate(start.getDate() + count * 7);
+      break;
+    case 'BIWEEKLY':
+      end.setDate(start.getDate() + count * 14);
+      break;
+    case 'MONTHLY':
+      end.setMonth(start.getMonth() + count);
+      break;
+    default:
+      break;
+  }
+  // Add 10 minutes buffer to ensure backend inclusion
+  end.setMinutes(end.getMinutes() + 10);
+  return end.toISOString();
+}
+
 export const BookingConfirmationForm: React.FC<BookingConfirmationFormProps> = ({
   patientId,
   therapist,
   slot,
+  holdId,
   onBack,
 }) => {
   const [notes, setNotes] = useState('');
@@ -65,13 +100,23 @@ export const BookingConfirmationForm: React.FC<BookingConfirmationFormProps> = (
         patientId,
         therapistId: therapist.id,
         slotId: slot.id,
+        holdId,
+        therapistName: therapist.name,
         notes: notes.trim() || undefined,
       });
     } else {
+      const calculatedEnd = calculateRecurrenceEndDate(
+        slot.startTime,
+        recurringRule.frequency,
+        recurringRule.occurrencesCount,
+      );
       bookRecurring({
         patientId,
         therapistId: therapist.id,
         baseSlotId: slot.id,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        recurrenceEndDate: calculatedEnd,
         recurringRule,
         notes: notes.trim() || undefined,
       });
