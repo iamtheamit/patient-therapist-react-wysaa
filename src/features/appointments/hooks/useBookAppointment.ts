@@ -77,11 +77,28 @@ export const useBookRecurringAppointment = () => {
 
       navigate(ROUTES.PATIENT.DASHBOARD, { replace: true });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
+      const err = error as Record<string, unknown>;
+      const msg = typeof err?.message === 'string' ? err.message : '';
+      const isConflict =
+        err?.status === 409 ||
+        err?.errorCode === 'CONFLICT' ||
+        msg.toLowerCase().includes('conflict');
+      const isExpired =
+        msg.toLowerCase().includes('hold expired') || msg.toLowerCase().includes('expired');
+
       addToast({
         type: 'error',
-        title: 'Recurring Booking Failed',
-        message: error.message || 'Could not complete recurring booking series.',
+        title: isConflict
+          ? 'Slot Already Taken'
+          : isExpired
+            ? 'Reservation Expired'
+            : 'Recurring Booking Failed',
+        message: isConflict
+          ? 'One or more slots in your recurring series are already booked. Please choose a different time.'
+          : isExpired
+            ? 'Your hold expired before the series could be confirmed. Please select the slot again.'
+            : 'We could not complete your recurring booking. Please try again in a moment.',
       });
     },
   });

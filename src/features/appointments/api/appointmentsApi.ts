@@ -177,10 +177,10 @@ export const appointmentsApi = {
     if (!payload.holdId) {
       throw new Error('Hold ID is required to complete booking');
     }
-    // Note: No catch/fallback here — errors (e.g. ConflictError from backend) must propagate
-    // so the mutation's onError handler shows the correct "Booking Failed" toast.
+    // No catch/fallback — errors must propagate to onError handler.
     const response = await axiosClient.post<unknown, any>(`/appointments/${payload.holdId}/pay`, {
       status: 'SUCCESS',
+      notes: payload.notes || undefined,
     });
     return {
       id: response.id,
@@ -193,7 +193,7 @@ export const appointmentsApi = {
       startTime: response.startTime,
       endTime: response.endTime,
       status: response.appointmentStatus,
-      notes: payload.notes || '',
+      notes: response.notes || payload.notes || '',
       meetingLink: 'https://meet.therapysync.example.com/new-session',
       createdAt: response.createdAt,
     };
@@ -202,59 +202,37 @@ export const appointmentsApi = {
   bookRecurringAppointment: async (
     payload: RecurringBookingPayload,
   ): Promise<RecurringBookingResponse> => {
-    try {
-      const freq =
-        payload.recurringRule.frequency === 'BIWEEKLY'
-          ? 'BI_WEEKLY'
-          : payload.recurringRule.frequency;
+    // No catch/fallback — errors propagate to useBookRecurringAppointment.onError.
+    const freq =
+      payload.recurringRule.frequency === 'BIWEEKLY'
+        ? 'BI_WEEKLY'
+        : payload.recurringRule.frequency;
 
-      const holds = await axiosClient.post<unknown, any[]>('/appointments/hold', {
-        therapistId: payload.therapistId,
-        startTime: payload.startTime,
-        endTime: payload.endTime,
-        bookingType: 'RECURRING',
-        recurrenceFrequency: freq,
-        recurrenceEndDate: payload.recurrenceEndDate,
-      });
+    // Step 1: Create all HOLDs atomically for the recurring series
+    const holds = await axiosClient.post<unknown, any[]>('/appointments/hold', {
+      therapistId: payload.therapistId,
+      startTime: payload.startTime,
+      endTime: payload.endTime,
+      bookingType: 'RECURRING',
+      recurrenceFrequency: freq,
+      recurrenceEndDate: payload.recurrenceEndDate,
+    });
 
-      const confirmedAppointments = [];
-      for (const hold of holds) {
-        const confirmed = await axiosClient.post<unknown, any>(`/appointments/${hold.id}/pay`, {
-          status: 'SUCCESS',
-        });
-        confirmedAppointments.push(confirmed);
-      }
-
-      return {
-        seriesId: holds[0]?.seriesId || `series-${Date.now()}`,
-        createdCount: confirmedAppointments.length,
-        appointments: confirmedAppointments.map((c) => ({
-          id: c.id,
-          startTime: c.startTime,
-          endTime: c.endTime,
-        })),
-      };
-    } catch (error) {
-      console.error('Failed to book recurring appointment series, using fallback', error);
-      await new Promise((resolve) => setTimeout(resolve, 900));
-
-      const createdAppointments = Array.from({
-        length: payload.recurringRule.occurrencesCount,
-      }).map((_, index) => {
-        const start = new Date(Date.now() + (index + 1) * 7 * 24 * 60 * 60 * 1000);
-        const end = new Date(start.getTime() + 60 * 60 * 1000);
-        return {
-          id: `app-recurring-${index + 1}`,
-          startTime: start.toISOString(),
-          endTime: end.toISOString(),
-        };
-      });
-
-      return {
-        seriesId: `series-${Date.now()}`,
-        createdCount: payload.recurringRule.occurrencesCount,
-        appointments: createdAppointments,
-      };
+    const seriesId = (holds as any[])[0]?.seriesId;
+    if (!seriesId) {
+      throw new Error('Failed to create recurring series — no seriesId returned.');
     }
+
+    // Step 2: Confirm the entire series atomically in one transaction
+    const seriesResult = await axiosClient.post<unknown, any>(
+      `/appointments/series/${seriesId}/pay`,
+      { notes: payload.notes || undefined },
+    );
+
+    return {
+      seriesId: seriesResult.seriesId || seriesId,
+      createdCount: seriesResult.confirmedCount || (holds as any[]).length,
+      appointments: seriesResult.appointments || [],
+    };
   },
 };
