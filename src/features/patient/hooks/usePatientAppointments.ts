@@ -4,11 +4,12 @@ import {
   type AppointmentFilters,
   type PaginatedAppointmentsResponse,
 } from '../api/patientApi';
-import type { PatientDashboardStats } from '../types/patient.types';
+import type { PatientDashboardStats } from '@/features/dashboard/types/dashboard.types';
+import { QUERY_KEYS } from '@/config/queryKeys';
 
 export const usePatientAppointments = (patientId: string, filters?: AppointmentFilters) => {
   return useQuery<PaginatedAppointmentsResponse>({
-    queryKey: ['appointments', 'patient', patientId, filters],
+    queryKey: QUERY_KEYS.APPOINTMENTS.PATIENT_LIST(patientId, filters as Record<string, unknown>),
     queryFn: () => patientApi.getAppointments(patientId, filters),
     enabled: Boolean(patientId),
   });

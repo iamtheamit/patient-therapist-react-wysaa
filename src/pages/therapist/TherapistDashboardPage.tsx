@@ -1,14 +1,20 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { ROUTES } from '@/config/routes';
+import {
+  getInitials,
+  formatTimeRange,
+  getRelativeTimeBadge,
+  formatDateStr,
+} from '@/utils/formatters';
 import { useDashboard } from '@/features/dashboard';
 import type { TherapistDashboardData } from '@/features/dashboard';
 import { useNow } from '@/hooks/useNow';
 
 export const TherapistDashboardPage: React.FC = () => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const navigate = useNavigate();
 
   const therapistName = user?.name || 'Dr. Sarah Connor';
@@ -32,46 +38,6 @@ export const TherapistDashboardPage: React.FC = () => {
   const todaySchedule = therapistData?.todaySchedule ?? [];
 
   const nowTime = useNow();
-
-  // Helper to format startTime and endTime to HH:MM AM/PM range
-  const formatTimeRange = (startStr: string, endStr: string) => {
-    try {
-      const start = new Date(startStr);
-      const end = new Date(endStr);
-      return `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    } catch {
-      return '';
-    }
-  };
-
-  // Helper to get relative time badge text
-  const getRelativeTimeBadge = (startStr: string, currentMs: number) => {
-    try {
-      const diffMs = new Date(startStr).getTime() - currentMs;
-      const diffMin = Math.round(diffMs / 60000);
-      if (diffMin <= 0) return 'STARTED';
-      if (diffMin < 60) return `IN ${diffMin} MINUTES`;
-      const diffHrs = Math.round(diffMin / 60);
-      if (diffHrs < 24) return `IN ${diffHrs} HOURS`;
-      return 'UPCOMING';
-    } catch {
-      return 'UPCOMING';
-    }
-  };
-
-  // Helper to format date
-  const formatDateStr = (startStr: string) => {
-    try {
-      return new Date(startStr).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return '';
-    }
-  };
 
   if (isLoading) {
     return (
@@ -226,12 +192,7 @@ export const TherapistDashboardPage: React.FC = () => {
 
                 {/* Patient Avatar Thumbnail */}
                 <div className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md shrink-0 bg-gradient-to-br from-[#0052cc] to-[#003d9b] text-white flex items-center justify-center font-heading font-extrabold text-2xl">
-                  {(nextSession.patient?.name || 'P')
-                    .split(' ')
-                    .map((n: string) => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .substring(0, 2)}
+                  {getInitials(nextSession.patient?.name || 'P')}
                 </div>
               </div>
             </section>
@@ -292,12 +253,7 @@ export const TherapistDashboardPage: React.FC = () => {
                     </tr>
                   ) : (
                     recentAppointments.slice(0, 4).map((appt) => {
-                      const initials = (appt.patient?.name || 'P')
-                        .split(' ')
-                        .map((n: string) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .substring(0, 2);
+                      const initials = getInitials(appt.patient?.name || 'P');
                       const start = new Date(appt.startTime);
                       const formattedTime =
                         start.toLocaleDateString(undefined, {

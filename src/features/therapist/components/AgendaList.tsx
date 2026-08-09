@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ClinicalNotesModal } from './ClinicalNotesModal';
 import { useUpdateAppointmentStatus } from '../hooks/useUpdateAppointmentStatus';
+import type { AppointmentStatus } from '@/features/patient/types/patient.types';
 
 interface AgendaListProps {
   items?: TherapistAgendaItem[];
@@ -117,20 +118,19 @@ export const AgendaList: React.FC<AgendaListProps> = ({ items, isLoading, therap
                   )}
 
                   <select
-                    value={item.status.toLowerCase()}
+                    value={item.status.toUpperCase()}
                     onChange={(e) =>
                       updateStatus({
                         appointmentId: item.id,
-                        status: e.target.value as
-                          'scheduled' | 'completed' | 'no_show' | 'cancelled',
+                        status: e.target.value as AppointmentStatus,
                       })
                     }
                     className="bg-white border border-[#c3c6d6]/70 text-[#191c1e] rounded-lg px-2.5 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#0052cc]/30 cursor-pointer"
                   >
-                    <option value="scheduled">scheduled</option>
-                    <option value="completed">completed</option>
-                    <option value="no_show">no_show</option>
-                    <option value="cancelled">cancelled</option>
+                    <option value="SCHEDULED">Scheduled</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="NO_SHOW">No-Show</option>
+                    <option value="CANCELLED">Cancelled</option>
                   </select>
                 </div>
               </CardContent>

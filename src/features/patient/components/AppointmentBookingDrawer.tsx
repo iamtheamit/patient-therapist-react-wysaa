@@ -11,7 +11,7 @@ import {
   type AvailableSlot,
 } from '@/features/appointments';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 
 interface AppointmentBookingDrawerProps {
   isOpen: boolean;
@@ -24,7 +24,7 @@ export const AppointmentBookingDrawer: React.FC<AppointmentBookingDrawerProps> =
   onClose,
   therapist,
 }) => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const patientId = user?.id || 'patient-user-1';
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -32,10 +32,11 @@ export const AppointmentBookingDrawer: React.FC<AppointmentBookingDrawerProps> =
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
   const [step, setStep] = useState<'slots' | 'confirm'>('slots');
 
-  const { data: slots = [], isLoading: isSlotsLoading } = useAvailableSlots(
-    therapist?.id || '',
-    selectedDate,
-  );
+  const {
+    data: slots = [],
+    isLoading: isSlotsLoading,
+    isError: isSlotsError,
+  } = useAvailableSlots(therapist?.id || '', selectedDate);
 
   const { secondsRemaining, isHolding, startHold, releaseHold, holdSession } = useSlotHold();
 
@@ -133,6 +134,13 @@ export const AppointmentBookingDrawer: React.FC<AppointmentBookingDrawerProps> =
               {isSlotsLoading ? (
                 <div className="py-8 text-center text-xs text-[#51606f] animate-pulse">
                   Loading available slots...
+                </div>
+              ) : isSlotsError ? (
+                <div className="p-4 text-center bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-xs font-bold text-red-800">Failed to load slots.</p>
+                  <p className="text-[11px] text-red-600 mt-1">
+                    Please check your connection or try again.
+                  </p>
                 </div>
               ) : (
                 <SlotGrid

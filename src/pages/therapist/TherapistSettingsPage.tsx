@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { User, Video, Bell, ShieldCheck, Save, CheckCircle2, CreditCard } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { UIState } from '@/stores/uiStore';
 
 export const TherapistSettingsPage: React.FC = () => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const addToast = useUIStore((state: UIState) => state.addToast);
 
   const [activeTab, setActiveTab] = useState<

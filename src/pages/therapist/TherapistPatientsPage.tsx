@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Filter, ChevronRight, X, CheckCircle2, Sparkles } from 'lucide-react';
+import { Search, Plus, Filter, ChevronRight, X, CheckCircle2 } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
 import type { UIState } from '@/stores/uiStore';
 import { ComingSoonModal } from '@/components/ui/ComingSoonModal';
+import { ComingSoonBanner } from '@/components/common/ComingSoonBanner';
 
 interface PatientRecord {
   id: string;
@@ -37,100 +38,7 @@ export const TherapistPatientsPage: React.FC = () => {
   const [newPatientEmail, setNewPatientEmail] = useState('');
   const [newPatientDiagnosis, setNewPatientDiagnosis] = useState('');
 
-  const [patients, setPatients] = useState<PatientRecord[]>([
-    {
-      id: 'pat-1',
-      name: 'Alex Patient',
-      email: 'alex.patient@therapysync.com',
-      phone: '+1 (555) 234-5678',
-      avatar:
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      age: 29,
-      gender: 'Non-binary',
-      diagnosis: 'Generalized Anxiety Disorder (GAD)',
-      riskLevel: 'Moderate',
-      status: 'Active',
-      totalSessions: 12,
-      lastSessionDate: 'Aug 04, 2026',
-      nextSessionDate: 'Today at 10:00 AM',
-      emergencyContact: 'Sarah Patient (Sister) - +1 (555) 999-0011',
-      medicalHistory: [
-        'Diagnosed with GAD in 2024',
-        'Responds well to Cognitive Behavioral Therapy (CBT)',
-        'No active medication',
-      ],
-      recentNotes:
-        'Patient completed 7-day thought record exercise. Anxiety levels reduced from 8/10 to 4/10 after ground techniques.',
-    },
-    {
-      id: 'pat-2',
-      name: 'Jordan Miller',
-      email: 'jordan@example.com',
-      phone: '+1 (555) 876-5432',
-      avatar:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      age: 34,
-      gender: 'Male',
-      diagnosis: 'Major Depressive Disorder (Mild)',
-      riskLevel: 'Low',
-      status: 'Active',
-      totalSessions: 4,
-      lastSessionDate: 'Jul 28, 2026',
-      nextSessionDate: 'Today at 02:00 PM',
-      emergencyContact: 'Elena Miller (Spouse) - +1 (555) 888-2233',
-      medicalHistory: [
-        'Prescribed SSRI (Sertraline 50mg) by Psychiatrist',
-        'Focusing on behavioral activation and social reconnecting',
-      ],
-      recentNotes:
-        'Initial intake completed. Patient expresses high motivation to rebuild weekly routine.',
-    },
-    {
-      id: 'pat-3',
-      name: 'Taylor Reed',
-      email: 'taylor@example.com',
-      phone: '+1 (555) 432-1098',
-      avatar:
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      age: 26,
-      gender: 'Female',
-      diagnosis: 'Post-Traumatic Stress Disorder (PTSD)',
-      riskLevel: 'High',
-      status: 'Active',
-      totalSessions: 18,
-      lastSessionDate: 'Aug 01, 2026',
-      nextSessionDate: 'Tomorrow at 11:00 AM',
-      emergencyContact: 'David Reed (Father) - +1 (555) 123-7766',
-      medicalHistory: [
-        'Motor vehicle accident trauma in 2023',
-        'EMDR therapy in progress',
-        'Safety plan verified and active',
-      ],
-      recentNotes: 'High priority patient. Monitored grounding exercises during panic triggers.',
-    },
-    {
-      id: 'pat-4',
-      name: 'Samantha Vance',
-      email: 'samantha.v@example.com',
-      phone: '+1 (555) 345-6789',
-      avatar:
-        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-      age: 41,
-      gender: 'Female',
-      diagnosis: 'Occupational Burnout & Insomnia',
-      riskLevel: 'Low',
-      status: 'Active',
-      totalSessions: 8,
-      lastSessionDate: 'Yesterday',
-      nextSessionDate: 'Aug 12, 2026',
-      emergencyContact: 'Tom Vance (Husband) - +1 (555) 444-9988',
-      medicalHistory: [
-        'Corporate executive with chronic work stress',
-        'CBT for Insomnia (CBT-I) sleep restriction protocol',
-      ],
-      recentNotes: 'Sleep diary shows improved sleep onset latency by 35 minutes.',
-    },
-  ]);
+  const [patients, setPatients] = useState<PatientRecord[]>([]);
 
   const filteredPatients = useMemo(() => {
     return patients.filter((patient) => {
@@ -184,30 +92,11 @@ export const TherapistPatientsPage: React.FC = () => {
   return (
     <div className="space-y-6 text-left w-full">
       {/* Feature Coming Soon Banner */}
-      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold shrink-0">
-            <Sparkles className="w-5 h-5 text-amber-600" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-amber-900 flex items-center gap-2">
-              Patient Directory Feature Coming Soon
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-200/60 text-amber-800 font-bold uppercase tracking-wider">Preview Mode</span>
-            </h3>
-            <p className="text-xs text-amber-700/90 mt-0.5">
-              The patient directory and electronic health record module is currently in active development.
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsComingSoonOpen(true)}
-          className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition shadow-2xs shrink-0 cursor-pointer flex items-center gap-1.5"
-        >
-          <Sparkles className="w-4 h-4" />
-          View Details
-        </button>
-      </div>
+      <ComingSoonBanner
+        featureTitle="Patient Directory"
+        description="The patient directory and electronic health record module is currently in active development."
+        onViewSpecs={() => setIsComingSoonOpen(true)}
+      />
 
       {/* Header Title */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#c3c6d6]/40">

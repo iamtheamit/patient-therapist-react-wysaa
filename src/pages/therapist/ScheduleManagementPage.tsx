@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Settings2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import {
   WeeklyScheduleForm,
   WeeklyAvailabilityCalendar,
@@ -10,7 +10,7 @@ import {
 } from '@/features/therapist';
 
 export const ScheduleManagementPage: React.FC = () => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const therapistId = user?.id || 'therapist-doc-1';
 
   const [searchParams] = useSearchParams();

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CalendarCheck, Clock, UserCheck } from 'lucide-react';
-import type { PatientDashboardStats } from '../types/patient.types';
+import type { PatientDashboardStats } from '@/features/dashboard';
 import { Card, CardContent } from '@/components/ui/Card';
 
 interface PatientStatsGridProps {

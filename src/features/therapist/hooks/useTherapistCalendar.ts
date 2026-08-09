@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { therapistApi } from '../api/therapistApi';
 import type { AvailabilityBlock } from '../components/WeeklyAvailabilityCalendar';
-import type { StatusUpdatePayload } from '../types/therapist.types';
 import { QUERY_KEYS } from '@/config/queryKeys';
+import { useUpdateAppointmentStatus } from './useUpdateAppointmentStatus';
 
 export const THERAPIST_CALENDAR_KEYS = {
   all: ['therapist-calendar'] as const,
@@ -29,8 +29,6 @@ const toTimeString = (dateObj: Date): string => {
 };
 
 export const useTherapistCalendar = (therapistId: string) => {
-  const queryClient = useQueryClient();
-
   // Query 1: Real backend appointments
   const appointmentsQuery = useQuery({
     queryKey: THERAPIST_CALENDAR_KEYS.appointments(therapistId),
@@ -47,14 +45,7 @@ export const useTherapistCalendar = (therapistId: string) => {
   });
 
   // Mutation: Update appointment status (Scheduled -> Completed / Cancelled / No Show)
-  const statusMutation = useMutation({
-    mutationFn: (payload: StatusUpdatePayload) => therapistApi.updateStatus(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: THERAPIST_CALENDAR_KEYS.appointments(therapistId),
-      });
-    },
-  });
+  const statusMutation = useUpdateAppointmentStatus(therapistId);
 
   // Map backend appointments to AvailabilityBlock[] format
   const rawAppointments = (appointmentsQuery.data || []) as unknown as Array<{

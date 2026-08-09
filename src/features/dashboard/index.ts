@@ -1,6 +1,6 @@
 // Dashboard feature barrel export
 export { dashboardApi } from './api/dashboardApi';
-export { useDashboard, DASHBOARD_QUERY_KEY } from './hooks/useDashboard';
+export { useDashboard } from './hooks/useDashboard';
 export type {
   DashboardData,
   PatientDashboardData,

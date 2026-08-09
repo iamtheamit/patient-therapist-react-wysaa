@@ -11,7 +11,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { useTherapistAgenda } from '@/features/therapist/hooks/useTherapistAgenda';
 import { useUpdateAppointmentStatus } from '@/features/therapist/hooks/useUpdateAppointmentStatus';
 import { ClinicalNotesModal } from '@/features/therapist/components/ClinicalNotesModal';
@@ -173,7 +173,7 @@ const RiskBadge: React.FC<{ level: 'Low' | 'Moderate' | 'High' }> = ({ level }) 
 // ─── Page Component ───────────────────────────────────────────────────────────
 
 export const TherapistAppointmentsPage: React.FC = () => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const therapistId = user?.id || 'therapist-doc-1';
   const addToast = useUIStore((state: UIState) => state.addToast);
 

@@ -8,7 +8,7 @@ export interface User {
   avatarUrl?: string;
 }
 
-export interface AuthState {
+export interface AuthSnapshot {
   user: User | null;
   isAuthenticated: boolean;
   token: string | null;

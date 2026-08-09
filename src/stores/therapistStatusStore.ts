@@ -16,7 +16,7 @@ export const useTherapistStatusStore = create<TherapistStatusState>()(
     }),
     {
       name: 'therapysync-therapist-status-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
     },
   ),
 );

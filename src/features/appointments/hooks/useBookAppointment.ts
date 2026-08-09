@@ -8,6 +8,7 @@ import { QUERY_KEYS } from '@/config/queryKeys';
 import { useUIStore } from '@/stores/uiStore';
 import type { UIState } from '@/stores/uiStore';
 import { ROUTES } from '@/config/routes';
+import { classifyBookingError } from '@/utils/formatters';
 
 export const useBookAppointment = () => {
   const queryClient = useQueryClient();
@@ -18,7 +19,7 @@ export const useBookAppointment = () => {
     mutationFn: (payload) => appointmentsApi.bookAppointment(payload),
     onSuccess: (appointment) => {
       // Invalidate dashboard and all appointment/schedule queries so active holds clear immediately
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD.ROOT });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.APPOINTMENTS.ROOT });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCHEDULES.ROOT });
 
@@ -31,14 +32,9 @@ export const useBookAppointment = () => {
       navigate(ROUTES.PATIENT.DASHBOARD, { replace: true });
     },
     onError: (error: unknown) => {
-      const err = error as Record<string, unknown>;
-      const msg = typeof err?.message === 'string' ? err.message : '';
-      const isConflict =
-        err?.status === 409 ||
-        err?.errorCode === 'CONFLICT' ||
-        msg.toLowerCase().includes('conflict');
-      const isExpired =
-        msg.toLowerCase().includes('hold expired') || msg.toLowerCase().includes('expired');
+      const errorType = classifyBookingError(error);
+      const isConflict = errorType === 'conflict';
+      const isExpired = errorType === 'expired';
 
       addToast({
         type: 'error',
@@ -65,7 +61,7 @@ export const useBookRecurringAppointment = () => {
   return useMutation<RecurringBookingResponse, Error, RecurringBookingPayload>({
     mutationFn: (payload) => appointmentsApi.bookRecurringAppointment(payload),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD.ROOT });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.APPOINTMENTS.ROOT });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCHEDULES.ROOT });
 
@@ -78,14 +74,9 @@ export const useBookRecurringAppointment = () => {
       navigate(ROUTES.PATIENT.DASHBOARD, { replace: true });
     },
     onError: (error: unknown) => {
-      const err = error as Record<string, unknown>;
-      const msg = typeof err?.message === 'string' ? err.message : '';
-      const isConflict =
-        err?.status === 409 ||
-        err?.errorCode === 'CONFLICT' ||
-        msg.toLowerCase().includes('conflict');
-      const isExpired =
-        msg.toLowerCase().includes('hold expired') || msg.toLowerCase().includes('expired');
+      const errorType = classifyBookingError(error);
+      const isConflict = errorType === 'conflict';
+      const isExpired = errorType === 'expired';
 
       addToast({
         type: 'error',

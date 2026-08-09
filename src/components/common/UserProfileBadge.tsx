@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 
 interface UserProfileBadgeProps {
   defaultName?: string;
@@ -18,7 +18,7 @@ export const UserProfileBadge: React.FC<UserProfileBadgeProps> = ({
   showDivider = true,
   status,
 }) => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
 
   const name = user?.name || defaultName;
   const email = user?.email || defaultEmail;

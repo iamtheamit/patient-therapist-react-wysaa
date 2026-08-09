@@ -1,102 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Calendar, Clock, Video, Timer, Plus, ArrowRight, CalendarX } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { ROUTES } from '@/config/routes';
+import { QUERY_KEYS } from '@/config/queryKeys';
 import {
   PatientAppointmentsTab,
   QuickTherapistSearch,
   AppointmentBookingDrawer,
   PatientScheduleCalendar,
+  ActiveHoldCard,
+  CheckoutModal,
 } from '@/features/patient';
+import { getInitials } from '@/utils/formatters';
 import { useDashboard } from '@/features/dashboard';
 import type { PatientDashboardData, DashboardAppointment } from '@/features/dashboard';
 import { useBookAppointment } from '@/features/appointments/hooks/useBookAppointment';
 import type { TherapistProfile } from '@/features/appointments';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-
-// Encapsulated ActiveHoldCard with ticking timer to optimize rendering lifecycle
-const ActiveHoldCard: React.FC<{
-  hold: DashboardAppointment;
-  onCheckout: (hold: DashboardAppointment) => void;
-}> = ({ hold, onCheckout }) => {
-  const queryClient = useQueryClient();
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-
-  useEffect(() => {
-    const expires = hold.holdExpiresAt ? new Date(hold.holdExpiresAt).getTime() : Date.now();
-    const update = () => {
-      const remaining = Math.max(0, Math.floor((expires - Date.now()) / 1000));
-      setTimeLeft(remaining);
-      if (remaining <= 0) {
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      }
-    };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [hold.holdExpiresAt, queryClient]);
-
-  if (timeLeft <= 0) return null;
-
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-  return (
-    <div className="bg-amber-50/80 border border-amber-300/70 rounded-xl p-4 space-y-2 text-left shadow-2xs">
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
-          <Clock className="w-3.5 h-3.5 text-amber-600" />
-          <span>
-            Today,{' '}
-            {new Date(hold.startTime).toLocaleTimeString(undefined, {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        </div>
-        <span className="text-amber-800 text-[10px] font-bold bg-white px-2 py-0.5 rounded-full shadow-2xs border border-amber-300 animate-pulse">
-          Expires in {formattedTime}
-        </span>
-      </div>
-      <h4 className="font-heading font-bold text-sm text-[#191c1e]">
-        {hold.therapist?.name || 'Therapist Session'}
-      </h4>
-      <p className="text-xs text-[#51606f] font-medium pb-2">
-        {new Date(hold.startTime).toLocaleDateString(undefined, {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-        })}{' '}
-        •{' '}
-        {new Date(hold.startTime).toLocaleTimeString(undefined, {
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
-      </p>
-      <button
-        onClick={() => onCheckout(hold)}
-        className="w-full text-center bg-white border border-amber-500 text-amber-900 hover:bg-amber-100/70 py-2 rounded-xl text-xs font-bold transition-colors shadow-2xs cursor-pointer"
-      >
-        Continue Booking
-      </button>
-    </div>
-  );
-};
 
 export const PatientDashboardPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const firstName = user?.name ? user.name.split(' ')[0] : 'Alex';
-  const location = useLocation();
-
-  const isAppointmentsView = location.hash === '#appointments' || location.hash === '#holds';
-  const isBookView = location.hash === '#book';
+  const [searchParams] = useSearchParams();
+  const currentView = searchParams.get('view');
+  const isAppointmentsView = currentView === 'appointments' || currentView === 'holds';
+  const isBookView = currentView === 'book';
 
   const [selectedTherapistForBooking, setSelectedTherapistForBooking] =
     useState<TherapistProfile | null>(null);
@@ -271,7 +203,7 @@ export const PatientDashboardPage: React.FC = () => {
                           </a>
                         )}
                         <Link
-                          to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
+                          to={`${ROUTES.PATIENT.DASHBOARD}?view=appointments`}
                           className="group/link px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all duration-200 flex items-center gap-1.5 font-bold text-xs whitespace-nowrap backdrop-blur-xs hover:translate-x-0.5"
                         >
                           <span>View Details</span>
@@ -318,7 +250,7 @@ export const PatientDashboardPage: React.FC = () => {
                   Upcoming Appointments
                 </h3>
                 <Link
-                  to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
+                  to={`${ROUTES.PATIENT.DASHBOARD}?view=appointments`}
                   className="text-[#003d9b] hover:text-[#0052cc] transition-colors font-bold text-xs flex items-center gap-1"
                 >
                   View all
@@ -355,13 +287,7 @@ export const PatientDashboardPage: React.FC = () => {
                   <div className="space-y-3">
                     {upcomingList.map((appt) => {
                       const startDate = new Date(appt.startTime);
-                      const initials = (appt.therapist?.name || 'T')
-                        .replace('Dr. ', '')
-                        .split(' ')
-                        .map((n: string) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .substring(0, 2);
+                      const initials = getInitials(appt.therapist?.name || 'T');
                       return (
                         <div
                           key={appt.id}
@@ -411,7 +337,7 @@ export const PatientDashboardPage: React.FC = () => {
 
               <div className="p-3 bg-[#f8f9fb] border-t border-slate-100 text-center mt-auto">
                 <Link
-                  to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
+                  to={`${ROUTES.PATIENT.DASHBOARD}?view=appointments`}
                   className="text-[#003d9b] font-bold text-xs hover:underline inline-flex items-center justify-center gap-1 py-1"
                 >
                   View All Appointments
@@ -431,7 +357,7 @@ export const PatientDashboardPage: React.FC = () => {
               <div className="flex justify-between items-center">
                 <h3 className="font-heading font-bold text-sm text-[#191c1e]">Active Hold</h3>
                 <Link
-                  to={`${ROUTES.PATIENT.DASHBOARD}#holds`}
+                  to={`${ROUTES.PATIENT.DASHBOARD}?view=holds`}
                   className="text-[#003d9b] hover:text-[#0052cc] transition-colors text-xs font-bold flex items-center gap-1"
                 >
                   View all
@@ -456,88 +382,21 @@ export const PatientDashboardPage: React.FC = () => {
 
       {/* Checkout Confirmation Modal */}
       {selectedHoldForCheckout && (
-        <Modal
+        <CheckoutModal
           isOpen={Boolean(selectedHoldForCheckout)}
           onClose={() => setSelectedHoldForCheckout(null)}
-          title="Complete Session Payment"
-          description="Review your held appointment details and confirm payment to secure your booking."
-        >
-          <div className="space-y-4 pt-2 text-[#191c1e] text-xs">
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-              <h4 className="font-heading font-bold text-sm text-[#191c1e]">
-                {selectedHoldForCheckout.therapist?.name || 'Therapist Session'}
-              </h4>
-              <p className="text-secondary font-medium">
-                {selectedHoldForCheckout.therapist?.specialization ||
-                  'Cognitive Behavioral Therapy (CBT)'}
-              </p>
-              <div className="pt-2 border-t border-slate-200/60 flex justify-between font-bold text-[#191c1e]">
-                <span>Date:</span>
-                <span>
-                  {new Date(selectedHoldForCheckout.startTime).toLocaleDateString(undefined, {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between font-bold text-[#191c1e]">
-                <span>Time:</span>
-                <span>
-                  {new Date(selectedHoldForCheckout.startTime).toLocaleTimeString(undefined, {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-b border-slate-100 py-3.5 font-bold">
-              <span className="text-[#51606f]">Session Fee:</span>
-              <span className="text-lg text-[#191c1e]">$150.00</span>
-            </div>
-
-            <div className="p-3 bg-[#e5eeff] text-[#003d9b] rounded-xl border border-[#0052cc]/20 flex items-center gap-2 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-[#0052cc] animate-ping shrink-0" />
-              <span>Secure payment via HSA/FSA Card (•••• 4242)</span>
-            </div>
-
-            <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
-              <Button variant="ghost" size="sm" onClick={() => setSelectedHoldForCheckout(null)}>
-                Back
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                isLoading={isBooking}
-                onClick={() => {
-                  bookSingle(
-                    {
-                      patientId: selectedHoldForCheckout.patientId,
-                      therapistId:
-                        selectedHoldForCheckout.therapistId ||
-                        selectedHoldForCheckout.therapist?.id ||
-                        '',
-                      slotId: `slot-${selectedHoldForCheckout.id}`,
-                      holdId: selectedHoldForCheckout.id,
-                      therapistName: selectedHoldForCheckout.therapist?.name || 'Therapist',
-                    },
-                    {
-                      onSuccess: () => {
-                        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-                        queryClient.invalidateQueries({ queryKey: ['appointments'] });
-                        setSelectedHoldForCheckout(null);
-                      },
-                    },
-                  );
-                }}
-              >
-                Confirm &amp; Pay $150
-              </Button>
-            </div>
-          </div>
-        </Modal>
+          selectedHold={selectedHoldForCheckout}
+          isBooking={isBooking}
+          onConfirm={(payload) => {
+            bookSingle(payload, {
+              onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD.ROOT });
+                queryClient.invalidateQueries({ queryKey: ['appointments'] });
+                setSelectedHoldForCheckout(null);
+              },
+            });
+          }}
+        />
       )}
     </div>
   );

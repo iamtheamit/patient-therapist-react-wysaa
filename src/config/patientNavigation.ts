@@ -29,7 +29,7 @@ export const PATIENT_NAV_ITEMS: PatientNavItem[] = [
     id: 'appointments',
     label: 'My Appointments',
     shortLabel: 'Appointments',
-    href: `${ROUTES.PATIENT.DASHBOARD}#appointments`,
+    href: `${ROUTES.PATIENT.DASHBOARD}?view=appointments`,
     icon: 'calendar_month',
     dividerAfter: true,
   },

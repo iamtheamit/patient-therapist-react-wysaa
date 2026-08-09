@@ -4,7 +4,7 @@ import type { UserRole } from '@/types/auth';
 import { ROUTES } from '@/config/routes';
 import { useAuthStore } from '@/stores/authStore';
 import { PageSpinner } from '@/components/feedback/PageSpinner';
-import { useSessionBootstrap } from '@/features/auth/hooks/useSessionBootstrap';
+import { useIsBootstrapping } from '@/app/SessionProvider';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,19 +13,23 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRole }) => {
   const location = useLocation();
-  const isBootstrapping = useSessionBootstrap();
+  const isBootstrapping = useIsBootstrapping();
   const { isAuthenticated, user, token } = useAuthStore();
 
   const hasToken = token;
-  const userRole = user?.role || 'PATIENT';
 
-  if (isBootstrapping) {
+  // If we have a token but user data hasn't loaded yet, treat it as bootstrapping
+  const isUserLoading = hasToken && !user;
+
+  if (isBootstrapping || isUserLoading) {
     return <PageSpinner label="Restoring session..." />;
   }
 
   if (!isAuthenticated && !hasToken) {
     return <Navigate to={ROUTES.AUTH.LOGIN} state={{ from: location }} replace />;
   }
+
+  const userRole = user?.role || 'PATIENT';
 
   if (allowedRole && userRole !== allowedRole) {
     const fallbackPath =

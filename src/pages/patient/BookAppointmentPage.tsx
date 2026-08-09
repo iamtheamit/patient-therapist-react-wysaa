@@ -1,19 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  Search,
-  Star,
-  Calendar,
-  Clock,
-  UserCheck,
-  ShieldCheck,
-  ArrowLeft,
-  LayoutGrid,
-  List,
-  SlidersHorizontal,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, Clock, UserCheck, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import {
   SlotGrid,
   BookingConfirmationForm,
@@ -21,6 +9,10 @@ import {
   useTherapists,
   useAvailableSlots,
   useSlotHold,
+  TherapistAvatar,
+  TherapistDirectoryCard,
+  DatePickerBar,
+  TherapistFilterToolbar,
   type TherapistProfile,
   type AvailableSlot,
 } from '@/features/appointments';
@@ -28,132 +20,8 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/common/EmptyState';
 
-const SPECIALTY_FILTERS = [
-  'All Specialties',
-  'Cognitive Behavioral Therapy (CBT)',
-  'Mindfulness & Mood Care',
-  'Trauma & Resilience Therapy',
-  'Anxiety & Stress Management',
-];
-
-// Fallback avatar helper that handles image loading errors gracefully
-const TherapistAvatar: React.FC<{ url?: string; name: string; size?: string }> = ({
-  url,
-  name,
-  size = 'w-14 h-14',
-}) => {
-  const [hasError, setHasError] = useState(false);
-  const initials = name
-    .replace('Dr. ', '')
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
-
-  if (!url || hasError) {
-    return (
-      <div
-        className={`${size} rounded-full bg-gradient-to-br from-[#003d9b] to-[#0052cc] text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-xs shrink-0 select-none`}
-      >
-        {initials}
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={url}
-      alt=""
-      onError={() => setHasError(true)}
-      className={`${size} rounded-full object-cover border-2 border-white shadow-xs shrink-0`}
-    />
-  );
-};
-
-// Directory Therapist Card Component
-const TherapistDirectoryCardItem: React.FC<{
-  therapist: TherapistProfile;
-  onViewProfile: (therapist: TherapistProfile) => void;
-  onBookSession: (therapist: TherapistProfile) => void;
-}> = ({ therapist, onViewProfile, onBookSession }) => {
-  const isTopRated = (therapist.rating || 0) >= 4.8;
-
-  return (
-    <div className="bg-white rounded-xl border border-outline-variant/50 hover:border-primary/30 transition-colors duration-200 text-left group">
-      {/* Main content row */}
-      <div className="p-5 flex gap-4">
-        {/* Avatar column */}
-        <div className="relative shrink-0 pt-0.5">
-          <TherapistAvatar url={therapist.avatarUrl} name={therapist.name} size="w-12 h-12" />
-        </div>
-
-        {/* Info column */}
-        <div className="flex-1 min-w-0 space-y-2">
-          {/* Name + credentials row */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="font-heading font-semibold text-sm text-on-surface leading-tight truncate">
-                {therapist.name}
-              </h3>
-              <p className="text-xs text-primary font-medium mt-0.5 truncate">
-                {therapist.specialization}
-              </p>
-            </div>
-            {isTopRated && (
-              <span className="shrink-0 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/70 px-2 py-0.5 rounded-md flex items-center gap-1">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                Top Rated
-              </span>
-            )}
-          </div>
-
-          {/* Meta row — clean inline text, not pill badges */}
-          <div className="flex items-center gap-3 text-xs text-secondary">
-            <span className="flex items-center gap-1">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-              <span className="font-semibold text-on-surface">{therapist.rating}</span>
-            </span>
-            <span className="w-px h-3 bg-outline-variant/60" />
-            <span>{therapist.experienceYears || 5}+ yrs experience</span>
-            <span className="w-px h-3 bg-outline-variant/60" />
-            <span>50 min session</span>
-          </div>
-
-          {/* Bio — plain text, no fake quote styling */}
-          <p className="text-xs text-secondary leading-relaxed line-clamp-2">
-            {therapist.bio ||
-              'Specialized clinical psychologist focused on evidence-based cognitive and behavioral therapies.'}
-          </p>
-        </div>
-      </div>
-
-      {/* Footer — pricing + actions */}
-      <div className="px-5 py-3 border-t border-outline-variant/30 flex items-center justify-between gap-4">
-        {/* Left: price */}
-        <div className="flex items-center gap-4 text-xs text-secondary font-medium">
-          <span>
-            Session Fee: <span className="font-semibold text-on-surface">$150</span> / visit
-          </span>
-        </div>
-
-        {/* Right: actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="ghost" size="sm" onClick={() => onViewProfile(therapist)}>
-            View Profile
-          </Button>
-
-          <Button variant="primary" size="sm" onClick={() => onBookSession(therapist)}>
-            Book Session
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export const BookAppointmentPage: React.FC = () => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const patientId = user?.id || 'patient-user-1';
 
   const { data: therapists = [], isLoading: isTherapistsLoading } = useTherapists();
@@ -171,29 +39,11 @@ export const BookAppointmentPage: React.FC = () => {
   const [bookingStep, setBookingStep] = useState<'directory' | 'slots' | 'confirm'>('directory');
   const [profileModalTherapist, setProfileModalTherapist] = useState<TherapistProfile | null>(null);
 
-  const next7Days = useMemo(() => {
-    const days = [];
-    const today = new Date();
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      const isoDate = d.toISOString().split('T')[0];
-      const dayName =
-        i === 0
-          ? 'Today'
-          : i === 1
-            ? 'Tomorrow'
-            : d.toLocaleDateString('en-US', { weekday: 'short' });
-      const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      days.push({ isoDate, dayName, monthDay, fullDate: d });
-    }
-    return days;
-  }, []);
-
-  const { data: slots = [], isLoading: isSlotsLoading } = useAvailableSlots(
-    selectedTherapist?.id || '',
-    selectedDate,
-  );
+  const {
+    data: slots = [],
+    isLoading: isSlotsLoading,
+    isError: isSlotsError,
+  } = useAvailableSlots(selectedTherapist?.id || '', selectedDate);
 
   const { secondsRemaining, isHolding, startHold, releaseHold, holdSession } = useSlotHold();
 
@@ -284,117 +134,19 @@ export const BookAppointmentPage: React.FC = () => {
 
       {/* Directory Filter Toolbar */}
       {bookingStep === 'directory' && (
-        <div className="bg-white rounded-xl border border-outline-variant/40 p-5 space-y-3">
-          <div className="flex flex-col md:flex-row md:items-end gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <label className="text-[11px] font-semibold text-secondary uppercase tracking-wider mb-1 block">
-                Search
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Name or specialization…"
-                  className="w-full pl-9 pr-9 py-2 bg-surface-container-low border border-outline-variant/60 rounded-lg text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Quick filters + sort + layout */}
-            <div className="flex items-end gap-2 flex-wrap sm:flex-nowrap">
-              <button
-                type="button"
-                onClick={() => setShowTopRatedOnly(!showTopRatedOnly)}
-                className={`px-3 py-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
-                  showTopRatedOnly
-                    ? 'bg-amber-50 border-amber-300 text-amber-800'
-                    : 'bg-surface-container-low border-outline-variant/60 text-secondary hover:text-on-surface hover:border-outline-variant'
-                }`}
-              >
-                <Star
-                  className={`w-3 h-3 ${
-                    showTopRatedOnly ? 'fill-amber-500 text-amber-500' : 'text-outline-variant'
-                  }`}
-                />
-                Top Rated
-              </button>
-
-              {/* Sort */}
-              <div className="flex items-center gap-1.5 bg-surface-container-low border border-outline-variant/60 px-3 py-2 rounded-lg text-xs text-secondary">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-outline" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'rating' | 'experience' | 'name')}
-                  className="bg-transparent text-on-surface font-medium focus:outline-none cursor-pointer text-xs"
-                >
-                  <option value="rating">Rating</option>
-                  <option value="experience">Experience</option>
-                  <option value="name">Name</option>
-                </select>
-              </div>
-
-              {/* Layout toggle */}
-              <div className="hidden sm:flex items-center bg-surface-container-low border border-outline-variant/60 p-0.5 rounded-lg">
-                <button
-                  onClick={() => setLayoutMode('list')}
-                  className={`p-1.5 rounded-md transition ${
-                    layoutMode === 'list'
-                      ? 'bg-primary text-white'
-                      : 'text-outline hover:text-on-surface'
-                  }`}
-                  title="List View"
-                >
-                  <List className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setLayoutMode('grid')}
-                  className={`p-1.5 rounded-md transition ${
-                    layoutMode === 'grid'
-                      ? 'bg-primary text-white'
-                      : 'text-outline hover:text-on-surface'
-                  }`}
-                  title="Grid View"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Specialty filter row */}
-          <div className="flex items-center justify-between pt-2 border-t border-outline-variant/20">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-              {SPECIALTY_FILTERS.map((spec) => (
-                <button
-                  key={spec}
-                  onClick={() => setSelectedSpecialty(spec)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                    selectedSpecialty === spec
-                      ? 'bg-primary text-white'
-                      : 'text-secondary hover:bg-surface-container-low hover:text-on-surface'
-                  }`}
-                >
-                  {spec}
-                </button>
-              ))}
-            </div>
-
-            <span className="text-xs text-secondary shrink-0 hidden md:block tabular-nums">
-              {filteredTherapists.length} result{filteredTherapists.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-        </div>
+        <TherapistFilterToolbar
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          selectedSpecialty={selectedSpecialty}
+          onSelectedSpecialtyChange={setSelectedSpecialty}
+          showTopRatedOnly={showTopRatedOnly}
+          onShowTopRatedOnlyChange={setShowTopRatedOnly}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          layoutMode={layoutMode}
+          onLayoutModeChange={setLayoutMode}
+          resultCount={filteredTherapists.length}
+        />
       )}
 
       {/* ACTIVE STEP VIEW */}
@@ -437,7 +189,7 @@ export const BookAppointmentPage: React.FC = () => {
             }
           >
             {filteredTherapists.map((therapist) => (
-              <TherapistDirectoryCardItem
+              <TherapistDirectoryCard
                 key={therapist.id}
                 therapist={therapist}
                 onViewProfile={(t) => setProfileModalTherapist(t)}
@@ -471,52 +223,8 @@ export const BookAppointmentPage: React.FC = () => {
                   </Button>
                 </div>
 
-                {/* 7-Day Interactive Date Navigation Bar */}
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="text-xs font-bold text-[#191c1e] flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#003d9b]" /> Select Session Date
-                    </label>
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
-                      <span className="text-[11px] font-semibold text-[#51606f]">Custom Date:</span>
-                      <input
-                        type="date"
-                        min={new Date().toISOString().split('T')[0]}
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="px-2.5 py-1 bg-[#f8f9ff] border border-[#c3c6d6]/60 rounded-lg text-xs font-medium text-[#191c1e] focus:outline-none focus:border-[#003d9b]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Date Pill Cards Carousel */}
-                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 overflow-x-auto pb-1">
-                    {next7Days.map((day) => {
-                      const isSelected = selectedDate === day.isoDate;
-                      return (
-                        <button
-                          key={day.isoDate}
-                          type="button"
-                          onClick={() => setSelectedDate(day.isoDate)}
-                          className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#003d9b] text-white border-[#003d9b] shadow-md shadow-[#003d9b]/20 ring-2 ring-[#003d9b]/30'
-                              : 'bg-[#f8f9ff] text-[#191c1e] border-[#c3c6d6]/50 hover:bg-slate-100 hover:border-[#003d9b]/40'
-                          }`}
-                        >
-                          <span
-                            className={`text-[10px] uppercase tracking-wider font-bold ${
-                              isSelected ? 'text-blue-100' : 'text-[#51606f]'
-                            }`}
-                          >
-                            {day.dayName}
-                          </span>
-                          <span className="text-xs font-extrabold mt-0.5">{day.monthDay}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                {/* Date Navigation Bar */}
+                <DatePickerBar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
                 {/* Available Slots Section */}
                 <div className="space-y-4 pt-2 border-t border-slate-100">
@@ -539,14 +247,26 @@ export const BookAppointmentPage: React.FC = () => {
                     )}
                   </div>
 
-                  <SlotGrid
-                    slots={slots}
-                    selectedSlotId={selectedSlot?.id || null}
-                    onSelectSlot={handleSelectSlot}
-                    isLoading={isSlotsLoading}
-                  />
+                  {isSlotsError ? (
+                    <div className="p-6 text-center bg-red-50 border border-red-200 rounded-xl space-y-2">
+                      <p className="text-xs font-bold text-red-800">
+                        Failed to retrieve slot availability.
+                      </p>
+                      <p className="text-xs text-red-700">
+                        There was a network error connecting to the scheduling server. Please check
+                        your connection or try again.
+                      </p>
+                    </div>
+                  ) : (
+                    <SlotGrid
+                      slots={slots}
+                      selectedSlotId={selectedSlot?.id || null}
+                      onSelectSlot={handleSelectSlot}
+                      isLoading={isSlotsLoading}
+                    />
+                  )}
 
-                  {!isSlotsLoading && slots.length === 0 && (
+                  {!isSlotsLoading && !isSlotsError && slots.length === 0 && (
                     <div className="bg-[#f8f9ff] border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
                       <div className="text-xs text-[#51606f]">
                         <p className="font-semibold text-[#191c1e]">

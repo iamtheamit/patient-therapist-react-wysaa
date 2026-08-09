@@ -14,6 +14,8 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.APPOINTMENTS.ROOT, 'list', filters] as const,
     PATIENT_UPCOMING: (patientId: string) =>
       [...QUERY_KEYS.APPOINTMENTS.ROOT, 'patient', patientId, 'upcoming'] as const,
+    PATIENT_LIST: (patientId: string, filters?: Record<string, unknown>) =>
+      [...QUERY_KEYS.APPOINTMENTS.ROOT, 'patient', patientId, 'list', filters] as const,
     THERAPIST_AGENDA: (therapistId: string, date: string) =>
       [...QUERY_KEYS.APPOINTMENTS.ROOT, 'therapist', therapistId, 'agenda', date] as const,
     DETAIL: (id: string) => [...QUERY_KEYS.APPOINTMENTS.ROOT, 'detail', id] as const,
@@ -26,5 +28,8 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.SCHEDULES.ROOT, 'therapist', therapistId, 'config'] as const,
     AVAILABLE_SLOTS: (therapistId: string, date: string) =>
       [...QUERY_KEYS.SCHEDULES.ROOT, 'slots', therapistId, date] as const,
+  },
+  DASHBOARD: {
+    ROOT: ['dashboard'] as const,
   },
 } as const;

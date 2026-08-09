@@ -15,6 +15,9 @@ export const useUpdateAppointmentStatus = (therapistId: string) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.APPOINTMENTS.THERAPIST_AGENDA(therapistId, 'all'),
       });
+      queryClient.invalidateQueries({
+        queryKey: ['therapist-calendar', 'appointments', therapistId],
+      });
 
       addToast({
         type: 'success',
@@ -41,6 +44,9 @@ export const useUpdateClinicalNotes = (therapistId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.APPOINTMENTS.THERAPIST_AGENDA(therapistId, 'all'),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['therapist-calendar', 'appointments', therapistId],
       });
 
       addToast({

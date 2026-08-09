@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '@/types/auth';
 
-export interface AuthState {
+export interface AuthStoreState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
@@ -13,7 +13,7 @@ export interface AuthState {
   updateUser: (updatedFields: Partial<User>) => void;
 }
 
-export const useAuthStore = create<AuthState>()((set) => ({
+export const useAuthStore = create<AuthStoreState>()((set) => ({
   user: null,
   token: null,
   isAuthenticated: false,
@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   updateUser: (updatedFields: Partial<User>) =>
-    set((state: AuthState) => ({
+    set((state: AuthStoreState) => ({
       user: state.user ? { ...state.user, ...updatedFields } : null,
     })),
 }));

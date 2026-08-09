@@ -6,11 +6,13 @@ export type AppointmentStatus =
   | 'CANCELLED'
   | 'HELD'
   | 'HOLD_EXPIRED'
-  | 'PAYMENT_FAILED'
-  | 'scheduled'
-  | 'completed'
-  | 'no_show'
-  | 'cancelled';
+  | 'PAYMENT_FAILED';
+
+export const normalizeStatus = (raw: string): AppointmentStatus => {
+  const upper = raw.toUpperCase();
+  if (upper === 'HOLD') return 'HELD';
+  return upper as AppointmentStatus;
+};
 
 export interface TherapistSummary {
   id: string;
@@ -30,10 +32,4 @@ export interface PatientAppointment {
   meetingLink?: string;
   createdAt: string;
   holdExpiresAt?: string;
-}
-
-export interface PatientDashboardStats {
-  totalCompletedSessions: number;
-  upcomingSessionsCount: number;
-  assignedTherapistsCount: number;
 }

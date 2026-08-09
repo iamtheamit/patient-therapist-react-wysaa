@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { User as UserIcon, LogOut, Menu, X, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/utils/cn';
 
@@ -18,7 +18,7 @@ export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const { mutate: logoutMutate } = useLogout();
 
   const isTherapist = user?.role === 'THERAPIST';

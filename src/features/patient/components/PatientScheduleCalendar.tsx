@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { usePatientAppointments } from '../hooks/usePatientAppointments';
 import type { PatientAppointment } from '../types/patient.types';
 import { ROUTES } from '@/config/routes';
@@ -37,7 +37,7 @@ const formatDateKey = (date: Date): string => {
 };
 
 export const PatientScheduleCalendar: React.FC = () => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const patientId = user?.id || 'patient-user-1';
   const { data: appointmentsData } = usePatientAppointments(patientId, { limit: 100 });
   const appointments = appointmentsData?.items || [];
@@ -233,7 +233,7 @@ export const PatientScheduleCalendar: React.FC = () => {
         </div>
 
         <Link
-          to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
+          to={`${ROUTES.PATIENT.DASHBOARD}?view=appointments`}
           className="text-[#003d9b] hover:text-[#002b70] transition-colors text-xs font-semibold flex items-center gap-1 group bg-blue-50/60 hover:bg-blue-100/60 px-2.5 py-1.5 rounded-lg border border-blue-100/80"
         >
           <span>View all</span>
@@ -455,7 +455,7 @@ export const PatientScheduleCalendar: React.FC = () => {
                             </a>
                           ) : (
                             <Link
-                              to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
+                              to={`${ROUTES.PATIENT.DASHBOARD}?view=appointments`}
                               className="inline-flex items-center gap-1 text-xs font-bold text-[#003d9b] hover:text-[#002b70] transition-colors"
                             >
                               <span>View details</span>

@@ -8,7 +8,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { usePatientAppointments } from '../hooks/usePatientAppointments';
 import { AppointmentCard } from './AppointmentCard';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -18,7 +18,7 @@ import type { AppointmentFilters } from '../api/patientApi';
 export type FilterTab = 'all' | 'upcoming' | 'past' | 'holds' | 'failed';
 
 export const PatientAppointmentsTab: React.FC = () => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const patientId = user?.id || 'patient-user-1';
 
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -78,7 +78,7 @@ export const PatientAppointmentsTab: React.FC = () => {
     [searchQuery, startDate, endDate, activeTab, page, limit],
   );
 
-  const { data: responseData, isLoading } = usePatientAppointments(patientId, filters);
+  const { data: responseData, isLoading, isError } = usePatientAppointments(patientId, filters);
 
   const appointments = responseData?.items || [];
   const total = responseData?.total || 0;
@@ -289,6 +289,13 @@ export const PatientAppointmentsTab: React.FC = () => {
           <div className="p-12 text-center bg-white rounded-2xl border border-[#c3c6d6]/40 text-xs text-[#51606f] animate-pulse">
             Loading your appointments...
           </div>
+        ) : isError ? (
+          <EmptyState
+            title="Failed to Load Appointments"
+            description="We encountered an error loading your appointments from the server. Please check your connection or try again."
+            actionLabel="Try Again"
+            onAction={handleClearFilters}
+          />
         ) : filteredAppointments.length === 0 ? (
           <EmptyState
             title="No Appointments Found"

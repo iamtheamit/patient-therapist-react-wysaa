@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { axiosClient } from '@/api/axiosClient';
 import type {
   TherapistProfile,
@@ -8,63 +7,23 @@ import type {
 import type { SlotHoldSession } from '../types/hold.types';
 import type { RecurringBookingPayload, RecurringBookingResponse } from '../types/recurring.types';
 import type { PatientAppointment } from '@/features/patient/types/patient.types';
-
-import { useTherapistStatusStore } from '@/stores/therapistStatusStore';
+import { PROFILE_ENRICHMENT, DEFAULT_PROFILE } from '../config/therapistEnrichment';
 
 export const appointmentsApi = {
   getTherapists: async (): Promise<TherapistProfile[]> => {
-    // Hardcoded enrichment data keyed by therapist name.
-    // The backend User model only stores id/name/email — UI-specific profile
-    // fields (specialization, bio, avatar, etc.) are supplemented here until
-    // a full therapist-profile table is added.
-    const PROFILE_ENRICHMENT: Record<string, Partial<TherapistProfile>> = {
-      'Dr. Sarah Connor': {
-        specialization: 'Cognitive Behavioral Therapy (CBT)',
-        avatarUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDTf1ffvDkCcFUrkgufSLU5b5rl5E0xYYSfZ1ssnFH-TctvnOzXWey_6Qe-Jd0Ck0b-TsXxVTNdCdKqehwfBNnpFxLAC2kV-n-dDwfE-qpzhT52oWqYgoHZ3Il6FYHeKtIj4tO2VotciFst6JlxEgBpJW6y8iAjgR88DEy4PsgRctla5fSXqPlmJ6I0vwJyDBAh9b-QxBdI49Y3kt96Tg_DyJ4j_4QZuJ8M0LDAxnKZmF1BbLT63qCe',
-        bio: 'Specialist in anxiety disorders, depression, and stress management with 8+ years clinical experience.',
-        experienceYears: 8,
-        rating: 4.9,
-        availableDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-      },
-      'Dr. Marcus Vance': {
-        specialization: 'Mindfulness & Mood Care',
-        avatarUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCqZmuUQmcTVzJTMOdgIeA6noCDs1eRLKlJaPfthz5mrVwLWqmpQX2h-Doj7HkphDsRhTwWR388HV8Hrrz9suhMoYYMDkWXLiAgbTYOL0hELQT9g5a_EJfzin8N9hNg8CVb1HR30zxjKcwjQAh0h9ts8RZRI0TqzbeAW8kIeGapeVzZt8r9M2NCNPrC_Z0bYcHB7K4DxyFUO9DCA4_lQIjEWxDwQFQHMd00m7bm8aa1f3eNhpVD9AMA',
-        bio: 'Focused on mindfulness-based stress reduction (MBSR) and personal wellness coaching.',
-        experienceYears: 6,
-        rating: 4.8,
-        availableDays: ['Mon', 'Wed', 'Fri'],
-      },
-      'Dr. Elena Rostova': {
-        specialization: 'Trauma & Resilience Therapy',
-        avatarUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDllZUXRO5e7rF6Up-dc4pvNDJ0qWv7OphWn2vlLZcPEn3gJis9Q7DOo0DilkDLApu90FgIYAkRaz6PoaBtXIdwAKFLCg9BuwN4-IrK4xmi4NwRId8AiVCXUdfMbvWkwvXO3_591mt9jq8yU818JRbO8uNorJahJ37S2IGe_wRKmqy4ECkBTkkg0fARTOXTKWrQ8RtKeK8_tdah2K5_EyvC1HYbsRa1hRoGa6vQBOitJ0QrtVfJxECd',
-        bio: 'Expert in trauma-informed care, relationship counseling, and resilience building.',
-        experienceYears: 10,
-        rating: 5.0,
-        availableDays: ['Tue', 'Thu', 'Sat'],
-      },
-    };
-
-    const DEFAULT_PROFILE: Omit<TherapistProfile, 'id' | 'name'> = {
-      specialization: 'General Counseling',
-      bio: 'Licensed clinical therapist providing evidence-based care.',
-      experienceYears: 5,
-      rating: 4.5,
-      availableDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-    };
-
     try {
-      const response = await axiosClient.get<unknown, any>('/therapists');
-      const items = Array.isArray(response) ? response : (response as any)?.items || [];
+      const response = await axiosClient.get<unknown, Record<string, unknown>[]>('/therapists');
+      const items: Record<string, unknown>[] = Array.isArray(response)
+        ? response
+        : ((response as Record<string, unknown>)?.items as Record<string, unknown>[]) || [];
 
       if (Array.isArray(items) && items.length > 0) {
         return items.map((t) => {
-          const enrichment = PROFILE_ENRICHMENT[t.name] || {};
+          const name = (t.name as string) || '';
+          const enrichment = PROFILE_ENRICHMENT[name] || {};
           return {
-            id: t.id,
-            name: t.name,
+            id: t.id as string,
+            name,
             specialization: enrichment.specialization || DEFAULT_PROFILE.specialization,
             avatarUrl: enrichment.avatarUrl,
             bio: enrichment.bio || DEFAULT_PROFILE.bio,
@@ -83,60 +42,25 @@ export const appointmentsApi = {
   },
 
   getAvailableSlots: async (therapistId: string, date: string): Promise<AvailableSlot[]> => {
-    // Check if therapist is offline (Dr. Sarah Connor / therapist-1)
-    const isOnline = useTherapistStatusStore.getState().isOnline;
-    if (therapistId === 'therapist-1' && !isOnline) {
-      return [];
+    const response = await axiosClient.get<unknown, Record<string, unknown>[]>(
+      '/appointments/availability',
+      { params: { therapistId, startDate: date, endDate: date } },
+    );
+    const items: Record<string, unknown>[] = Array.isArray(response)
+      ? response
+      : ((response as Record<string, unknown>)?.items as Record<string, unknown>[]) || [];
+
+    if (Array.isArray(items)) {
+      return items.map((s, index) => ({
+        id: `slot-${therapistId}-${(s.startTime as string) || index}`,
+        therapistId,
+        startTime: s.startTime as string,
+        endTime: s.endTime as string,
+        isAvailable: true,
+      }));
     }
 
-    try {
-      const response = await axiosClient.get<unknown, any>('/appointments/availability', {
-        params: { therapistId, startDate: date, endDate: date },
-      });
-      const items = Array.isArray(response) ? response : (response as any)?.items || [];
-
-      if (Array.isArray(items)) {
-        return items.map((s: any, index: number) => ({
-          id: `slot-${therapistId}-${s.startTime || index}`,
-          therapistId,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          isAvailable: true,
-        }));
-      }
-
-      return [];
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      const targetDate = date ? new Date(date) : new Date();
-
-      const times = [
-        { hour: 9, minute: 0 },
-        { hour: 10, minute: 30 },
-        { hour: 13, minute: 0 },
-        { hour: 14, minute: 30 },
-        { hour: 16, minute: 0 },
-      ];
-
-      return times.map((t, index) => {
-        const start = new Date(targetDate);
-        start.setHours(t.hour, t.minute, 0, 0);
-
-        const end = new Date(start);
-        end.setHours(t.hour + 1, t.minute, 0, 0);
-
-        const isBooked = index === 1;
-
-        return {
-          id: `slot-${therapistId}-${index + 1}`,
-          therapistId,
-          startTime: start.toISOString(),
-          endTime: end.toISOString(),
-          isAvailable: !isBooked,
-        };
-      });
-    }
+    return [];
   },
 
   holdSlot: async (
@@ -147,30 +71,28 @@ export const appointmentsApi = {
   ): Promise<SlotHoldSession> => {
     // No catch/fallback — errors must propagate to useSlotHold so the user
     // sees a meaningful "slot unavailable" message and cannot proceed to checkout.
-    const response = await axiosClient.post<unknown, any>('/appointments/hold', {
-      therapistId,
-      startTime,
-      endTime,
-      bookingType: 'ONE_TIME',
-    });
-    const appointments = response as any[];
+    const response = await axiosClient.post<unknown, Record<string, unknown>[]>(
+      '/appointments/hold',
+      {
+        therapistId,
+        startTime,
+        endTime,
+        bookingType: 'ONE_TIME',
+      },
+    );
+    const appointments = response as Record<string, unknown>[];
     const firstAppt = appointments[0];
     return {
-      holdId: firstAppt.id,
+      holdId: firstAppt.id as string,
       slotId,
       therapistId,
-      expiresAt: new Date(firstAppt.holdExpiresAt).getTime(),
+      expiresAt: new Date(firstAppt.holdExpiresAt as string).getTime(),
     };
   },
 
   releaseSlot: async (holdId: string): Promise<{ success: boolean }> => {
-    try {
-      await axiosClient.post<unknown, any>(`/appointments/holds/${holdId}/release`);
-      return { success: true };
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return { success: true };
-    }
+    await axiosClient.post<unknown, unknown>(`/appointments/holds/${holdId}/release`);
+    return { success: true };
   },
 
   bookAppointment: async (payload: BookAppointmentPayload): Promise<PatientAppointment> => {
@@ -178,24 +100,29 @@ export const appointmentsApi = {
       throw new Error('Hold ID is required to complete booking');
     }
     // No catch/fallback — errors must propagate to onError handler.
-    const response = await axiosClient.post<unknown, any>(`/appointments/${payload.holdId}/pay`, {
-      status: 'SUCCESS',
-      notes: payload.notes || undefined,
-    });
-    return {
-      id: response.id,
-      patientId: response.patientId,
-      therapist: {
-        id: response.therapistId,
-        name: response.therapist?.name || payload.therapistName || 'Dr. Sarah Connor',
-        specialization: response.therapist?.specialization || 'Cognitive Behavioral Therapy (CBT)',
+    const response = await axiosClient.post<unknown, Record<string, unknown>>(
+      `/appointments/${payload.holdId}/pay`,
+      {
+        status: 'SUCCESS',
+        notes: payload.notes || undefined,
       },
-      startTime: response.startTime,
-      endTime: response.endTime,
-      status: response.appointmentStatus,
-      notes: response.notes || payload.notes || '',
-      meetingLink: 'https://meet.therapysync.example.com/new-session',
-      createdAt: response.createdAt,
+    );
+    const therapist = response.therapist as Record<string, unknown> | undefined;
+    return {
+      id: response.id as string,
+      patientId: response.patientId as string,
+      therapist: {
+        id: (response.therapistId as string) || (therapist?.id as string) || '',
+        name: (therapist?.name as string) || payload.therapistName || '',
+        specialization: (therapist?.specialization as string) || '',
+      },
+      startTime: response.startTime as string,
+      endTime: response.endTime as string,
+      status: response.appointmentStatus as PatientAppointment['status'],
+      notes: (response.notes as string) || payload.notes || '',
+      // Only include meetingLink if the backend actually provides one
+      ...(response.meetingLink ? { meetingLink: response.meetingLink as string } : {}),
+      createdAt: response.createdAt as string,
     };
   },
 
@@ -209,7 +136,7 @@ export const appointmentsApi = {
         : payload.recurringRule.frequency;
 
     // Step 1: Create all HOLDs atomically for the recurring series
-    const holds = await axiosClient.post<unknown, any[]>('/appointments/hold', {
+    const holds = await axiosClient.post<unknown, Record<string, unknown>[]>('/appointments/hold', {
       therapistId: payload.therapistId,
       startTime: payload.startTime,
       endTime: payload.endTime,
@@ -218,21 +145,22 @@ export const appointmentsApi = {
       recurrenceEndDate: payload.recurrenceEndDate,
     });
 
-    const seriesId = (holds as any[])[0]?.seriesId;
+    const holdsArr = holds as Record<string, unknown>[];
+    const seriesId = holdsArr[0]?.seriesId as string | undefined;
     if (!seriesId) {
       throw new Error('Failed to create recurring series — no seriesId returned.');
     }
 
     // Step 2: Confirm the entire series atomically in one transaction
-    const seriesResult = await axiosClient.post<unknown, any>(
+    const seriesResult = await axiosClient.post<unknown, Record<string, unknown>>(
       `/appointments/series/${seriesId}/pay`,
       { notes: payload.notes || undefined },
     );
 
     return {
-      seriesId: seriesResult.seriesId || seriesId,
-      createdCount: seriesResult.confirmedCount || (holds as any[]).length,
-      appointments: seriesResult.appointments || [],
+      seriesId: (seriesResult.seriesId as string) || seriesId,
+      createdCount: (seriesResult.confirmedCount as number) || holdsArr.length,
+      appointments: (seriesResult.appointments as PatientAppointment[]) || [],
     };
   },
 };

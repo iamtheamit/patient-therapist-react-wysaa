@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { axiosClient } from '@/api/axiosClient';
-import type { PatientAppointment, PatientDashboardStats } from '../types/patient.types';
+import type { PatientAppointment } from '../types/patient.types';
+import { normalizeStatus } from '../types/patient.types';
+import type { PatientDashboardStats } from '@/features/dashboard';
 
 export interface AppointmentFilters {
   search?: string;
@@ -21,11 +22,12 @@ export interface PaginatedAppointmentsResponse {
 
 export const patientApi = {
   getAppointments: async (
-    patientId: string,
+    _patientId: string,
     filters?: AppointmentFilters,
   ): Promise<PaginatedAppointmentsResponse> => {
-    try {
-      const response = await axiosClient.get<unknown, any>('/appointments/patient', {
+    const response = await axiosClient.get<unknown, Record<string, unknown>>(
+      '/appointments/patient',
+      {
         params: {
           search: filters?.search,
           startDate: filters?.startDate,
@@ -34,130 +36,52 @@ export const patientApi = {
           page: filters?.page || 1,
           limit: filters?.limit || 10,
         },
-      });
-      const items = Array.isArray(response) ? response : (response as any)?.items || [];
-      const total =
-        typeof response === 'object' && response?.total !== undefined
-          ? response.total
-          : items.length;
-      const page =
-        typeof response === 'object' && response?.page !== undefined
-          ? response.page
-          : filters?.page || 1;
-      const limit =
-        typeof response === 'object' && response?.limit !== undefined
-          ? response.limit
-          : filters?.limit || 10;
-      const totalPages =
-        typeof response === 'object' && response?.totalPages !== undefined
-          ? response.totalPages
-          : Math.ceil(total / (limit || 1));
+      },
+    );
 
-      const mappedItems = items.map((appt: any) => {
-        const rawStatus = appt.status || appt.appointmentStatus || 'SCHEDULED';
-        return {
-          ...appt,
-          status: rawStatus === 'HOLD' ? 'HELD' : rawStatus,
-        };
-      });
+    const items: Record<string, unknown>[] = Array.isArray(response)
+      ? (response as Record<string, unknown>[])
+      : ((response as Record<string, unknown>)?.items as Record<string, unknown>[]) || [];
 
-      return {
-        items: mappedItems,
-        total,
-        page,
-        limit,
-        totalPages,
-      };
-    } catch {
-      // Mock Fallback for local demo resilience
-      await new Promise((resolve) => setTimeout(resolve, 600));
+    const total =
+      typeof response === 'object' && (response as Record<string, unknown>)?.total !== undefined
+        ? ((response as Record<string, unknown>).total as number)
+        : items.length;
+    const page =
+      typeof response === 'object' && (response as Record<string, unknown>)?.page !== undefined
+        ? ((response as Record<string, unknown>).page as number)
+        : filters?.page || 1;
+    const limit =
+      typeof response === 'object' && (response as Record<string, unknown>)?.limit !== undefined
+        ? ((response as Record<string, unknown>).limit as number)
+        : filters?.limit || 10;
+    const totalPages =
+      typeof response === 'object' &&
+      (response as Record<string, unknown>)?.totalPages !== undefined
+        ? ((response as Record<string, unknown>).totalPages as number)
+        : Math.ceil(total / (limit || 1));
 
-      const now = new Date();
-      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      const pastDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const mappedItems: PatientAppointment[] = items.map((appt) => ({
+      ...(appt as unknown as PatientAppointment),
+      status: normalizeStatus(
+        (appt.status as string) || (appt.appointmentStatus as string) || 'SCHEDULED',
+      ),
+    }));
 
-      const mockItems: PatientAppointment[] = [
-        {
-          id: 'app-101',
-          patientId,
-          therapist: {
-            id: 'therapist-1',
-            name: 'Dr. Sarah Connor',
-            specialization: 'Cognitive Behavioral Therapy (CBT)',
-          },
-          startTime: new Date(tomorrow.setHours(10, 0, 0, 0)).toISOString(),
-          endTime: new Date(tomorrow.setHours(11, 0, 0, 0)).toISOString(),
-          status: 'CONFIRMED',
-          notes: 'Focus on stress management and sleep anxiety exercises.',
-          meetingLink: 'https://meet.therapysync.example.com/cbt-session-101',
-          createdAt: now.toISOString(),
-        },
-        {
-          id: 'app-102',
-          patientId,
-          therapist: {
-            id: 'therapist-2',
-            name: 'Dr. Marcus Vance',
-            specialization: 'Mindfulness & Depression Care',
-          },
-          startTime: new Date(nextWeek.setHours(14, 30, 0, 0)).toISOString(),
-          endTime: new Date(nextWeek.setHours(15, 30, 0, 0)).toISOString(),
-          status: 'CONFIRMED',
-          meetingLink: 'https://meet.therapysync.example.com/mindfulness-102',
-          createdAt: now.toISOString(),
-        },
-        {
-          id: 'app-103',
-          patientId,
-          therapist: {
-            id: 'therapist-1',
-            name: 'Dr. Sarah Connor',
-            specialization: 'Cognitive Behavioral Therapy (CBT)',
-          },
-          startTime: new Date(pastDate.setHours(11, 0, 0, 0)).toISOString(),
-          endTime: new Date(pastDate.setHours(12, 0, 0, 0)).toISOString(),
-          status: 'COMPLETED',
-          notes: 'Initial consultation completed. Homework assigned.',
-          createdAt: pastDate.toISOString(),
-        },
-      ];
-
-      return {
-        items: mockItems,
-        total: mockItems.length,
-        page: 1,
-        limit: 10,
-        totalPages: 1,
-      };
-    }
+    return { items: mappedItems, total, page, limit, totalPages };
   },
 
   getStats: async (patientId: string): Promise<PatientDashboardStats> => {
-    try {
-      const response = await axiosClient.get<unknown, PatientDashboardStats>(
-        `/patients/${patientId}/stats`,
-      );
-      return response;
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      return {
-        totalCompletedSessions: 8,
-        upcomingSessionsCount: 2,
-        assignedTherapistsCount: 2,
-      };
-    }
+    const response = await axiosClient.get<unknown, PatientDashboardStats>(
+      `/patients/${patientId}/stats`,
+    );
+    return response;
   },
 
   cancelAppointment: async (appointmentId: string): Promise<{ success: boolean; id: string }> => {
-    try {
-      const response = await axiosClient.post<unknown, { success: boolean; id: string }>(
-        `/appointments/${appointmentId}/cancel`,
-      );
-      return response;
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { success: true, id: appointmentId };
-    }
+    const response = await axiosClient.post<unknown, { success: boolean; id: string }>(
+      `/appointments/${appointmentId}/cancel`,
+    );
+    return response;
   },
 };

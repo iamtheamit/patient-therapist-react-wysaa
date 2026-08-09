@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { Logo } from '@/components/common/Logo';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
@@ -9,7 +9,7 @@ import { useLogout } from '@/features/auth/hooks/useLogout';
 export const TherapistMobileHeader: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
   const { mutate: logoutMutate } = useLogout();
 
   const handleSignOut = () => {

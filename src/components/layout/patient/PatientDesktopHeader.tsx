@@ -5,10 +5,12 @@ import { UserProfileBadge } from '@/components/common/UserProfileBadge';
 export const PatientDesktopHeader: React.FC = () => {
   const location = useLocation();
 
-  const getBreadcrumbTitle = (pathname: string, hash: string) => {
-    if (hash === '#appointments') return 'My Appointments';
-    if (hash === '#holds') return 'My Holds';
-    if (hash === '#book' || pathname.includes('/book')) return 'Book Therapy Session';
+  const getBreadcrumbTitle = (pathname: string, search: string) => {
+    const searchParams = new URLSearchParams(search);
+    const view = searchParams.get('view');
+    if (view === 'appointments') return 'My Appointments';
+    if (view === 'holds') return 'My Holds';
+    if (view === 'book' || pathname.includes('/book')) return 'Book Therapy Session';
     if (pathname.includes('/therapists')) return 'Therapists';
     if (pathname.includes('/messages')) return 'Messages';
     if (pathname.includes('/payments')) return 'Payments';
@@ -25,7 +27,7 @@ export const PatientDesktopHeader: React.FC = () => {
         <span>Patient Portal</span>
         <span className="text-[#c3c6d6]">/</span>
         <span className="text-[#191c1e]">
-          {getBreadcrumbTitle(location.pathname, location.hash)}
+          {getBreadcrumbTitle(location.pathname, location.search)}
         </span>
       </div>
 

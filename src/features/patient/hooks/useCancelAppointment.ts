@@ -13,7 +13,10 @@ export const useCancelAppointment = (patientId: string) => {
     onSuccess: () => {
       // Invalidate queries so UI updates immediately
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.APPOINTMENTS.PATIENT_UPCOMING(patientId),
+        queryKey: QUERY_KEYS.APPOINTMENTS.PATIENT_LIST(patientId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.DASHBOARD.ROOT,
       });
 
       addToast({

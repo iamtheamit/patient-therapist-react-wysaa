@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, Heart, Shield, Save, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthState } from '@/stores/authStore';
+import type { AuthStoreState } from '@/stores/authStore';
 import { Button } from '@/components/ui/Button';
 
 export const PatientProfilePage: React.FC = () => {
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state: AuthStoreState) => state.user);
 
   const [fullName, setFullName] = useState(user?.name || 'Alex Patient');
   const [email] = useState(user?.email || 'alex.patient@therapysync.com');

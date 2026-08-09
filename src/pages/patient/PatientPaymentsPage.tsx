@@ -1,85 +1,20 @@
 import React, { useState } from 'react';
-import {
-  CreditCard,
-  Download,
-  FileText,
-  CheckCircle2,
-  Clock,
-  ShieldCheck,
-  Plus,
-  Sparkles,
-} from 'lucide-react';
+import { CreditCard, Download, FileText, CheckCircle2, ShieldCheck, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ComingSoonModal } from '@/components/ui/ComingSoonModal';
-
-interface Invoice {
-  id: string;
-  therapistName: string;
-  serviceType: string;
-  date: string;
-  amount: number;
-  status: 'PAID' | 'PENDING' | 'INSURANCE_CLAIM';
-  superbillUrl?: string;
-}
-
-const MOCK_INVOICES: Invoice[] = [
-  {
-    id: 'INV-2026-0801',
-    therapistName: 'Dr. Sarah Connor',
-    serviceType: '50-Min Cognitive Behavioral Therapy',
-    date: 'Aug 04, 2026',
-    amount: 150.0,
-    status: 'PAID',
-  },
-  {
-    id: 'INV-2026-0728',
-    therapistName: 'Dr. Sarah Connor',
-    serviceType: '50-Min Intake Assessment',
-    date: 'Jul 28, 2026',
-    amount: 150.0,
-    status: 'PAID',
-  },
-  {
-    id: 'INV-2026-0715',
-    therapistName: 'Dr. Marcus Vance',
-    serviceType: '50-Min Mindfulness & Mood Session',
-    date: 'Jul 15, 2026',
-    amount: 150.0,
-    status: 'INSURANCE_CLAIM',
-  },
-];
+import { ComingSoonBanner } from '@/components/common/ComingSoonBanner';
 
 export const PatientPaymentsPage: React.FC = () => {
-  const [invoices] = useState<Invoice[]>(MOCK_INVOICES);
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
 
   return (
     <div className="space-y-8 text-left w-full">
       {/* Feature Coming Soon Banner */}
-      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold shrink-0">
-            <Sparkles className="w-5 h-5 text-amber-600" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-amber-900 flex items-center gap-2">
-              Payments &amp; Billing Feature Coming Soon
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-200/60 text-amber-800 font-bold uppercase tracking-wider">Preview Mode</span>
-            </h3>
-            <p className="text-xs text-amber-700/90 mt-0.5">
-              Automated claims, HSA/FSA card support, and digital invoicing are under active development.
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsComingSoonOpen(true)}
-          className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition shadow-2xs shrink-0 cursor-pointer flex items-center gap-1.5"
-        >
-          <Sparkles className="w-4 h-4" />
-          View Feature Specs
-        </button>
-      </div>
+      <ComingSoonBanner
+        featureTitle="Payments & Billing"
+        description="Automated claims, HSA/FSA card support, and digital invoicing are under active development."
+        onViewSpecs={() => setIsComingSoonOpen(true)}
+      />
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#c3c6d6]/30 pb-4">
@@ -92,7 +27,7 @@ export const PatientPaymentsPage: React.FC = () => {
           </p>
         </div>
 
-        <Button variant="outline" size="sm" className="text-xs font-semibold">
+        <Button variant="outline" size="sm" className="text-xs font-semibold" disabled>
           <Download className="w-3.5 h-3.5" /> Download Tax Statement (2026)
         </Button>
       </div>
@@ -107,27 +42,24 @@ export const PatientPaymentsPage: React.FC = () => {
               <CheckCircle2 className="w-3.5 h-3.5" /> Up to date
             </span>
           </div>
-          <p className="text-[11px] text-[#737685]">Next session billing on Aug 12, 2026</p>
+          <p className="text-[11px] text-[#737685]">No pending transactions</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-[#c3c6d6]/40 p-5 shadow-sm space-y-2">
           <span className="text-xs font-bold text-[#51606f] block">Insurance Reimbursements</span>
           <div className="flex items-baseline gap-2">
-            <span className="font-heading text-2xl font-bold text-[#003d9b]">$150.00</span>
-            <span className="text-xs text-amber-600 font-semibold flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" /> 1 Claim Processing
-            </span>
+            <span className="font-heading text-2xl font-bold text-[#51606f]">$0.00</span>
           </div>
-          <p className="text-[11px] text-[#737685]">Submitted to BlueCross Health</p>
+          <p className="text-[11px] text-[#737685]">0 Claims Processing</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-[#c3c6d6]/40 p-5 shadow-sm space-y-2">
           <span className="text-xs font-bold text-[#51606f] block">Default Payment Card</span>
           <div className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-[#003d9b]" />
-            <span className="font-bold text-sm text-[#191c1e]">HSA/FSA Visa •••• 4242</span>
+            <CreditCard className="w-5 h-5 text-slate-400" />
+            <span className="font-bold text-sm text-[#51606f]">No Card Added</span>
           </div>
-          <p className="text-[11px] text-[#737685]">Auto-pay active for booked slots</p>
+          <p className="text-[11px] text-[#737685]">Add payment method to book slots</p>
         </div>
       </div>
 
@@ -139,59 +71,11 @@ export const PatientPaymentsPage: React.FC = () => {
             <h3 className="font-heading font-bold text-base text-[#191c1e] flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#003d9b]" /> Session Invoices &amp; Superbills
             </h3>
-            <span className="text-xs font-semibold text-[#51606f]">
-              {invoices.length} Total Statements
-            </span>
+            <span className="text-xs font-semibold text-[#51606f]">0 Total Statements</span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 text-[#51606f] font-bold">
-                  <th className="py-3 px-2">Invoice ID</th>
-                  <th className="py-3 px-2">Therapist &amp; Service</th>
-                  <th className="py-3 px-2">Date</th>
-                  <th className="py-3 px-2">Amount</th>
-                  <th className="py-3 px-2">Status</th>
-                  <th className="py-3 px-2 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
-                {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50 transition">
-                    <td className="py-3.5 px-2 font-bold text-[#191c1e]">{inv.id}</td>
-                    <td className="py-3.5 px-2">
-                      <div className="font-bold text-[#191c1e]">{inv.therapistName}</div>
-                      <div className="text-[11px] text-[#737685]">{inv.serviceType}</div>
-                    </td>
-                    <td className="py-3.5 px-2 text-[#51606f]">{inv.date}</td>
-                    <td className="py-3.5 px-2 font-bold text-[#191c1e]">
-                      ${inv.amount.toFixed(2)}
-                    </td>
-                    <td className="py-3.5 px-2">
-                      {inv.status === 'PAID' && (
-                        <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold text-[10px] border border-emerald-200">
-                          Paid
-                        </span>
-                      )}
-                      {inv.status === 'INSURANCE_CLAIM' && (
-                        <span className="bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px] border border-amber-200">
-                          Claim Pending
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-2 text-right">
-                      <button
-                        className="text-[#003d9b] hover:underline font-semibold inline-flex items-center gap-1"
-                        title="Download PDF Superbill"
-                      >
-                        <Download className="w-3.5 h-3.5" /> PDF
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="py-12 text-center text-[#737685]">
+            <p className="text-xs">No invoices or superbills found.</p>
           </div>
         </div>
 
@@ -200,24 +84,16 @@ export const PatientPaymentsPage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-[#c3c6d6]/40 p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-bold text-sm text-[#191c1e]">Saved Payment Cards</h3>
-              <button className="text-xs text-[#003d9b] font-bold flex items-center gap-1 hover:underline">
+              <button
+                className="text-xs text-[#003d9b] font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                onClick={() => setIsComingSoonOpen(true)}
+              >
                 <Plus className="w-3.5 h-3.5" /> Add Card
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="p-3.5 bg-[#f8f9ff] border border-[#003d9b]/30 rounded-xl flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-5 h-5 text-[#003d9b]" />
-                  <div>
-                    <h4 className="font-bold text-xs text-[#191c1e]">HSA/FSA Card</h4>
-                    <p className="text-[11px] text-[#737685]">Expires 12/28 • Default</p>
-                  </div>
-                </div>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                  Primary
-                </span>
-              </div>
+            <div className="py-8 text-center text-[#737685]">
+              <p className="text-xs">No payment cards on file.</p>
             </div>
           </div>
 
