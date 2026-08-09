@@ -633,23 +633,31 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                                 setSelectedBlock(block);
                               }}
                               style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
-                              className={`absolute left-1 right-1 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between z-10 transition-all hover:scale-[1.01] hover:z-20 cursor-pointer overflow-hidden ${st.card}`}
+                              className={`absolute left-1 right-1 rounded-xl shadow-2xs flex flex-col justify-between z-10 transition-all hover:scale-[1.01] hover:z-20 cursor-pointer overflow-hidden ${
+                                heightPx < 55 ? 'p-1.5' : 'p-2.5'
+                              } ${st.card}`}
                             >
-                              <div className="flex justify-between items-start gap-1">
+                              <div className="flex justify-between items-start gap-1 w-full">
                                 <span
-                                  className={`px-2 py-0.5 text-[9.5px] font-extrabold rounded-md uppercase tracking-wider shrink-0 ${st.badge}`}
+                                  className={`px-1.5 py-0.5 text-[9px] font-extrabold rounded-md uppercase tracking-wider shrink-0 ${st.badge}`}
                                 >
                                   {st.label}
                                 </span>
-                                <span className={`text-[11px] font-bold shrink-0 ${st.text}`}>
-                                  {block.startTime} – {block.endTime}
+                                <span className={`text-[10px] font-bold shrink-0 ${st.text}`}>
+                                  {heightPx < 55
+                                    ? block.startTime
+                                    : `${block.startTime} – ${block.endTime}`}
                                 </span>
                               </div>
-                              <div className="min-w-0">
-                                <p className={`text-xs font-bold font-heading truncate ${st.titleText}`}>
-                                  {block.patientName || block.title || 'Derived Slot'}
-                                </p>
-                              </div>
+                              {(block.patientName || (heightPx >= 55 && block.title)) && (
+                                <div className="min-w-0">
+                                  <p
+                                    className={`text-xs font-bold font-heading truncate ${st.titleText}`}
+                                  >
+                                    {block.patientName || block.title || 'Derived Slot'}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -740,23 +748,31 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                           setSelectedBlock(block);
                         }}
                         style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
-                        className={`absolute left-2 right-2 rounded-xl p-3 shadow-2xs flex flex-col justify-between z-10 transition-all hover:scale-[1.005] hover:z-20 cursor-pointer overflow-hidden ${st.card}`}
+                        className={`absolute left-2 right-2 rounded-xl shadow-2xs flex flex-col justify-between z-10 transition-all hover:scale-[1.005] hover:z-20 cursor-pointer overflow-hidden ${
+                          heightPx < 55 ? 'p-1.5' : 'p-3'
+                        } ${st.card}`}
                       >
-                        <div className="flex justify-between items-start gap-1">
+                        <div className="flex justify-between items-start gap-1 w-full">
                           <span
-                            className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-md uppercase tracking-wider ${st.badge}`}
+                            className={`px-2 py-0.5 text-[9.5px] font-extrabold rounded-md uppercase tracking-wider ${st.badge}`}
                           >
                             {st.label}
                           </span>
                           <span className={`text-xs font-bold ${st.text}`}>
-                            {block.startTime} – {block.endTime}
+                            {heightPx < 55
+                              ? block.startTime
+                              : `${block.startTime} – ${block.endTime}`}
                           </span>
                         </div>
-                        <div>
-                          <p className={`text-sm font-bold font-heading truncate ${st.titleText}`}>
-                            {block.patientName || block.title || 'Derived Slot'}
-                          </p>
-                        </div>
+                        {(block.patientName || (heightPx >= 55 && block.title)) && (
+                          <div>
+                            <p
+                              className={`text-sm font-bold font-heading truncate ${st.titleText}`}
+                            >
+                              {block.patientName || block.title || 'Derived Slot'}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     );
                   },
