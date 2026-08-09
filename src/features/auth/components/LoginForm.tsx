@@ -20,8 +20,8 @@ export const LoginForm: React.FC = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'patient@wysa.com',
-      password: 'Password123!',
+      email: '',
+      password: '',
     },
   });
 
@@ -31,13 +31,8 @@ export const LoginForm: React.FC = () => {
 
   const handleRoleSelect = (role: 'patient' | 'therapist') => {
     setActiveRole(role);
-    if (role === 'patient') {
-      setValue('email', 'patient@wysa.com', { shouldValidate: true });
-      setValue('password', 'Password123!', { shouldValidate: true });
-    } else {
-      setValue('email', 'therapist@wysa.com', { shouldValidate: true });
-      setValue('password', 'Password123!', { shouldValidate: true });
-    }
+    setValue('email', '', { shouldValidate: false });
+    setValue('password', '', { shouldValidate: false });
   };
 
   return (
