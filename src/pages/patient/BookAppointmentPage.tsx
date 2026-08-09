@@ -227,7 +227,10 @@ export const BookAppointmentPage: React.FC = () => {
   const handleSelectSlot = async (slot: AvailableSlot) => {
     setSelectedSlot(slot);
     if (selectedTherapist) {
-      await startHold(slot, selectedTherapist.id);
+      const success = await startHold(slot, selectedTherapist.id);
+      // Only advance to confirm step if the hold was successfully acquired.
+      // If startHold failed (slot taken, expired, etc.) stay on slot selection.
+      if (!success) return;
     }
     setBookingStep('confirm');
   };

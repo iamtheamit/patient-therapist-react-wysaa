@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { axiosClient } from '@/api/axiosClient';
-import { env } from '@/config/env';
 import type {
   TherapistProfile,
   AvailableSlot,
@@ -146,32 +145,22 @@ export const appointmentsApi = {
     startTime: string,
     endTime: string,
   ): Promise<SlotHoldSession> => {
-    try {
-      const response = await axiosClient.post<unknown, any>('/appointments/hold', {
-        therapistId,
-        startTime,
-        endTime,
-        bookingType: 'ONE_TIME',
-      });
-      const appointments = response as any[];
-      const firstAppt = appointments[0];
-      return {
-        holdId: firstAppt.id,
-        slotId,
-        therapistId,
-        expiresAt: new Date(firstAppt.holdExpiresAt).getTime(),
-      };
-    } catch (error) {
-      console.error('Failed to hold slot on backend, using fallback', error);
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const expiresAt = Date.now() + env.VITE_SLOT_HOLD_DURATION_SECONDS * 1000;
-      return {
-        holdId: `hold-${Date.now()}`,
-        slotId,
-        therapistId,
-        expiresAt,
-      };
-    }
+    // No catch/fallback — errors must propagate to useSlotHold so the user
+    // sees a meaningful "slot unavailable" message and cannot proceed to checkout.
+    const response = await axiosClient.post<unknown, any>('/appointments/hold', {
+      therapistId,
+      startTime,
+      endTime,
+      bookingType: 'ONE_TIME',
+    });
+    const appointments = response as any[];
+    const firstAppt = appointments[0];
+    return {
+      holdId: firstAppt.id,
+      slotId,
+      therapistId,
+      expiresAt: new Date(firstAppt.holdExpiresAt).getTime(),
+    };
   },
 
   releaseSlot: async (holdId: string): Promise<{ success: boolean }> => {
@@ -185,51 +174,29 @@ export const appointmentsApi = {
   },
 
   bookAppointment: async (payload: BookAppointmentPayload): Promise<PatientAppointment> => {
-    try {
-      if (payload.holdId) {
-        const response = await axiosClient.post<unknown, any>(
-          `/appointments/${payload.holdId}/pay`,
-          { status: 'SUCCESS' },
-        );
-        return {
-          id: response.id,
-          patientId: response.patientId,
-          therapist: {
-            id: response.therapistId,
-            name: response.therapist?.name || payload.therapistName || 'Dr. Sarah Connor',
-            specialization:
-              response.therapist?.specialization || 'Cognitive Behavioral Therapy (CBT)',
-          },
-          startTime: response.startTime,
-          endTime: response.endTime,
-          status: response.appointmentStatus,
-          notes: payload.notes || '',
-          meetingLink: 'https://meet.therapysync.example.com/new-session',
-          createdAt: response.createdAt,
-        };
-      }
+    if (!payload.holdId) {
       throw new Error('Hold ID is required to complete booking');
-    } catch (error: any) {
-      console.error('Failed to complete booking on backend, using fallback', error);
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      const now = new Date();
-      return {
-        id: `app-${Date.now()}`,
-        patientId: payload.patientId,
-        therapist: {
-          id: payload.therapistId,
-          name: payload.therapistName || 'Dr. Sarah Connor',
-          specialization: 'Cognitive Behavioral Therapy (CBT)',
-        },
-        startTime: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-        endTime: new Date(now.getTime() + 25 * 60 * 60 * 1000).toISOString(),
-        status: 'CONFIRMED',
-        notes: payload.notes,
-        meetingLink: 'https://meet.therapysync.example.com/new-session',
-        createdAt: now.toISOString(),
-      };
     }
+    // Note: No catch/fallback here — errors (e.g. ConflictError from backend) must propagate
+    // so the mutation's onError handler shows the correct "Booking Failed" toast.
+    const response = await axiosClient.post<unknown, any>(`/appointments/${payload.holdId}/pay`, {
+      status: 'SUCCESS',
+    });
+    return {
+      id: response.id,
+      patientId: response.patientId,
+      therapist: {
+        id: response.therapistId,
+        name: response.therapist?.name || payload.therapistName || 'Dr. Sarah Connor',
+        specialization: response.therapist?.specialization || 'Cognitive Behavioral Therapy (CBT)',
+      },
+      startTime: response.startTime,
+      endTime: response.endTime,
+      status: response.appointmentStatus,
+      notes: payload.notes || '',
+      meetingLink: 'https://meet.therapysync.example.com/new-session',
+      createdAt: response.createdAt,
+    };
   },
 
   bookRecurringAppointment: async (

@@ -39,7 +39,7 @@ export const useSlotHold = () => {
     queryClient.invalidateQueries({ queryKey: ['appointments'] });
   }, [holdSession, clearTimer, queryClient]);
 
-  const startHold = async (slot: AvailableSlot, therapistId: string) => {
+  const startHold = async (slot: AvailableSlot, therapistId: string): Promise<boolean> => {
     try {
       setIsHolding(true);
       const session = await appointmentsApi.holdSlot(
@@ -71,17 +71,28 @@ export const useSlotHold = () => {
           addToast({
             type: 'warning',
             title: 'Slot Reservation Expired',
-            message: `Your ${holdMinutes}-minute slot hold has expired. Please choose a slot again.`,
+            message: `Your ${holdMinutes}-minute hold on this slot has expired. Please select a time slot again to continue.`,
           });
         }
       }, 1000);
-    } catch {
+
+      return true;
+    } catch (err: unknown) {
       setIsHolding(false);
+      // Determine if this is a known conflict (slot taken) or an unknown error
+      const e = err as Record<string, unknown>;
+      const msg = typeof e?.message === 'string' ? e.message : '';
+      const isConflict =
+        e?.status === 409 || e?.errorCode === 'CONFLICT' || msg.toLowerCase().includes('conflict');
+
       addToast({
         type: 'error',
-        title: 'Slot Hold Failed',
-        message: 'Could not hold this time slot. Someone else may have reserved it.',
+        title: isConflict ? 'Slot No Longer Available' : 'Unable to Reserve Slot',
+        message: isConflict
+          ? 'This time slot was just booked by another patient. Please choose a different time.'
+          : 'We could not reserve this slot right now. Please try again or choose a different time.',
       });
+      return false;
     }
   };
 

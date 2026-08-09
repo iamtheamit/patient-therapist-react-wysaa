@@ -30,11 +30,28 @@ export const useBookAppointment = () => {
 
       navigate(ROUTES.PATIENT.DASHBOARD, { replace: true });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
+      const err = error as Record<string, unknown>;
+      const msg = typeof err?.message === 'string' ? err.message : '';
+      const isConflict =
+        err?.status === 409 ||
+        err?.errorCode === 'CONFLICT' ||
+        msg.toLowerCase().includes('conflict');
+      const isExpired =
+        msg.toLowerCase().includes('hold expired') || msg.toLowerCase().includes('expired');
+
       addToast({
         type: 'error',
-        title: 'Booking Failed',
-        message: error.message || 'Could not complete appointment booking.',
+        title: isConflict
+          ? 'Slot Already Taken'
+          : isExpired
+            ? 'Reservation Expired'
+            : 'Booking Failed',
+        message: isConflict
+          ? 'This slot was just confirmed by another patient. Please go back and choose a different time.'
+          : isExpired
+            ? 'Your hold on this slot has expired before payment was completed. Please select the slot again.'
+            : 'We could not complete your booking. Please try again in a moment.',
       });
     },
   });
