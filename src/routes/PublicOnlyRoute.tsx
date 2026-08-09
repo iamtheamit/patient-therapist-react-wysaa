@@ -1,18 +1,24 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import type { UserRole } from '@/types/auth';
 import { ROUTES } from '@/config/routes';
 import { useAuthStore } from '@/stores/authStore';
+import { PageSpinner } from '@/components/feedback/PageSpinner';
+import { useSessionBootstrap } from '@/features/auth/hooks/useSessionBootstrap';
 
 interface PublicOnlyRouteProps {
   children: React.ReactNode;
 }
 
 export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({ children }) => {
+  const isBootstrapping = useSessionBootstrap();
   const { isAuthenticated, user, token } = useAuthStore();
 
-  const hasToken = token || localStorage.getItem('auth_token');
-  const userRole = user?.role || (localStorage.getItem('user_role') as UserRole) || 'PATIENT';
+  const hasToken = token;
+  const userRole = user?.role || 'PATIENT';
+
+  if (isBootstrapping) {
+    return <PageSpinner label="Checking session..." />;
+  }
 
   if (isAuthenticated || hasToken) {
     const defaultDashboard =

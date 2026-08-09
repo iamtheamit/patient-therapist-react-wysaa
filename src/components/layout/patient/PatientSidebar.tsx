@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { PATIENT_NAV_ITEMS } from '@/config/patientNavigation';
+import type { PatientNavItem } from '@/config/patientNavigation';
 import { Logo } from '@/components/common/Logo';
 import { cn } from '@/utils/cn';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { ComingSoonModal } from '@/components/ui/ComingSoonModal';
 
 import { useLogout } from '@/features/auth/hooks/useLogout';
 
@@ -11,10 +13,26 @@ export const PatientSidebar: React.FC = () => {
   const location = useLocation();
   const { mutate: logoutMutate } = useLogout();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [comingSoonModalData, setComingSoonModalData] = useState<{
+    isOpen: boolean;
+    title: string;
+    icon: string;
+  } | null>(null);
 
   const handleSignOut = () => {
     setShowSignOutModal(false);
     logoutMutate();
+  };
+
+  const handleItemClick = (e: React.MouseEvent, item: PatientNavItem) => {
+    if (item.comingSoon) {
+      e.preventDefault();
+      setComingSoonModalData({
+        isOpen: true,
+        title: item.label,
+        icon: item.icon,
+      });
+    }
   };
 
   return (
@@ -43,8 +61,9 @@ export const PatientSidebar: React.FC = () => {
               <React.Fragment key={item.id}>
                 <Link
                   to={item.href}
+                  onClick={(e) => handleItemClick(e, item)}
                   className={cn(
-                    'flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all group',
+                    'flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all group cursor-pointer',
                     isActive
                       ? 'bg-[#e6f0ff] text-[#0052cc] shadow-2xs'
                       : 'text-[#434654] hover:bg-[#f8f9fb] hover:text-[#191c1e]',
@@ -117,6 +136,16 @@ export const PatientSidebar: React.FC = () => {
         confirmLabel="Sign out"
         cancelLabel="Cancel"
       />
+
+      {/* Feature Coming Soon Modal */}
+      {comingSoonModalData && (
+        <ComingSoonModal
+          isOpen={comingSoonModalData.isOpen}
+          onClose={() => setComingSoonModalData(null)}
+          featureTitle={comingSoonModalData.title}
+          icon={comingSoonModalData.icon}
+        />
+      )}
     </>
   );
 };

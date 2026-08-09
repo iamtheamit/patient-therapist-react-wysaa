@@ -326,9 +326,9 @@ export const PatientDashboardPage: React.FC = () => {
                 </Link>
               </div>
 
-              <div className="p-6 flex-1 flex flex-col justify-center">
+              <div className="p-6 flex-1 flex flex-col">
                 {isLoading ? (
-                  <div className="py-8 text-center text-xs text-[#51606f] animate-pulse flex flex-col items-center justify-center gap-2">
+                  <div className="py-8 text-center text-xs text-[#51606f] animate-pulse flex flex-col items-center justify-center gap-2 flex-1">
                     <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
                       <Clock className="w-5 h-5 animate-spin" />
                     </div>

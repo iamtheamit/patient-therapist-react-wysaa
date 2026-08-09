@@ -13,14 +13,18 @@ export interface RegisterCredentials {
 
 export interface BackendAuthTokens {
   accessToken: string;
-  refreshToken: string;
   tokenType: string;
   expiresIn: number;
   user: User;
 }
 
+export interface RefreshResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
-  refreshToken?: string;
 }

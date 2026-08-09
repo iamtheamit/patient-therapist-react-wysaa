@@ -15,7 +15,7 @@ export const useLogin = () => {
   return useMutation<AuthResponse, Error, LoginCredentials>({
     mutationFn: (credentials) => authApi.login(credentials),
     onSuccess: (data) => {
-      setAuth(data.user, data.token, data.refreshToken);
+      setAuth(data.user, data.token);
 
       addToast({
         type: 'success',

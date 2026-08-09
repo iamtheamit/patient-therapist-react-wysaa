@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Filter, ChevronRight, X, CheckCircle2 } from 'lucide-react';
+import { Search, Plus, Filter, ChevronRight, X, CheckCircle2, Sparkles } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
 import type { UIState } from '@/stores/uiStore';
+import { ComingSoonModal } from '@/components/ui/ComingSoonModal';
 
 interface PatientRecord {
   id: string;
@@ -24,6 +25,7 @@ interface PatientRecord {
 
 export const TherapistPatientsPage: React.FC = () => {
   const addToast = useUIStore((state: UIState) => state.addToast);
+  const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState<'ALL' | 'High' | 'Moderate' | 'Low'>('ALL');
@@ -181,11 +183,37 @@ export const TherapistPatientsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 text-left w-full">
+      {/* Feature Coming Soon Banner */}
+      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold shrink-0">
+            <Sparkles className="w-5 h-5 text-amber-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+              Patient Directory Feature Coming Soon
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-200/60 text-amber-800 font-bold uppercase tracking-wider">Preview Mode</span>
+            </h3>
+            <p className="text-xs text-amber-700/90 mt-0.5">
+              The patient directory and electronic health record module is currently in active development.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsComingSoonOpen(true)}
+          className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition shadow-2xs shrink-0 cursor-pointer flex items-center gap-1.5"
+        >
+          <Sparkles className="w-4 h-4" />
+          View Details
+        </button>
+      </div>
+
       {/* Header Title */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#c3c6d6]/40">
         <div>
           <h1 className="text-2xl md:text-3xl font-heading font-bold text-[#191c1e]">
-            Patient Directory & EHR
+            Patient Directory &amp; EHR
           </h1>
           <p className="text-xs md:text-sm text-[#434654] mt-1">
             Access client health records, clinical progress histories, risk levels, and emergency
@@ -469,6 +497,13 @@ export const TherapistPatientsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ComingSoonModal
+        isOpen={isComingSoonOpen}
+        onClose={() => setIsComingSoonOpen(false)}
+        featureTitle="Patient Directory"
+        icon="group"
+      />
     </div>
   );
 };

@@ -21,6 +21,8 @@ export const useUpdateScheduleConfig = (therapistId: string) => {
     mutationFn: (config) => therapistApi.updateScheduleConfig(config),
     onSuccess: (updatedConfig) => {
       queryClient.setQueryData(QUERY_KEYS.SCHEDULES.THERAPIST_CONFIG(therapistId), updatedConfig);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCHEDULES.ROOT });
+      queryClient.invalidateQueries({ queryKey: ['therapist-calendar'] });
 
       addToast({
         type: 'success',

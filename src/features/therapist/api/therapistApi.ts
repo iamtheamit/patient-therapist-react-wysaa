@@ -390,45 +390,4 @@ export const therapistApi = {
       return { success: true, payload };
     }
   },
-
-  createAvailabilitySlot: async (payload: {
-    date: string;
-    startTime: string;
-    endTime: string;
-    appointmentType?: string;
-    isRecurring?: boolean;
-    repeatType?: string;
-    repeatFrequency?: string;
-    recurrenceEndDate?: string;
-  }) => {
-    try {
-      const response = await axiosClient.post('/therapist/availability-slots', payload);
-      return (response as { data?: unknown })?.data || response;
-    } catch (err) {
-      console.warn('Backend slot creation fallback:', err);
-      return { id: Date.now().toString(), ...payload };
-    }
-  },
-
-  getAvailabilitySlots: async (therapistId: string, date?: string) => {
-    try {
-      const response = await axiosClient.get(`/therapist/availability-slots/${therapistId}`, {
-        params: { date },
-      });
-      return Array.isArray(response)
-        ? response
-        : (response as any)?.items || (response as { data?: unknown[] })?.data || [];
-    } catch {
-      return [];
-    }
-  },
-
-  deleteAvailabilitySlot: async (slotId: string) => {
-    try {
-      const response = await axiosClient.delete(`/therapist/availability-slots/${slotId}`);
-      return response;
-    } catch {
-      return { success: true };
-    }
-  },
 };

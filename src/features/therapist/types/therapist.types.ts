@@ -14,10 +14,12 @@ export interface TherapistAgendaItem {
   startTime: string; // ISO 8601 UTC
   endTime: string; // ISO 8601 UTC
   status: AppointmentStatus;
-  notes?: string;
+  notes?: string;          // Patient's booking note (read-only)
+  clinicalNotes?: string;  // Therapist's clinical/session notes (editable)
   meetingLink?: string;
   createdAt: string;
 }
+
 
 export interface TherapistStats {
   todaySessionsCount: number;

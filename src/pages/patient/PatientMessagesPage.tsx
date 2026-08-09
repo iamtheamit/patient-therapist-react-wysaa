@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Send, Paperclip, ShieldCheck, Clock, CheckCheck, Lock } from 'lucide-react';
+import { Search, Send, Paperclip, ShieldCheck, Clock, CheckCheck, Lock, Sparkles } from 'lucide-react';
+import { ComingSoonModal } from '@/components/ui/ComingSoonModal';
 
 interface ChatThread {
   id: string;
@@ -58,19 +59,12 @@ const MOCK_MESSAGES: Record<string, MessageItem[]> = {
       id: 'm2',
       sender: 'patient',
       text: 'Hi Dr. Sarah! Yes, I completed it yesterday evening and felt much more grounded afterwards.',
-      timestamp: '09:30 AM',
+      timestamp: '09:18 AM',
     },
     {
       id: 'm3',
-      sender: 'patient',
-      text: 'I attached my completed log here for you to see.',
-      timestamp: '09:31 AM',
-      attachmentName: 'CBT_ThoughtLog_Alex.pdf',
-    },
-    {
-      id: 'm4',
       sender: 'therapist',
-      text: 'Great work on your daily mindfulness journal! Let us review item #3 in our session tomorrow.',
+      text: 'Great work on your daily mindfulness journal! Let us review item #3 in our session.',
       timestamp: '10:42 AM',
     },
   ],
@@ -89,6 +83,7 @@ export const PatientMessagesPage: React.FC = () => {
   const [newMessageText, setNewMessageText] = useState('');
   const [messages, setMessages] = useState(MOCK_MESSAGES);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
 
   const activeThread = MOCK_THREADS.find((t) => t.id === activeThreadId) || MOCK_THREADS[0];
   const activeMessages = messages[activeThreadId] || [];
@@ -114,6 +109,32 @@ export const PatientMessagesPage: React.FC = () => {
 
   return (
     <div className="space-y-6 text-left w-full">
+      {/* Feature Coming Soon Banner */}
+      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold shrink-0">
+            <Sparkles className="w-5 h-5 text-amber-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+              Messages Feature Coming Soon
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-200/60 text-amber-800 font-bold uppercase tracking-wider">Preview Mode</span>
+            </h3>
+            <p className="text-xs text-amber-700/90 mt-0.5">
+              This module is currently under active development. Click below to view feature specifications and early access options.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsComingSoonOpen(true)}
+          className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition shadow-2xs shrink-0 cursor-pointer flex items-center gap-1.5"
+        >
+          <Sparkles className="w-4 h-4" />
+          View Feature Specs
+        </button>
+      </div>
+
       {/* Page Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#c3c6d6]/30 pb-4">
         <div>
@@ -311,6 +332,13 @@ export const PatientMessagesPage: React.FC = () => {
           </form>
         </div>
       </div>
+
+      <ComingSoonModal
+        isOpen={isComingSoonOpen}
+        onClose={() => setIsComingSoonOpen(false)}
+        featureTitle="Messages"
+        icon="chat"
+      />
     </div>
   );
 };

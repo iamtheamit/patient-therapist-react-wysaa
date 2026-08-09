@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Clock, ShieldCheck } from 'lucide-react';
+import { Save, Clock, ShieldCheck, Info } from 'lucide-react';
 import type { TherapistScheduleConfig, DayScheduleRule } from '../types/therapist.types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -104,6 +104,17 @@ export const WeeklyScheduleForm: React.FC<WeeklyScheduleFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-left">
+      {/* Data Protection Banner */}
+      <div className="bg-[#0052cc]/5 border border-[#0052cc]/20 rounded-2xl p-4 flex items-start gap-3 text-xs text-[#191c1e]">
+        <Info className="w-5 h-5 text-[#0052cc] shrink-0 mt-0.5" />
+        <div>
+          <p className="font-bold text-[#0052cc]">Schedule Version & History Protection</p>
+          <p className="text-[#434654] mt-0.5">
+            Updating your weekly shift rules or session length applies starting today for all future dates. Past calendar history, prior shift configurations, and confirmed patient bookings are strictly preserved and remain untouched.
+          </p>
+        </div>
+      </div>
+
       {/* Session Duration Settings */}
       <Card className="bg-white border-[#c3c6d6]/40 shadow-xs rounded-2xl !overflow-visible relative z-30">
         <CardContent className="p-4 sm:p-6 space-y-4 !overflow-visible">

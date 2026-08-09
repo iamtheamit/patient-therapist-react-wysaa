@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText } from 'lucide-react';
+import { FileText, MessageSquare } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useUpdateClinicalNotes } from '../hooks/useUpdateAppointmentStatus';
 import type { TherapistAgendaItem } from '../types/therapist.types';
@@ -16,12 +16,12 @@ export const ClinicalNotesModal: React.FC<ClinicalNotesModalProps> = ({
   item,
 }) => {
   const [prevItemId, setPrevItemId] = useState<string | null>(null);
-  const [notes, setNotes] = useState('');
+  const [clinicalNotes, setClinicalNotes] = useState('');
 
   // Sync state during render when a new item is selected (React 19 recommended pattern)
   if (item && item.id !== prevItemId) {
     setPrevItemId(item.id);
-    setNotes(item.notes || '');
+    setClinicalNotes(item.clinicalNotes || '');
   }
 
   const therapistId = item?.therapistId || 'therapist-doc-1';
@@ -31,7 +31,7 @@ export const ClinicalNotesModal: React.FC<ClinicalNotesModalProps> = ({
 
   const handleSave = () => {
     saveNotes(
-      { appointmentId: item.id, notes },
+      { appointmentId: item.id, notes: clinicalNotes },
       {
         onSuccess: () => onClose(),
       },
@@ -56,6 +56,20 @@ export const ClinicalNotesModal: React.FC<ClinicalNotesModalProps> = ({
       }}
     >
       <div className="space-y-4 pt-1 text-left">
+        {/* Patient's booking note — read-only */}
+        {item.notes && (
+          <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <MessageSquare className="w-3.5 h-3.5 text-[#0052cc]" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0052cc]">
+                Patient's Note
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 leading-relaxed italic">"{item.notes}"</p>
+          </div>
+        )}
+
+        {/* Therapist's editable clinical notes */}
         <div>
           <label
             htmlFor="clinicalNotesInput"
@@ -66,8 +80,8 @@ export const ClinicalNotesModal: React.FC<ClinicalNotesModalProps> = ({
           <textarea
             id="clinicalNotesInput"
             rows={5}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            value={clinicalNotes}
+            onChange={(e) => setClinicalNotes(e.target.value)}
             placeholder="Type clinical observations, CBT homework exercises, or treatment recommendations..."
             className="w-full bg-slate-50/50 dark:bg-slate-850 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-xs rounded-xl border border-slate-200/80 dark:border-slate-700 p-3.5 outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/20 transition shadow-inner"
           />

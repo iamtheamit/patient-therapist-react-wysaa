@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { therapistApi } from '../api/therapistApi';
 import type { AvailabilityBlock } from '../components/WeeklyAvailabilityCalendar';
 import type { StatusUpdatePayload } from '../types/therapist.types';
+import { QUERY_KEYS } from '@/config/queryKeys';
 
 export const THERAPIST_CALENDAR_KEYS = {
   all: ['therapist-calendar'] as const,
@@ -9,7 +10,6 @@ export const THERAPIST_CALENDAR_KEYS = {
     [...THERAPIST_CALENDAR_KEYS.all, 'appointments', therapistId] as const,
   schedule: (therapistId: string) =>
     [...THERAPIST_CALENDAR_KEYS.all, 'schedule', therapistId] as const,
-  slots: (therapistId: string) => [...THERAPIST_CALENDAR_KEYS.all, 'slots', therapistId] as const,
 };
 
 // Helper: Convert ISO Date string to "YYYY-MM-DD"
@@ -41,18 +41,9 @@ export const useTherapistCalendar = (therapistId: string) => {
 
   // Query 2: Schedule configuration (working rules)
   const scheduleConfigQuery = useQuery({
-    queryKey: THERAPIST_CALENDAR_KEYS.schedule(therapistId),
+    queryKey: QUERY_KEYS.SCHEDULES.THERAPIST_CONFIG(therapistId),
     queryFn: () => therapistApi.getScheduleConfig(therapistId),
     enabled: Boolean(therapistId),
-    staleTime: 60000,
-  });
-
-  // Query 3: Therapist custom availability slots
-  const availabilitySlotsQuery = useQuery({
-    queryKey: THERAPIST_CALENDAR_KEYS.slots(therapistId),
-    queryFn: () => therapistApi.getAvailabilitySlots(therapistId),
-    enabled: Boolean(therapistId),
-    staleTime: 30000,
   });
 
   // Mutation: Update appointment status (Scheduled -> Completed / Cancelled / No Show)
@@ -62,31 +53,6 @@ export const useTherapistCalendar = (therapistId: string) => {
       queryClient.invalidateQueries({
         queryKey: THERAPIST_CALENDAR_KEYS.appointments(therapistId),
       });
-    },
-  });
-
-  // Mutation: Create custom availability slot
-  const createSlotMutation = useMutation({
-    mutationFn: (payload: {
-      date: string;
-      startTime: string;
-      endTime: string;
-      appointmentType?: string;
-      isRecurring?: boolean;
-      repeatType?: string;
-      repeatFrequency?: string;
-      recurrenceEndDate?: string;
-    }) => therapistApi.createAvailabilitySlot(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: THERAPIST_CALENDAR_KEYS.slots(therapistId) });
-    },
-  });
-
-  // Mutation: Delete custom availability slot
-  const deleteSlotMutation = useMutation({
-    mutationFn: (slotId: string) => therapistApi.deleteAvailabilitySlot(slotId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: THERAPIST_CALENDAR_KEYS.slots(therapistId) });
     },
   });
 
@@ -131,56 +97,18 @@ export const useTherapistCalendar = (therapistId: string) => {
     };
   });
 
-  // Map custom availability slots to AvailabilityBlock[] format
-  const rawSlots = (availabilitySlotsQuery.data || []) as unknown as Array<{
-    id: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-    appointmentType?: string;
-    isRecurring?: boolean;
-    repeatType?: string;
-    repeatFrequency?: string;
-  }>;
-
-  const mappedCustomSlotBlocks: AvailabilityBlock[] = rawSlots.map((slot) => {
-    const [startH, startM] = (slot.startTime || '09:00').split(':').map(Number);
-    const [endH, endM] = (slot.endTime || '10:00').split(':').map(Number);
-
-    const startHourNum = startH + (startM || 0) / 60;
-    const durationHoursNum = Math.max(0.5, (endH * 60 + endM - (startH * 60 + startM)) / 60);
-
-    return {
-      id: slot.id,
-      date: slot.date,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-      startHour: startHourNum,
-      durationHours: durationHoursNum,
-      location: 'Telehealth',
-      type: 'available',
-      appointmentType: slot.appointmentType || 'Follow Up Session',
-      isRecurring: slot.isRecurring ?? false,
-      repeatType: slot.repeatType,
-      repeatFrequency: slot.repeatFrequency,
-    };
-  });
-
   return {
     appointments: appointmentsQuery.data || [],
     appointmentBlocks: mappedAppointmentBlocks,
-    customSlotBlocks: mappedCustomSlotBlocks,
+    customSlotBlocks: [],
     scheduleConfig: scheduleConfigQuery.data,
     isLoading: appointmentsQuery.isLoading || scheduleConfigQuery.isLoading,
     isError: appointmentsQuery.isError || scheduleConfigQuery.isError,
     refetch: () => {
       appointmentsQuery.refetch();
       scheduleConfigQuery.refetch();
-      availabilitySlotsQuery.refetch();
     },
     updateStatus: statusMutation.mutateAsync,
-    createAvailabilitySlot: createSlotMutation.mutateAsync,
-    deleteAvailabilitySlot: deleteSlotMutation.mutateAsync,
     isUpdatingStatus: statusMutation.isPending,
   };
 };

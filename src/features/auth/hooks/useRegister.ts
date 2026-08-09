@@ -15,7 +15,7 @@ export const useRegister = () => {
   return useMutation<AuthResponse, Error, RegisterCredentials>({
     mutationFn: (credentials) => authApi.register(credentials),
     onSuccess: (data) => {
-      setAuth(data.user, data.token, data.refreshToken);
+      setAuth(data.user, data.token);
 
       addToast({
         type: 'success',

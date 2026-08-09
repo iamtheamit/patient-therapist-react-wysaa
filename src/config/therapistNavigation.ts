@@ -9,6 +9,7 @@ export interface TherapistNavItem {
   badgeCount?: number;
   badgeVariant?: 'primary' | 'error' | 'secondary';
   dividerAfter?: boolean;
+  comingSoon?: boolean;
 }
 
 export const THERAPIST_NAV_ITEMS: TherapistNavItem[] = [
@@ -38,6 +39,7 @@ export const THERAPIST_NAV_ITEMS: TherapistNavItem[] = [
     label: 'Patient Directory',
     icon: 'group',
     href: ROUTES.THERAPIST.PATIENTS,
+    comingSoon: true,
   },
   {
     id: 'messages',
@@ -47,12 +49,14 @@ export const THERAPIST_NAV_ITEMS: TherapistNavItem[] = [
     badgeCount: 3,
     badgeVariant: 'error',
     dividerAfter: true,
+    comingSoon: true,
   },
   {
     id: 'reports',
     label: 'Reports',
     icon: 'bar_chart',
     href: ROUTES.THERAPIST.REPORTS,
+    comingSoon: true,
   },
   {
     id: 'settings',

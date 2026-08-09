@@ -9,6 +9,7 @@ export interface PatientNavItem {
   badgeCount?: number;
   badgeVariant?: 'primary' | 'error' | 'secondary';
   dividerAfter?: boolean;
+  comingSoon?: boolean;
 }
 
 export const PATIENT_NAV_ITEMS: PatientNavItem[] = [
@@ -39,6 +40,7 @@ export const PATIENT_NAV_ITEMS: PatientNavItem[] = [
     icon: 'chat',
     badgeCount: 2,
     badgeVariant: 'error',
+    comingSoon: true,
   },
   {
     id: 'payments',
@@ -46,6 +48,7 @@ export const PATIENT_NAV_ITEMS: PatientNavItem[] = [
     href: ROUTES.PATIENT.PAYMENTS,
     icon: 'payments',
     dividerAfter: true,
+    comingSoon: true,
   },
   {
     id: 'profile',

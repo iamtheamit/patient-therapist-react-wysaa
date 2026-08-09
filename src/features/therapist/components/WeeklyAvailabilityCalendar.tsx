@@ -79,6 +79,7 @@ const MONTH_NAMES = [
 
 const START_HOUR = 7;
 const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
+const HOUR_HEIGHT_PX = 88;
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -126,13 +127,13 @@ export const WeeklyAvailabilityCalendar: React.FC<{
   // Current Time indicator top offset in hours
   const currentHourDecimal = nowTime.getHours() + nowTime.getMinutes() / 60;
   const showTimeLine = currentHourDecimal >= START_HOUR && currentHourDecimal <= 24;
-  const timeLineTopPx = (currentHourDecimal - START_HOUR) * 64;
+  const timeLineTopPx = (currentHourDecimal - START_HOUR) * HOUR_HEIGHT_PX;
 
   // Auto-scroll scrollable time grid to current time or 8 AM
   useEffect(() => {
     const isToday = formatDateISO(currentDate) === formatDateISO(nowTime);
     const targetHour = isToday ? nowTime.getHours() : 9;
-    const targetScroll = Math.max(0, (targetHour - START_HOUR - 1) * 64);
+    const targetScroll = Math.max(0, (targetHour - START_HOUR - 1) * HOUR_HEIGHT_PX);
 
     if (viewMode === 'week' && weekScrollRef.current) {
       weekScrollRef.current.scrollTop = targetScroll;
@@ -163,7 +164,6 @@ export const WeeklyAvailabilityCalendar: React.FC<{
     }
 
     const slotDurMins = scheduleConfig?.slotDurationMinutes || 50;
-    const bufferDurMins = scheduleConfig?.bufferDurationMinutes ?? 10;
 
     const [startH, startM] = (dayRule.startTime || '09:00').split(':').map(Number);
     const [endH, endM] = (dayRule.endTime || '17:00').split(':').map(Number);
@@ -204,7 +204,8 @@ export const WeeklyAvailabilityCalendar: React.FC<{
       return (h || 0) * 60 + (m || 0);
     };
 
-    // Derive available or expired slots
+    // Derive available or expired slots on clean 30-minute grid intervals
+    const gridStepMins = 30; // Clean half-hour grid step
     let currMins = shiftStartMins;
     let slotIndex = 0;
     while (currMins + slotDurMins <= shiftEndMins) {
@@ -255,7 +256,7 @@ export const WeeklyAvailabilityCalendar: React.FC<{
       }
 
       slotIndex++;
-      currMins = slotEndMins + bufferDurMins;
+      currMins += gridStepMins;
     }
 
     return result;
@@ -588,9 +589,9 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                   {HOURS.map((hour) => (
                     <div
                       key={hour}
-                      className="h-[64px] border-b border-[#c3c6d6]/60 pr-2 pt-1 text-right relative"
+                      className="h-[88px] border-b border-[#c3c6d6]/60 pr-2 pt-1 text-right relative"
                     >
-                      <span className="text-[10px] font-bold text-[#51606f]">
+                      <span className="text-[11px] font-bold text-[#51606f]">
                         {formatHourLabel(hour)}
                       </span>
                     </div>
@@ -605,22 +606,23 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                     return (
                       <div
                         key={day.iso}
-                        className="flex-1 border-r border-[#c3c6d6]/40 relative min-h-[1088px] flex flex-col bg-white"
+                        className="flex-1 border-r border-[#c3c6d6]/40 relative min-h-[1496px] flex flex-col bg-white"
                       >
                         {/* Background Hour Grid Lines */}
                         {HOURS.map((hour) => (
                           <div
                             key={hour}
-                            className="h-[64px] border-b border-[#c3c6d6]/50 relative select-none"
+                            className="h-[88px] border-b border-[#c3c6d6]/50 relative select-none"
                           >
-                            <div className="absolute top-8 left-0 right-0 border-b border-dashed border-[#c3c6d6]/30 pointer-events-none" />
+                            <div className="absolute top-[44px] left-0 right-0 border-b border-dashed border-[#c3c6d6]/30 pointer-events-none" />
                           </div>
                         ))}
 
                         {/* Overlay Calendar Blocks */}
                         {dayBlocks.map((block: AvailabilityBlock) => {
-                          const topOffset = (block.startHour - START_HOUR) * 64;
-                          const heightPx = block.durationHours * 64;
+                          const topOffset = (block.startHour - START_HOUR) * HOUR_HEIGHT_PX + 1;
+                          const rawHeight = block.durationHours * HOUR_HEIGHT_PX;
+                          const heightPx = Math.max(rawHeight - 2, 38);
                           const st = getStatusStyles(block.status);
 
                           return (
@@ -631,20 +633,20 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                                 setSelectedBlock(block);
                               }}
                               style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
-                              className={`absolute left-1 right-1 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between z-10 transition-all cursor-pointer ${st.card}`}
+                              className={`absolute left-1 right-1 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between z-10 transition-all hover:scale-[1.01] hover:z-20 cursor-pointer overflow-hidden ${st.card}`}
                             >
                               <div className="flex justify-between items-start gap-1">
                                 <span
-                                  className={`px-1.5 py-0.5 text-[9px] font-extrabold rounded uppercase tracking-wider ${st.badge}`}
+                                  className={`px-2 py-0.5 text-[9.5px] font-extrabold rounded-md uppercase tracking-wider shrink-0 ${st.badge}`}
                                 >
                                   {st.label}
                                 </span>
-                                <span className={`text-[10px] font-bold ${st.text}`}>
+                                <span className={`text-[11px] font-bold shrink-0 ${st.text}`}>
                                   {block.startTime} – {block.endTime}
                                 </span>
                               </div>
-                              <div>
-                                <p className={`text-xs font-bold truncate ${st.titleText}`}>
+                              <div className="min-w-0">
+                                <p className={`text-xs font-bold font-heading truncate ${st.titleText}`}>
                                   {block.patientName || block.title || 'Derived Slot'}
                                 </p>
                               </div>
@@ -704,29 +706,30 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                 {HOURS.map((hour) => (
                   <div
                     key={hour}
-                    className="h-[64px] border-b border-[#c3c6d6]/60 pr-2 pt-1 text-right relative"
+                    className="h-[88px] border-b border-[#c3c6d6]/60 pr-2 pt-1 text-right relative"
                   >
-                    <span className="text-[10px] font-bold text-[#51606f]">
+                    <span className="text-[11px] font-bold text-[#51606f]">
                       {formatHourLabel(hour)}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <div className="flex-1 relative min-h-[1088px] flex flex-col">
+              <div className="flex-1 relative min-h-[1496px] flex flex-col">
                 {HOURS.map((hour) => (
                   <div
                     key={hour}
-                    className="h-[64px] border-b border-[#c3c6d6]/50 relative select-none"
+                    className="h-[88px] border-b border-[#c3c6d6]/50 relative select-none"
                   >
-                    <div className="absolute top-8 left-0 right-0 border-b border-dashed border-[#c3c6d6]/30 pointer-events-none" />
+                    <div className="absolute top-[44px] left-0 right-0 border-b border-dashed border-[#c3c6d6]/30 pointer-events-none" />
                   </div>
                 ))}
 
                 {getBlocksForDate(formatDateISO(currentDate), currentDate).map(
                   (block: AvailabilityBlock) => {
-                    const topOffset = (block.startHour - START_HOUR) * 64;
-                    const heightPx = block.durationHours * 64;
+                    const topOffset = (block.startHour - START_HOUR) * HOUR_HEIGHT_PX + 1;
+                    const rawHeight = block.durationHours * HOUR_HEIGHT_PX;
+                    const heightPx = Math.max(rawHeight - 2, 40);
                     const st = getStatusStyles(block.status);
 
                     return (
@@ -737,11 +740,11 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                           setSelectedBlock(block);
                         }}
                         style={{ top: `${topOffset}px`, height: `${heightPx}px` }}
-                        className={`absolute left-2 right-2 rounded-xl p-3 shadow-2xs flex flex-col justify-between z-10 transition-all cursor-pointer ${st.card}`}
+                        className={`absolute left-2 right-2 rounded-xl p-3 shadow-2xs flex flex-col justify-between z-10 transition-all hover:scale-[1.005] hover:z-20 cursor-pointer overflow-hidden ${st.card}`}
                       >
                         <div className="flex justify-between items-start gap-1">
                           <span
-                            className={`px-2 py-0.5 text-[10px] font-extrabold rounded uppercase tracking-wider ${st.badge}`}
+                            className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-md uppercase tracking-wider ${st.badge}`}
                           >
                             {st.label}
                           </span>
@@ -750,7 +753,7 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                           </span>
                         </div>
                         <div>
-                          <p className={`text-sm font-bold truncate ${st.titleText}`}>
+                          <p className={`text-sm font-bold font-heading truncate ${st.titleText}`}>
                             {block.patientName || block.title || 'Derived Slot'}
                           </p>
                         </div>
