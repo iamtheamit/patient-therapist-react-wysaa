@@ -20,10 +20,7 @@ export const PatientAppointmentsTab: React.FC = () => {
     return appointments.filter((appt) => {
       const apptDate = new Date(appt.startTime);
       if (activeTab === 'upcoming') {
-        return (
-          apptDate >= now &&
-          (appt.status === 'CONFIRMED' || appt.status === 'SCHEDULED' || appt.status === 'HELD')
-        );
+        return apptDate >= now && (appt.status === 'CONFIRMED' || appt.status === 'SCHEDULED');
       }
       if (activeTab === 'past') {
         return (
@@ -33,10 +30,16 @@ export const PatientAppointmentsTab: React.FC = () => {
         );
       }
       if (activeTab === 'holds') {
-        return appt.status === 'HELD';
+        const isExpired = appt.holdExpiresAt ? new Date(appt.holdExpiresAt) <= now : false;
+        return appt.status === 'HELD' && !isExpired;
       }
       if (activeTab === 'failed') {
-        return appt.status === 'HOLD_EXPIRED' || appt.status === 'PAYMENT_FAILED';
+        const isExpired = appt.holdExpiresAt ? new Date(appt.holdExpiresAt) <= now : false;
+        return (
+          appt.status === 'HOLD_EXPIRED' ||
+          appt.status === 'PAYMENT_FAILED' ||
+          (appt.status === 'HELD' && isExpired)
+        );
       }
       return true;
     });
@@ -49,7 +52,8 @@ export const PatientAppointmentsTab: React.FC = () => {
         new Date(a.startTime) >= now &&
         a.status !== 'CANCELLED' &&
         a.status !== 'HOLD_EXPIRED' &&
-        a.status !== 'PAYMENT_FAILED',
+        a.status !== 'PAYMENT_FAILED' &&
+        a.status !== 'HELD',
     ).length;
   }, [appointments]);
 
@@ -64,12 +68,23 @@ export const PatientAppointmentsTab: React.FC = () => {
   }, [appointments]);
 
   const failedCount = useMemo(() => {
-    return appointments.filter((a) => a.status === 'HOLD_EXPIRED' || a.status === 'PAYMENT_FAILED')
-      .length;
+    const now = new Date();
+    return appointments.filter((a) => {
+      const isExpired = a.holdExpiresAt ? new Date(a.holdExpiresAt) <= now : false;
+      return (
+        a.status === 'HOLD_EXPIRED' ||
+        a.status === 'PAYMENT_FAILED' ||
+        (a.status === 'HELD' && isExpired)
+      );
+    }).length;
   }, [appointments]);
 
   const activeHoldsCount = useMemo(() => {
-    return appointments.filter((a) => a.status === 'HELD').length;
+    const now = new Date();
+    return appointments.filter((a) => {
+      const isExpired = a.holdExpiresAt ? new Date(a.holdExpiresAt) <= now : false;
+      return a.status === 'HELD' && !isExpired;
+    }).length;
   }, [appointments]);
 
   return (

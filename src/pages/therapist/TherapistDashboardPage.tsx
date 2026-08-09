@@ -3,12 +3,83 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
 import { ROUTES } from '@/config/routes';
+import { useDashboard } from '@/features/dashboard';
+import type { TherapistDashboardData } from '@/features/dashboard';
+import { useNow } from '@/hooks/useNow';
 
 export const TherapistDashboardPage: React.FC = () => {
   const user = useAuthStore((state: AuthState) => state.user);
   const navigate = useNavigate();
 
   const therapistName = user?.name || 'Dr. Sarah Connor';
+
+  const { data: dashboardData, isLoading } = useDashboard();
+
+  // Extract therapist-specific data from unified dashboard response
+  const therapistData =
+    dashboardData?.role === 'THERAPIST' ? (dashboardData as TherapistDashboardData) : null;
+
+  const stats = therapistData?.stats || {
+    todaySessionsCount: 0,
+    upcomingSessionsCount: 0,
+    pendingHoldsCount: 0,
+    totalPatientsCount: 0,
+    completedSessionsCount: 0,
+  };
+
+  const nextSession = therapistData?.nextSession ?? null;
+  const recentAppointments = therapistData?.recentAppointments ?? [];
+  const todaySchedule = therapistData?.todaySchedule ?? [];
+
+  const nowTime = useNow();
+
+  // Helper to format startTime and endTime to HH:MM AM/PM range
+  const formatTimeRange = (startStr: string, endStr: string) => {
+    try {
+      const start = new Date(startStr);
+      const end = new Date(endStr);
+      return `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } catch {
+      return '';
+    }
+  };
+
+  // Helper to get relative time badge text
+  const getRelativeTimeBadge = (startStr: string, currentMs: number) => {
+    try {
+      const diffMs = new Date(startStr).getTime() - currentMs;
+      const diffMin = Math.round(diffMs / 60000);
+      if (diffMin <= 0) return 'STARTED';
+      if (diffMin < 60) return `IN ${diffMin} MINUTES`;
+      const diffHrs = Math.round(diffMin / 60);
+      if (diffHrs < 24) return `IN ${diffHrs} HOURS`;
+      return 'UPCOMING';
+    } catch {
+      return 'UPCOMING';
+    }
+  };
+
+  // Helper to format date
+  const formatDateStr = (startStr: string) => {
+    try {
+      return new Date(startStr).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="py-20 text-center text-xs text-[#51606f] animate-pulse">
+        Loading dashboard data...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 text-left w-full">
@@ -31,78 +102,171 @@ export const TherapistDashboardPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Stats Cards Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0052cc] flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-xl">today</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-[#51606f] uppercase tracking-wider">
+              Today's Sessions
+            </p>
+            <h4 className="text-xl font-heading font-extrabold text-[#191c1e]">
+              {stats.todaySessionsCount}
+            </h4>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-xl">check_circle</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-[#51606f] uppercase tracking-wider">
+              Completed
+            </p>
+            <h4 className="text-xl font-heading font-extrabold text-[#191c1e]">
+              {stats.completedSessionsCount}
+            </h4>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-xl">pending_actions</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-[#51606f] uppercase tracking-wider">
+              Pending Holds
+            </p>
+            <h4 className="text-xl font-heading font-extrabold text-[#191c1e]">
+              {stats.pendingHoldsCount}
+            </h4>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-2xl border border-[#c3c6d6]/40 shadow-xs flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-xl">groups</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-[#51606f] uppercase tracking-wider">
+              Active Patients
+            </p>
+            <h4 className="text-xl font-heading font-extrabold text-[#191c1e]">
+              {stats.totalPatientsCount}
+            </h4>
+          </div>
+        </div>
+      </div>
+
       {/* Main 2-Column Dashboard Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Left Column (Next Appt & Recent Appts Table) */}
         <div className="xl:col-span-2 space-y-8">
           {/* Next Appointment Hero Section */}
-          <section className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs overflow-hidden relative p-6 md:p-8">
-            <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-[#e6f0ff]/60 to-transparent pointer-events-none rounded-l-[100px] opacity-60"></div>
-            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-[#e6f0ff] text-[#0052cc] text-[11px] font-bold rounded-md tracking-wider uppercase">
-                    IN 20 MINUTES
-                  </span>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-[#434654] mb-1">10:00 AM – 10:50 AM</p>
-                  <h3 className="text-2xl font-heading font-extrabold text-[#191c1e]">
-                    Alex Patient
-                  </h3>
-                  <p className="text-xs font-medium text-[#51606f] mt-0.5">
-                    Cognitive Behavioral Therapy (CBT)
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[#434654]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-base text-[#0052cc]">
-                      calendar_today
+          {nextSession ? (
+            <section className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs overflow-hidden relative p-6 md:p-8">
+              <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-[#e6f0ff]/60 to-transparent pointer-events-none rounded-l-[100px] opacity-60"></div>
+              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-[#e6f0ff] text-[#0052cc] text-[11px] font-bold rounded-md tracking-wider uppercase">
+                      {getRelativeTimeBadge(nextSession.startTime, nowTime.getTime())}
                     </span>
-                    <span>Fri, Aug 7, 2026</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-base text-[#0052cc]">
-                      videocam
-                    </span>
-                    <span>Video Session</span>
+
+                  <div>
+                    <p className="text-xs font-semibold text-[#434654] mb-1">
+                      {formatTimeRange(nextSession.startTime, nextSession.endTime)}
+                    </p>
+                    <h3 className="text-2xl font-heading font-extrabold text-[#191c1e]">
+                      {nextSession.patient?.name || 'Unknown Patient'}
+                    </h3>
+                    <p className="text-xs font-medium text-[#51606f] mt-0.5">
+                      {nextSession.bookingType === 'RECURRING'
+                        ? 'Recurring Session'
+                        : 'One-time Session'}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[#434654]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-base text-[#0052cc]">
+                        calendar_today
+                      </span>
+                      <span>{formatDateStr(nextSession.startTime)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-base text-[#0052cc]">
+                        videocam
+                      </span>
+                      <span>Video Session</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    {nextSession.meetingLink && (
+                      <a
+                        href={nextSession.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-[#0052cc] text-white px-5 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#003d9b] transition-colors shadow-xs cursor-pointer text-center"
+                      >
+                        <span className="material-symbols-outlined text-base">videocam</span>
+                        Start Session
+                      </a>
+                    )}
+                    <Link
+                      to={ROUTES.THERAPIST.APPOINTMENTS}
+                      className="px-5 py-2.5 bg-white text-[#191c1e] border border-[#c3c6d6]/60 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer flex items-center justify-center"
+                    >
+                      View Details
+                    </Link>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3 pt-2">
-                  <button className="flex items-center gap-2 bg-[#0052cc] text-white px-5 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#003d9b] transition-colors shadow-xs cursor-pointer">
-                    <span className="material-symbols-outlined text-base">videocam</span>
-                    Start Session
-                  </button>
-                  <button className="px-5 py-2.5 bg-white text-[#191c1e] border border-[#c3c6d6]/60 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer">
-                    View Details
-                  </button>
+                {/* Patient Avatar Thumbnail */}
+                <div className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md shrink-0 bg-gradient-to-br from-[#0052cc] to-[#003d9b] text-white flex items-center justify-center font-heading font-extrabold text-2xl">
+                  {(nextSession.patient?.name || 'P')
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2)}
                 </div>
               </div>
-
-              {/* Patient Avatar Thumbnail */}
-              <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-md shrink-0">
-                <img
-                  alt="Alex Patient"
-                  className="w-full h-full object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxpQzOFYHryO37GalgHxs_ntSQ5fZ97NCkh6gBcniWCQuCxJtP_yGAzLbMDYvr9hRJXDZEjewM-5CxR8m6zrtwbWSM3hDTE1-6YwPP4L797xSF9hvnwoXpfzla760pIcyuuO6ENrztGj0mUWWgdK--Q8is2xyZlKY1zCB2GFvb_8ot7zjAo4OqXzeVaMnyjvQWWdImvEYSpoqUkO2S6ZoI1EvSsfgZN8ZmGmEqMYxMgELR4QjhsE1x"
-                />
+            </section>
+          ) : (
+            <section className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs p-6 md:p-8 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center mx-auto">
+                <span className="material-symbols-outlined text-2xl">event_busy</span>
               </div>
-            </div>
-          </section>
+              <div>
+                <h4 className="font-heading font-extrabold text-[#191c1e] text-base">
+                  No upcoming sessions
+                </h4>
+                <p className="text-xs text-[#51606f] mt-1 max-w-sm mx-auto">
+                  You don't have any upcoming therapy sessions scheduled at the moment.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate(ROUTES.THERAPIST.SCHEDULE)}
+                className="px-4 py-2 bg-[#0052cc] hover:bg-[#003d9b] text-white rounded-xl text-xs font-semibold transition"
+              >
+                Set Working Hours
+              </button>
+            </section>
+          )}
 
           {/* Recent Appointments Table */}
           <section className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-heading font-bold text-[#191c1e]">Recent Appointments</h3>
-              <a
-                href="#all-appointments"
+              <Link
+                to={ROUTES.THERAPIST.APPOINTMENTS}
                 className="text-[#0052cc] text-xs font-bold flex items-center gap-1 hover:underline"
               >
                 View all <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </a>
+              </Link>
             </div>
 
             <div className="overflow-x-auto">
@@ -117,133 +281,98 @@ export const TherapistDashboardPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="text-xs font-medium divide-y divide-[#c3c6d6]/30">
-                  <tr className="hover:bg-[#f8f9fb] transition-colors">
-                    <td className="py-3.5 px-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                          <img
-                            alt="Emily Davis"
-                            className="w-full h-full object-cover"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxpQzOFYHryO37GalgHxs_ntSQ5fZ97NCkh6gBcniWCQuCxJtP_yGAzLbMDYvr9hRJXDZEjewM-5CxR8m6zrtwbWSM3hDTE1-6YwPP4L797xSF9hvnwoXpfzla760pIcyuuO6ENrztGj0mUWWgdK--Q8is2xyZlKY1zCB2GFvb_8ot7zjAo4OqXzeVaMnyjvQWWdImvEYSpoqUkO2S6ZoI1EvSsfgZN8ZmGmEqMYxMgELR4QjhsE1x"
-                          />
-                        </div>
-                        <span className="font-bold text-[#191c1e]">Emily Davis</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-2 text-[#434654]">Thu, Aug 6, 4:00 PM</td>
-                    <td className="py-3.5 px-2 text-[#434654]">CBT Session</td>
-                    <td className="py-3.5 px-2">
-                      <span className="inline-block px-2.5 py-0.5 bg-[#ccfbf1] text-[#0d9488] text-[11px] font-bold rounded-full border border-[#0d9488]/20">
-                        Completed
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-2 text-center">
-                      <button className="text-[#434654] hover:text-[#0052cc] p-1 border border-[#c3c6d6]/50 rounded-md hover:bg-white transition-colors cursor-pointer">
-                        <span className="material-symbols-outlined text-base">description</span>
-                      </button>
-                    </td>
-                  </tr>
+                  {recentAppointments.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="py-8 text-center text-xs text-[#51606f] font-semibold bg-[#f8f9fb]/40 border border-dashed border-slate-200 rounded-xl"
+                      >
+                        No recent past sessions found.
+                      </td>
+                    </tr>
+                  ) : (
+                    recentAppointments.slice(0, 4).map((appt) => {
+                      const initials = (appt.patient?.name || 'P')
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .substring(0, 2);
+                      const start = new Date(appt.startTime);
+                      const formattedTime =
+                        start.toLocaleDateString(undefined, {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        }) +
+                        `, ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
-                  <tr className="hover:bg-[#f8f9fb] transition-colors">
-                    <td className="py-3.5 px-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                          <img
-                            alt="James Taylor"
-                            className="w-full h-full object-cover"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxpQzOFYHryO37GalgHxs_ntSQ5fZ97NCkh6gBcniWCQuCxJtP_yGAzLbMDYvr9hRJXDZEjewM-5CxR8m6zrtwbWSM3hDTE1-6YwPP4L797xSF9hvnwoXpfzla760pIcyuuO6ENrztGj0mUWWgdK--Q8is2xyZlKY1zCB2GFvb_8ot7zjAo4OqXzeVaMnyjvQWWdImvEYSpoqUkO2S6ZoI1EvSsfgZN8ZmGmEqMYxMgELR4QjhsE1x"
-                          />
-                        </div>
-                        <span className="font-bold text-[#191c1e]">James Taylor</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-2 text-[#434654]">Thu, Aug 6, 2:30 PM</td>
-                    <td className="py-3.5 px-2 text-[#434654]">Anxiety Therapy</td>
-                    <td className="py-3.5 px-2">
-                      <span className="inline-block px-2.5 py-0.5 bg-[#ccfbf1] text-[#0d9488] text-[11px] font-bold rounded-full border border-[#0d9488]/20">
-                        Completed
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-2 text-center">
-                      <button className="text-[#434654] hover:text-[#0052cc] p-1 border border-[#c3c6d6]/50 rounded-md hover:bg-white transition-colors cursor-pointer">
-                        <span className="material-symbols-outlined text-base">description</span>
-                      </button>
-                    </td>
-                  </tr>
+                      const statusClasses =
+                        appt.status === 'COMPLETED'
+                          ? 'bg-[#ccfbf1] text-[#0d9488] border-[#0d9488]/20'
+                          : appt.status === 'CANCELLED'
+                            ? 'bg-rose-100 text-rose-700 border-rose-200'
+                            : 'bg-amber-100 text-amber-700 border-amber-200';
 
-                  <tr className="hover:bg-[#f8f9fb] transition-colors">
-                    <td className="py-3.5 px-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                          <img
-                            alt="Olivia Martinez"
-                            className="w-full h-full object-cover"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxpQzOFYHryO37GalgHxs_ntSQ5fZ97NCkh6gBcniWCQuCxJtP_yGAzLbMDYvr9hRJXDZEjewM-5CxR8m6zrtwbWSM3hDTE1-6YwPP4L797xSF9hvnwoXpfzla760pIcyuuO6ENrztGj0mUWWgdK--Q8is2xyZlKY1zCB2GFvb_8ot7zjAo4OqXzeVaMnyjvQWWdImvEYSpoqUkO2S6ZoI1EvSsfgZN8ZmGmEqMYxMgELR4QjhsE1x"
-                          />
-                        </div>
-                        <span className="font-bold text-[#191c1e]">Olivia Martinez</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-2 text-[#434654]">Wed, Aug 5, 11:00 AM</td>
-                    <td className="py-3.5 px-2 text-[#434654]">Mindfulness Therapy</td>
-                    <td className="py-3.5 px-2">
-                      <span className="inline-block px-2.5 py-0.5 bg-[#ccfbf1] text-[#0d9488] text-[11px] font-bold rounded-full border border-[#0d9488]/20">
-                        Completed
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-2 text-center">
-                      <button className="text-[#434654] hover:text-[#0052cc] p-1 border border-[#c3c6d6]/50 rounded-md hover:bg-white transition-colors cursor-pointer">
-                        <span className="material-symbols-outlined text-base">description</span>
-                      </button>
-                    </td>
-                  </tr>
-
-                  <tr className="hover:bg-[#f8f9fb] transition-colors">
-                    <td className="py-3.5 px-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                          <img
-                            alt="Daniel Anderson"
-                            className="w-full h-full object-cover"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxpQzOFYHryO37GalgHxs_ntSQ5fZ97NCkh6gBcniWCQuCxJtP_yGAzLbMDYvr9hRJXDZEjewM-5CxR8m6zrtwbWSM3hDTE1-6YwPP4L797xSF9hvnwoXpfzla760pIcyuuO6ENrztGj0mUWWgdK--Q8is2xyZlKY1zCB2GFvb_8ot7zjAo4OqXzeVaMnyjvQWWdImvEYSpoqUkO2S6ZoI1EvSsfgZN8ZmGmEqMYxMgELR4QjhsE1x"
-                          />
-                        </div>
-                        <span className="font-bold text-[#191c1e]">Daniel Anderson</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-2 text-[#434654]">Wed, Aug 5, 9:00 AM</td>
-                    <td className="py-3.5 px-2 text-[#434654]">CBT Session</td>
-                    <td className="py-3.5 px-2">
-                      <span className="inline-block px-2.5 py-0.5 bg-rose-100 text-rose-700 text-[11px] font-bold rounded-full border border-rose-200">
-                        Cancelled
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-2 text-center">
-                      <button className="text-[#434654] hover:text-[#0052cc] p-1 border border-[#c3c6d6]/50 rounded-md hover:bg-white transition-colors cursor-pointer">
-                        <span className="material-symbols-outlined text-base">description</span>
-                      </button>
-                    </td>
-                  </tr>
+                      return (
+                        <tr key={appt.id} className="hover:bg-[#f8f9fb] transition-colors">
+                          <td className="py-3.5 px-2">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0052cc] to-[#003d9b] text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                {initials}
+                              </div>
+                              <span className="font-bold text-[#191c1e]">
+                                {appt.patient?.name || 'Unknown Patient'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-2 text-[#434654]">{formattedTime}</td>
+                          <td className="py-3.5 px-2 text-[#434654]">
+                            {appt.bookingType === 'RECURRING'
+                              ? 'Recurring Session'
+                              : 'One-time Session'}
+                          </td>
+                          <td className="py-3.5 px-2">
+                            <span
+                              className={`inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-full border ${statusClasses}`}
+                            >
+                              {appt.status.charAt(0) + appt.status.slice(1).toLowerCase()}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-2 text-center">
+                            <Link
+                              to={ROUTES.THERAPIST.APPOINTMENTS}
+                              className="text-[#434654] hover:text-[#0052cc] p-1 border border-[#c3c6d6]/50 rounded-md hover:bg-white inline-flex items-center justify-center transition-colors cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-base">
+                                description
+                              </span>
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
 
             <div className="mt-4 pt-3 border-t border-[#c3c6d6]/30 text-center">
-              <a
-                href="#all-appointments"
+              <Link
+                to={ROUTES.THERAPIST.APPOINTMENTS}
                 className="inline-flex items-center gap-1 text-[#0052cc] text-xs font-bold hover:underline"
               >
                 View All Appointments{' '}
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </a>
+              </Link>
             </div>
           </section>
         </div>
 
-        {/* Right Column (Today's Schedule & Quick Actions) */}
+        {/* Right Column (Today's Schedule) */}
         <div className="space-y-8">
           {/* Today's Schedule Timeline */}
-          <section className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs p-6 flex flex-col h-[520px]">
+          <section className="bg-white rounded-2xl border border-[#c3c6d6]/40 shadow-xs p-6 flex flex-col h-full min-h-[400px]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-heading font-bold text-[#191c1e]">Today's Schedule</h3>
               <Link
@@ -259,168 +388,67 @@ export const TherapistDashboardPage: React.FC = () => {
               <span className="material-symbols-outlined text-[#0052cc] text-base">
                 calendar_month
               </span>
-              <span>Fri, Aug 7, 2026</span>
+              <span>
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </span>
             </div>
 
             {/* Timeline Items List */}
             <div className="flex-1 overflow-y-auto pr-1 space-y-4">
-              {/* Appt 1 */}
-              <div className="relative flex gap-3 items-start group">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
-                  10:00 AM
+              {todaySchedule.length === 0 ? (
+                <div className="py-20 text-center text-xs text-[#51606f] font-semibold bg-[#f8f9fb]/40 border border-dashed border-slate-200 rounded-xl">
+                  No appointments scheduled for today.
                 </div>
-                {/* Vertical Timeline Connector Line & Dot */}
-                <div className="flex flex-col items-center self-stretch shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#0d9488] ring-4 ring-[#ccfbf1] z-10 mt-2.5"></div>
-                  <div className="w-0.5 flex-1 bg-[#0d9488]/30 my-1"></div>
-                </div>
-                <div className="flex-1 bg-[#ccfbf1]/40 border border-[#0d9488]/30 rounded-xl p-3 shadow-2xs flex justify-between items-center">
-                  <div>
-                    <h5 className="font-bold text-[#0d9488] text-xs mb-0.5">Alex Patient</h5>
-                    <p className="text-[11px] text-[#434654]">CBT Session</p>
-                  </div>
-                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-[#0052cc] cursor-pointer">
-                    <span className="material-symbols-outlined text-sm">videocam</span>
-                  </button>
-                </div>
-              </div>
+              ) : (
+                todaySchedule.map((appt, idx: number) => {
+                  const start = new Date(appt.startTime);
+                  const formattedTime = start.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  const isLast = idx === todaySchedule.length - 1;
 
-              {/* Appt 2 */}
-              <div className="relative flex gap-3 items-start group">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
-                  11:00 AM
-                </div>
-                {/* Vertical Timeline Connector Line & Dot */}
-                <div className="flex flex-col items-center self-stretch shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#0052cc] ring-4 ring-[#e6f0ff] z-10 mt-2.5"></div>
-                  <div className="w-0.5 flex-1 bg-[#0052cc]/30 my-1"></div>
-                </div>
-                <div className="flex-1 bg-[#e6f0ff]/50 border border-[#0052cc]/30 rounded-xl p-3 shadow-2xs flex justify-between items-center">
-                  <div>
-                    <h5 className="font-bold text-[#191c1e] text-xs mb-0.5">Jessica Miller</h5>
-                    <p className="text-[11px] text-[#434654]">Mindfulness Therapy</p>
-                  </div>
-                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-[#0052cc] cursor-pointer">
-                    <span className="material-symbols-outlined text-sm">videocam</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Break */}
-              <div className="relative flex gap-3 items-start group">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
-                  01:00 PM
-                </div>
-                {/* Vertical Timeline Connector Line & Dot */}
-                <div className="flex flex-col items-center self-stretch shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-400 ring-4 ring-slate-100 z-10 mt-2.5"></div>
-                  <div className="w-0.5 flex-1 bg-slate-300 my-1"></div>
-                </div>
-                <div className="flex-1 bg-slate-50 border border-[#c3c6d6]/40 rounded-xl p-3 shadow-2xs flex justify-between items-center">
-                  <div>
-                    <h5 className="font-bold text-[#191c1e] text-xs mb-0.5">Break</h5>
-                    <p className="text-[11px] text-[#434654]">Lunch Time</p>
-                  </div>
-                  <span className="material-symbols-outlined text-sm text-[#434654]">
-                    local_cafe
-                  </span>
-                </div>
-              </div>
-
-              {/* Appt 3 */}
-              <div className="relative flex gap-3 items-start group">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
-                  02:30 PM
-                </div>
-                {/* Vertical Timeline Connector Line & Dot */}
-                <div className="flex flex-col items-center self-stretch shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-purple-600 ring-4 ring-purple-100 z-10 mt-2.5"></div>
-                  <div className="w-0.5 flex-1 bg-purple-300 my-1"></div>
-                </div>
-                <div className="flex-1 bg-purple-50 border border-purple-200 rounded-xl p-3 shadow-2xs flex justify-between items-center">
-                  <div>
-                    <h5 className="font-bold text-purple-900 text-xs mb-0.5">Michael Brown</h5>
-                    <p className="text-[11px] text-[#434654]">Anxiety Management</p>
-                  </div>
-                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-purple-600 cursor-pointer">
-                    <span className="material-symbols-outlined text-sm">videocam</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Appt 4 */}
-              <div className="relative flex gap-3 items-start group">
-                <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
-                  04:00 PM
-                </div>
-                {/* Vertical Timeline Connector Line & Dot */}
-                <div className="flex flex-col items-center self-stretch shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-100 z-10 mt-2.5"></div>
-                  <div className="w-0.5 flex-1 bg-gradient-to-b from-amber-300 to-transparent my-1"></div>
-                </div>
-                <div className="flex-1 bg-[#fef3c7]/50 border border-amber-300 rounded-xl p-3 shadow-2xs flex justify-between items-center">
-                  <div>
-                    <h5 className="font-bold text-amber-900 text-xs mb-0.5">David Wilson</h5>
-                    <p className="text-[11px] text-[#434654]">Depression Support</p>
-                  </div>
-                  <button className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-amber-600 cursor-pointer">
-                    <span className="material-symbols-outlined text-sm">videocam</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Quick Actions Grid */}
-          <section>
-            <h3 className="text-lg font-heading font-bold text-[#191c1e] mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => navigate(ROUTES.THERAPIST.SCHEDULE)}
-                className="bg-white border border-[#c3c6d6]/40 p-4 rounded-xl flex items-center gap-3 hover:border-[#0052cc] transition-colors text-left shadow-xs cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-lg bg-[#e6f0ff] text-[#0052cc] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-lg">event_available</span>
-                </div>
-                <span className="font-bold text-xs text-[#191c1e]">
-                  Manage
-                  <br />
-                  Availability
-                </span>
-              </button>
-
-              <button className="bg-white border border-[#c3c6d6]/40 p-4 rounded-xl flex items-center gap-3 hover:border-rose-500 transition-colors text-left shadow-xs cursor-pointer">
-                <div className="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-lg">block</span>
-                </div>
-                <span className="font-bold text-xs text-[#191c1e]">
-                  Add
-                  <br />
-                  Unavailability
-                </span>
-              </button>
-
-              <button className="bg-white border border-[#c3c6d6]/40 p-4 rounded-xl flex items-center gap-3 hover:border-[#0d9488] transition-colors text-left shadow-xs cursor-pointer">
-                <div className="w-9 h-9 rounded-lg bg-[#ccfbf1] text-[#0d9488] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-lg">chat</span>
-                </div>
-                <span className="font-bold text-xs text-[#191c1e]">
-                  Message
-                  <br />
-                  Patient
-                </span>
-              </button>
-
-              <button className="bg-white border border-[#c3c6d6]/40 p-4 rounded-xl flex items-center gap-3 hover:border-purple-600 transition-colors text-left shadow-xs cursor-pointer">
-                <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-lg">bar_chart</span>
-                </div>
-                <span className="font-bold text-xs text-[#191c1e]">
-                  View
-                  <br />
-                  Reports
-                </span>
-              </button>
+                  return (
+                    <div key={appt.id} className="relative flex gap-3 items-start group">
+                      <div className="w-16 text-right text-[11px] font-bold text-[#434654] pt-2 shrink-0">
+                        {formattedTime}
+                      </div>
+                      {/* Vertical Timeline Connector Line & Dot */}
+                      <div className="flex flex-col items-center self-stretch shrink-0">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#0d9488] ring-4 ring-[#ccfbf1] z-10 mt-2.5"></div>
+                        {!isLast && <div className="w-0.5 flex-1 bg-[#0d9488]/30 my-1"></div>}
+                      </div>
+                      <div className="flex-1 bg-[#ccfbf1]/40 border border-[#0d9488]/30 rounded-xl p-3 shadow-2xs flex justify-between items-center">
+                        <div>
+                          <h5 className="font-bold text-[#0d9488] text-xs mb-0.5">
+                            {appt.patient?.name || 'Unknown Patient'}
+                          </h5>
+                          <p className="text-[11px] text-[#434654]">
+                            {appt.bookingType === 'RECURRING'
+                              ? 'Recurring Session'
+                              : 'One-time Session'}
+                          </p>
+                        </div>
+                        {appt.meetingLink && (
+                          <a
+                            href={appt.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 bg-white rounded-md border border-[#c3c6d6]/50 text-[#434654] hover:text-[#0052cc] cursor-pointer inline-flex items-center justify-center"
+                          >
+                            <span className="material-symbols-outlined text-sm">videocam</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </section>
         </div>

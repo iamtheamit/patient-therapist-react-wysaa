@@ -89,7 +89,7 @@ export const patientApi = {
 
   cancelAppointment: async (appointmentId: string): Promise<{ success: boolean; id: string }> => {
     try {
-      const response = await axiosClient.patch<unknown, { success: boolean; id: string }>(
+      const response = await axiosClient.post<unknown, { success: boolean; id: string }>(
         `/appointments/${appointmentId}/cancel`,
       );
       return response;

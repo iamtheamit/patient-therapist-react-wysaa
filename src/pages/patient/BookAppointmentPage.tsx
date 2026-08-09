@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
-import { useTherapistStatusStore } from '@/stores/therapistStatusStore';
 import {
   SlotGrid,
   BookingConfirmationForm,
@@ -72,25 +71,13 @@ const TherapistAvatar: React.FC<{ url?: string; name: string; size?: string }> =
   );
 };
 
-// Directory Therapist Card Component with Per-Date Slot Check & Disabled State
+// Directory Therapist Card Component
 const TherapistDirectoryCardItem: React.FC<{
   therapist: TherapistProfile;
-  selectedDate: string;
-  isSarahOnline: boolean;
   onViewProfile: (therapist: TherapistProfile) => void;
   onBookSession: (therapist: TherapistProfile) => void;
-}> = ({ therapist, selectedDate, isSarahOnline, onViewProfile, onBookSession }) => {
-  const { data: slots = [], isLoading } = useAvailableSlots(therapist.id, selectedDate);
-  const openSlotsCount = slots.filter((s) => s.isAvailable).length;
-  const isOnline = therapist.id === 'therapist-1' ? isSarahOnline : true;
+}> = ({ therapist, onViewProfile, onBookSession }) => {
   const isTopRated = (therapist.rating || 0) >= 4.8;
-  const hasSlotsAvailable = openSlotsCount > 0;
-
-  const formattedDate = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
 
   return (
     <div className="bg-white rounded-xl border border-outline-variant/50 hover:border-primary/30 transition-colors duration-200 text-left group">
@@ -99,11 +86,6 @@ const TherapistDirectoryCardItem: React.FC<{
         {/* Avatar column */}
         <div className="relative shrink-0 pt-0.5">
           <TherapistAvatar url={therapist.avatarUrl} name={therapist.name} size="w-12 h-12" />
-          <span
-            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-white ${
-              isOnline ? 'bg-emerald-500' : 'bg-on-surface-variant/30'
-            }`}
-          />
         </div>
 
         {/* Info column */}
@@ -146,26 +128,12 @@ const TherapistDirectoryCardItem: React.FC<{
         </div>
       </div>
 
-      {/* Footer — availability + actions */}
+      {/* Footer — pricing + actions */}
       <div className="px-5 py-3 border-t border-outline-variant/30 flex items-center justify-between gap-4">
-        {/* Left: availability + price */}
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5 text-secondary">
-            <Calendar className="w-3.5 h-3.5 text-on-surface-variant" />
-            <span>{formattedDate}</span>
-            {isLoading ? (
-              <span className="text-on-surface-variant animate-pulse ml-1">checking…</span>
-            ) : hasSlotsAvailable ? (
-              <span className="text-emerald-700 font-semibold ml-1">
-                · {openSlotsCount} slot{openSlotsCount !== 1 ? 's' : ''} open
-              </span>
-            ) : (
-              <span className="text-on-surface-variant font-medium ml-1">· No availability</span>
-            )}
-          </div>
-          <span className="w-px h-3.5 bg-outline-variant/40 hidden sm:block" />
-          <span className="hidden sm:inline text-secondary">
-            <span className="font-semibold text-on-surface">$150</span> / visit
+        {/* Left: price */}
+        <div className="flex items-center gap-4 text-xs text-secondary font-medium">
+          <span>
+            Session Fee: <span className="font-semibold text-on-surface">$150</span> / visit
           </span>
         </div>
 
@@ -175,15 +143,9 @@ const TherapistDirectoryCardItem: React.FC<{
             View Profile
           </Button>
 
-          {hasSlotsAvailable ? (
-            <Button variant="primary" size="sm" onClick={() => onBookSession(therapist)}>
-              Book Session
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" disabled className="opacity-50 pointer-events-none">
-              Unavailable
-            </Button>
-          )}
+          <Button variant="primary" size="sm" onClick={() => onBookSession(therapist)}>
+            Book Session
+          </Button>
         </div>
       </div>
     </div>
@@ -193,13 +155,11 @@ const TherapistDirectoryCardItem: React.FC<{
 export const BookAppointmentPage: React.FC = () => {
   const user = useAuthStore((state: AuthState) => state.user);
   const patientId = user?.id || 'patient-user-1';
-  const isSarahOnline = useTherapistStatusStore((state) => state.isOnline);
 
   const { data: therapists = [], isLoading: isTherapistsLoading } = useTherapists();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All Specialties');
-  const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   const [showTopRatedOnly, setShowTopRatedOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'rating' | 'experience' | 'name'>('rating');
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('list');
@@ -239,7 +199,6 @@ export const BookAppointmentPage: React.FC = () => {
 
   const filteredTherapists = useMemo(() => {
     const list = therapists.filter((t) => {
-      const isOnline = t.id === 'therapist-1' ? isSarahOnline : true;
       const isTopRated = (t.rating || 0) >= 4.8;
       const matchesSearch =
         t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -247,10 +206,9 @@ export const BookAppointmentPage: React.FC = () => {
       const matchesSpecialty =
         selectedSpecialty === 'All Specialties' ||
         t.specialization.toLowerCase().includes(selectedSpecialty.toLowerCase());
-      const matchesOnline = !showOnlineOnly || isOnline;
       const matchesTopRated = !showTopRatedOnly || isTopRated;
 
-      return matchesSearch && matchesSpecialty && matchesOnline && matchesTopRated;
+      return matchesSearch && matchesSpecialty && matchesTopRated;
     });
 
     return list.sort((a, b) => {
@@ -258,15 +216,7 @@ export const BookAppointmentPage: React.FC = () => {
       if (sortBy === 'experience') return (b.experienceYears || 0) - (a.experienceYears || 0);
       return a.name.localeCompare(b.name);
     });
-  }, [
-    therapists,
-    searchQuery,
-    selectedSpecialty,
-    showOnlineOnly,
-    showTopRatedOnly,
-    sortBy,
-    isSarahOnline,
-  ]);
+  }, [therapists, searchQuery, selectedSpecialty, showTopRatedOnly, sortBy]);
 
   const handleStartBooking = (therapist: TherapistProfile) => {
     setSelectedTherapist(therapist);
@@ -333,20 +283,6 @@ export const BookAppointmentPage: React.FC = () => {
       {bookingStep === 'directory' && (
         <div className="bg-white rounded-xl border border-outline-variant/40 p-5 space-y-3">
           <div className="flex flex-col md:flex-row md:items-end gap-3">
-            {/* Date picker */}
-            <div className="shrink-0 md:w-48">
-              <label className="text-[11px] font-semibold text-secondary uppercase tracking-wider mb-1 block">
-                Session Date
-              </label>
-              <input
-                type="date"
-                min={new Date().toISOString().split('T')[0]}
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-3 py-2 bg-surface-container-low border border-outline-variant/60 rounded-lg text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition cursor-pointer"
-              />
-            </div>
-
             {/* Search */}
             <div className="relative flex-1">
               <label className="text-[11px] font-semibold text-secondary uppercase tracking-wider mb-1 block">
@@ -374,23 +310,6 @@ export const BookAppointmentPage: React.FC = () => {
 
             {/* Quick filters + sort + layout */}
             <div className="flex items-end gap-2 flex-wrap sm:flex-nowrap">
-              <button
-                type="button"
-                onClick={() => setShowOnlineOnly(!showOnlineOnly)}
-                className={`px-3 py-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
-                  showOnlineOnly
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                    : 'bg-surface-container-low border-outline-variant/60 text-secondary hover:text-on-surface hover:border-outline-variant'
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    showOnlineOnly ? 'bg-emerald-500' : 'bg-outline-variant'
-                  }`}
-                />
-                Online
-              </button>
-
               <button
                 type="button"
                 onClick={() => setShowTopRatedOnly(!showTopRatedOnly)}
@@ -503,7 +422,6 @@ export const BookAppointmentPage: React.FC = () => {
             onAction={() => {
               setSearchQuery('');
               setSelectedSpecialty('All Specialties');
-              setShowOnlineOnly(false);
               setShowTopRatedOnly(false);
             }}
           />
@@ -519,8 +437,6 @@ export const BookAppointmentPage: React.FC = () => {
               <TherapistDirectoryCardItem
                 key={therapist.id}
                 therapist={therapist}
-                selectedDate={selectedDate}
-                isSarahOnline={isSarahOnline}
                 onViewProfile={(t) => setProfileModalTherapist(t)}
                 onBookSession={(t) => handleStartBooking(t)}
               />

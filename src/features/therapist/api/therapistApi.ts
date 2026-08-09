@@ -52,7 +52,7 @@ export const therapistApi = {
   getAgenda: async (therapistId: string, date?: string): Promise<TherapistAgendaItem[]> => {
     try {
       const response = await axiosClient.get<unknown, TherapistAgendaItem[]>(
-        `/therapists/${therapistId}/agenda`,
+        `/therapist/schedules/${therapistId}/agenda`,
         { params: { date } },
       );
       return Array.isArray(response)
@@ -113,6 +113,19 @@ export const therapistApi = {
           startTime: tomorrow11.toISOString(),
           endTime: new Date(tomorrow11.getTime() + 60 * 60 * 1000).toISOString(),
           status: 'CONFIRMED',
+          createdAt: now.toISOString(),
+        },
+        {
+          id: 'app-therapist-4',
+          therapistId,
+          patient: {
+            id: 'pat-4',
+            name: 'Samantha Vance',
+            email: 'samantha.v@example.com',
+          },
+          startTime: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          endTime: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
+          status: 'CANCELLED',
           createdAt: now.toISOString(),
         },
       ];
@@ -386,6 +399,7 @@ export const therapistApi = {
     isRecurring?: boolean;
     repeatType?: string;
     repeatFrequency?: string;
+    recurrenceEndDate?: string;
   }) => {
     try {
       const response = await axiosClient.post('/therapist/availability-slots', payload);

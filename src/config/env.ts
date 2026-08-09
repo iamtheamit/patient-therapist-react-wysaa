@@ -7,7 +7,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   VITE_API_BASE_URL: z.string().url().default('https://api.wysacare.example.com/v1'),
   VITE_APP_ENV: z.enum(['development', 'staging', 'production', 'test']).default('development'),
-  VITE_SLOT_HOLD_DURATION_SECONDS: z.coerce.number().int().positive().default(300),
+  VITE_SLOT_HOLD_DURATION_SECONDS: z.coerce.number().int().positive().default(60),
 });
 
 const _env = envSchema.safeParse({

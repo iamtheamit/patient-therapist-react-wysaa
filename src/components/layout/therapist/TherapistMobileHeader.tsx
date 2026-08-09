@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
-import { useUIStore } from '@/stores/uiStore';
-import type { UIState } from '@/stores/uiStore';
-import { useTherapistStatusStore } from '@/stores/therapistStatusStore';
 import { Logo } from '@/components/common/Logo';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
@@ -14,21 +11,6 @@ export const TherapistMobileHeader: React.FC = () => {
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const user = useAuthStore((state: AuthState) => state.user);
   const { mutate: logoutMutate } = useLogout();
-  const addToast = useUIStore((state: UIState) => state.addToast);
-  const isOnline = useTherapistStatusStore((state) => state.isOnline);
-  const toggleOnlineStatus = useTherapistStatusStore((state) => state.toggleOnlineStatus);
-
-  const handleToggleOnline = () => {
-    toggleOnlineStatus();
-    const nextState = !isOnline;
-    addToast({
-      type: nextState ? 'success' : 'warning',
-      title: nextState ? 'Status: Online' : 'Status: Offline',
-      message: nextState
-        ? 'You are now Online. New slots are available for patient bookings.'
-        : 'You are now Offline. No new slots can be booked for your profile.',
-    });
-  };
 
   const handleSignOut = () => {
     setShowSignOutModal(false);
@@ -42,23 +24,6 @@ export const TherapistMobileHeader: React.FC = () => {
           <Logo to="/therapist/dashboard" iconSize="text-2xl" textSize="text-lg" />
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleToggleOnline}
-              className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 border ${
-                isOnline
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border-amber-200'
-              }`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-                }`}
-              />
-              {isOnline ? 'Online' : 'Offline'}
-            </button>
-
             <button
               type="button"
               onClick={() => setShowSignOutModal(true)}
@@ -75,9 +40,7 @@ export const TherapistMobileHeader: React.FC = () => {
               type="button"
               aria-label="User menu"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`w-8 h-8 rounded-full overflow-hidden ring-offset-1 shadow-sm transition-all duration-300 ease-in-out cursor-pointer ${
-                isOnline ? 'ring-2 ring-emerald-500' : 'ring-2 ring-amber-400'
-              }`}
+              className="w-8 h-8 rounded-full overflow-hidden ring-offset-1 ring-2 ring-[#0052cc]/30 shadow-sm transition-all duration-300 ease-in-out cursor-pointer"
             >
               <img
                 alt="Dr. Sarah Connor"
@@ -94,9 +57,7 @@ export const TherapistMobileHeader: React.FC = () => {
               <div className="flex items-center gap-3">
                 <img
                   alt="Dr. Sarah Connor"
-                  className={`w-9 h-9 rounded-full object-cover ring-offset-1 transition-all duration-300 ease-in-out ${
-                    isOnline ? 'ring-2 ring-emerald-500' : 'ring-2 ring-amber-400'
-                  }`}
+                  className="w-9 h-9 rounded-full object-cover ring-offset-1 ring-2 ring-[#0052cc]/30 transition-all duration-300 ease-in-out"
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxi7fbYBrUC8gYf9yA9zuUplRT-sxz9TfKZWZ4s50vvrOzgtjYdgKhZLhWtQQmaZN03XvV7OwIwCkN8cEK_I3FVA7hT4zqypWBZ3EelKNplUINCfUlFKWN4OEpCJnSH-ZVGEA385I2On-RNj2GvBAOX5z-KOx41cdlG1cC4n1ltQNcrHpasMRDtHNZqB7z8R-xTOZKM1hzbakT8YpkduWVsCrESVaMD2xWD5is7vg3CcrFxrExnlPC"
                 />
                 <div>
@@ -107,31 +68,6 @@ export const TherapistMobileHeader: React.FC = () => {
                     {user?.email || 'sarah.connor@therapysync.com'}
                   </p>
                 </div>
-              </div>
-            </div>
-
-            {/* Full Switch inside menu */}
-            <div className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
-              <span className="text-xs font-bold text-[#191c1e]">Practice Booking Status</span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isOnline}
-                  onClick={handleToggleOnline}
-                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                    isOnline ? 'bg-emerald-600' : 'bg-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                      isOnline ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-                <span className="text-xs font-bold text-[#191c1e]">
-                  {isOnline ? 'Online' : 'Offline'}
-                </span>
               </div>
             </div>
 

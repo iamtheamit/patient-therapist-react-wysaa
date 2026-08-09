@@ -75,6 +75,7 @@ export const useTherapistCalendar = (therapistId: string) => {
       isRecurring?: boolean;
       repeatType?: string;
       repeatFrequency?: string;
+      recurrenceEndDate?: string;
     }) => therapistApi.createAvailabilitySlot(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: THERAPIST_CALENDAR_KEYS.slots(therapistId) });

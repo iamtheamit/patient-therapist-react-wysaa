@@ -29,6 +29,7 @@ export interface PatientAppointment {
   notes?: string;
   meetingLink?: string;
   createdAt: string;
+  holdExpiresAt?: string;
 }
 
 export interface PatientDashboardStats {
