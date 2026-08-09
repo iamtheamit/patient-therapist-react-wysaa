@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Calendar, Clock, Video, XCircle, ShieldCheck, MonitorPlay } from 'lucide-react';
 import type { PatientAppointment } from '../types/patient.types';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -17,6 +18,7 @@ interface AppointmentCardProps {
 }
 
 export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment }) => {
+  const queryClient = useQueryClient();
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const { mutate: cancelAppt, isPending: isCancelling } = useCancelAppointment(
@@ -41,10 +43,12 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment })
       setTimeLeft(diff);
       if (diff <= 0) {
         clearInterval(interval);
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [appointment.holdExpiresAt, timeLeft]);
+  }, [appointment.holdExpiresAt, timeLeft, queryClient]);
 
   const handleConfirmCancel = () => {
     cancelAppt(appointment.id, {

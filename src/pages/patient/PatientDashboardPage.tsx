@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Calendar, Clock, Video, Timer, Plus, ArrowRight, CalendarX } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthState } from '@/stores/authStore';
@@ -22,17 +23,23 @@ const ActiveHoldCard: React.FC<{
   hold: DashboardAppointment;
   onCheckout: (hold: DashboardAppointment) => void;
 }> = ({ hold, onCheckout }) => {
+  const queryClient = useQueryClient();
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
   useEffect(() => {
     const expires = hold.holdExpiresAt ? new Date(hold.holdExpiresAt).getTime() : Date.now();
     const update = () => {
-      setTimeLeft(Math.max(0, Math.floor((expires - Date.now()) / 1000)));
+      const remaining = Math.max(0, Math.floor((expires - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      }
     };
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [hold.holdExpiresAt]);
+  }, [hold.holdExpiresAt, queryClient]);
 
   if (timeLeft <= 0) return null;
 
@@ -41,10 +48,10 @@ const ActiveHoldCard: React.FC<{
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   return (
-    <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-xl p-4 space-y-2 text-left">
+    <div className="bg-amber-50/80 border border-amber-300/70 rounded-xl p-4 space-y-2 text-left shadow-2xs">
       <div className="flex justify-between items-start">
-        <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-xs">
-          <Clock className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
+          <Clock className="w-3.5 h-3.5 text-amber-600" />
           <span>
             Today,{' '}
             {new Date(hold.startTime).toLocaleTimeString(undefined, {
@@ -53,7 +60,7 @@ const ActiveHoldCard: React.FC<{
             })}
           </span>
         </div>
-        <span className="text-emerald-700 text-[10px] font-bold bg-white px-2 py-0.5 rounded-full shadow-2xs border border-emerald-200/60 animate-pulse">
+        <span className="text-amber-800 text-[10px] font-bold bg-white px-2 py-0.5 rounded-full shadow-2xs border border-amber-300 animate-pulse">
           Expires in {formattedTime}
         </span>
       </div>
@@ -74,7 +81,7 @@ const ActiveHoldCard: React.FC<{
       </p>
       <button
         onClick={() => onCheckout(hold)}
-        className="w-full text-center bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-50 py-2 rounded-xl text-xs font-bold transition-colors shadow-2xs cursor-pointer"
+        className="w-full text-center bg-white border border-amber-500 text-amber-900 hover:bg-amber-100/70 py-2 rounded-xl text-xs font-bold transition-colors shadow-2xs cursor-pointer"
       >
         Continue Booking
       </button>
@@ -83,6 +90,7 @@ const ActiveHoldCard: React.FC<{
 };
 
 export const PatientDashboardPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const user = useAuthStore((state: AuthState) => state.user);
   const firstName = user?.name ? user.name.split(' ')[0] : 'Alex';
   const location = useLocation();
@@ -517,6 +525,8 @@ export const PatientDashboardPage: React.FC = () => {
                     },
                     {
                       onSuccess: () => {
+                        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+                        queryClient.invalidateQueries({ queryKey: ['appointments'] });
                         setSelectedHoldForCheckout(null);
                       },
                     },

@@ -17,9 +17,10 @@ export const useBookAppointment = () => {
   return useMutation<PatientAppointment, Error, BookAppointmentPayload>({
     mutationFn: (payload) => appointmentsApi.bookAppointment(payload),
     onSuccess: (appointment) => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.APPOINTMENTS.PATIENT_UPCOMING(appointment.patientId),
-      });
+      // Invalidate dashboard and all appointment/schedule queries so active holds clear immediately
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.APPOINTMENTS.ROOT });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCHEDULES.ROOT });
 
       addToast({
         type: 'success',
@@ -46,10 +47,10 @@ export const useBookRecurringAppointment = () => {
 
   return useMutation<RecurringBookingResponse, Error, RecurringBookingPayload>({
     mutationFn: (payload) => appointmentsApi.bookRecurringAppointment(payload),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.APPOINTMENTS.PATIENT_UPCOMING(variables.patientId),
-      });
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.APPOINTMENTS.ROOT });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCHEDULES.ROOT });
 
       addToast({
         type: 'success',

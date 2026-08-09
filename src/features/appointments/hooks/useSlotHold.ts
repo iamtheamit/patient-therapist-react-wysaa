@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { appointmentsApi } from '../api/appointmentsApi';
 import type { SlotHoldSession } from '../types/hold.types';
 import type { AvailableSlot } from '../types/appointments.types';
@@ -7,6 +8,7 @@ import type { UIState } from '@/stores/uiStore';
 import { env } from '@/config/env';
 
 export const useSlotHold = () => {
+  const queryClient = useQueryClient();
   const [holdSession, setHoldSession] = useState<SlotHoldSession | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
   const [isHolding, setIsHolding] = useState<boolean>(false);
@@ -33,7 +35,9 @@ export const useSlotHold = () => {
     setHoldSession(null);
     setSecondsRemaining(0);
     setIsHolding(false);
-  }, [holdSession, clearTimer]);
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['appointments'] });
+  }, [holdSession, clearTimer, queryClient]);
 
   const startHold = async (slot: AvailableSlot, therapistId: string) => {
     try {
@@ -50,6 +54,8 @@ export const useSlotHold = () => {
       setSecondsRemaining(initialRemaining);
 
       clearTimer();
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
 
       timerRef.current = setInterval(() => {
         const remaining = Math.max(0, Math.floor((session.expiresAt - Date.now()) / 1000));
@@ -59,6 +65,8 @@ export const useSlotHold = () => {
           clearTimer();
           setHoldSession(null);
           setIsHolding(false);
+          queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+          queryClient.invalidateQueries({ queryKey: ['appointments'] });
           const holdMinutes = Math.floor(env.VITE_SLOT_HOLD_DURATION_SECONDS / 60);
           addToast({
             type: 'warning',

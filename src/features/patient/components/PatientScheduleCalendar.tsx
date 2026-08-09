@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -39,12 +39,21 @@ const formatDateKey = (date: Date): string => {
 export const PatientScheduleCalendar: React.FC = () => {
   const user = useAuthStore((state: AuthState) => state.user);
   const patientId = user?.id || 'patient-user-1';
-  const { data: appointments = [] } = usePatientAppointments(patientId);
+  const { data: appointmentsData } = usePatientAppointments(patientId, { limit: 100 });
+  const appointments = appointmentsData?.items || [];
 
   const today = useMemo(() => new Date(), []);
   const [viewDate, setViewDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [activeModalDate, setActiveModalDate] = useState<Date | null>(null);
+  const [currentTime, setCurrentTime] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const currentYear = viewDate.getFullYear();
   const currentMonth = viewDate.getMonth(); // 0-indexed
@@ -93,15 +102,27 @@ export const PatientScheduleCalendar: React.FC = () => {
       if (!map[key]) {
         map[key] = { appointments: [], holds: [] };
       }
-      if (appt.status === 'HELD') {
+
+      const statusStr = appt.status as string;
+      const isHold = statusStr === 'HELD' || statusStr === 'HOLD';
+      const isExpired = appt.holdExpiresAt
+        ? new Date(appt.holdExpiresAt).getTime() <= currentTime
+        : false;
+
+      if (isHold && !isExpired) {
         map[key].holds.push(appt);
-      } else if (appt.status !== 'CANCELLED') {
+      } else if (
+        statusStr !== 'CANCELLED' &&
+        statusStr !== 'HOLD_EXPIRED' &&
+        statusStr !== 'PAYMENT_FAILED' &&
+        !isHold
+      ) {
         map[key].appointments.push(appt);
       }
     });
 
     return map;
-  }, [appointments]);
+  }, [appointments, currentTime]);
 
   // Generate calendar days grid
   const calendarDays = useMemo<CalendarDay[]>(() => {
@@ -308,7 +329,7 @@ export const PatientScheduleCalendar: React.FC = () => {
                   <span
                     className={cn(
                       'w-1.5 h-1.5 rounded-full transition-transform group-hover:scale-125',
-                      dayItem.isSelected ? 'bg-emerald-300' : 'bg-emerald-500',
+                      dayItem.isSelected ? 'bg-amber-300' : 'bg-amber-500',
                     )}
                   />
                 )}
@@ -325,7 +346,7 @@ export const PatientScheduleCalendar: React.FC = () => {
           <span>Appointment</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 bg-emerald-500 rounded-full" />
+          <span className="w-2 h-2 bg-amber-500 rounded-full" />
           <span>Slot Hold</span>
         </div>
       </div>
@@ -440,31 +461,31 @@ export const PatientScheduleCalendar: React.FC = () => {
                     return (
                       <div
                         key={hold.id}
-                        className="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-3 space-y-2.5 shadow-2xs"
+                        className="bg-amber-50/80 border border-amber-300/70 rounded-xl p-3 space-y-2.5 shadow-2xs"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">
-                              <Clock className="w-4 h-4" />
+                            <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-900 font-bold text-xs flex items-center justify-center shrink-0">
+                              <Clock className="w-4 h-4 text-amber-600" />
                             </div>
                             <div>
                               <p className="font-bold text-sm text-[#191c1e]">
                                 {hold.therapist.name}
                               </p>
-                              <p className="text-xs text-emerald-700 font-medium">Slot Held</p>
+                              <p className="text-xs text-amber-800 font-medium">Slot Held</p>
                             </div>
                           </div>
 
-                          <span className="bg-white text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-2xs">
+                          <span className="bg-white text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-2xs">
                             Active Hold
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs pt-1 border-t border-emerald-200/60">
-                          <span className="font-bold text-emerald-800">{holdTime}</span>
+                        <div className="flex items-center justify-between text-xs pt-1 border-t border-amber-200/80">
+                          <span className="font-bold text-amber-900">{holdTime}</span>
                           <Link
                             to={`${ROUTES.PATIENT.DASHBOARD}#holds`}
-                            className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-white hover:bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 shadow-2xs transition-colors"
+                            className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 bg-white hover:bg-amber-100 px-3 py-1 rounded-lg border border-amber-400 shadow-2xs transition-colors"
                           >
                             <span>Complete Booking</span>
                             <ArrowRight className="w-3 h-3" />

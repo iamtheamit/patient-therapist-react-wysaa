@@ -2,18 +2,72 @@
 import { axiosClient } from '@/api/axiosClient';
 import type { PatientAppointment, PatientDashboardStats } from '../types/patient.types';
 
+export interface AppointmentFilters {
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedAppointmentsResponse {
+  items: PatientAppointment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const patientApi = {
-  getAppointments: async (patientId: string): Promise<PatientAppointment[]> => {
+  getAppointments: async (
+    patientId: string,
+    filters?: AppointmentFilters,
+  ): Promise<PaginatedAppointmentsResponse> => {
     try {
-      const response = await axiosClient.get<unknown, any>('/appointments/patient');
+      const response = await axiosClient.get<unknown, any>('/appointments/patient', {
+        params: {
+          search: filters?.search,
+          startDate: filters?.startDate,
+          endDate: filters?.endDate,
+          status: filters?.status && filters.status !== 'all' ? filters.status : undefined,
+          page: filters?.page || 1,
+          limit: filters?.limit || 10,
+        },
+      });
       const items = Array.isArray(response) ? response : (response as any)?.items || [];
-      return items.map((appt: any) => {
+      const total =
+        typeof response === 'object' && response?.total !== undefined
+          ? response.total
+          : items.length;
+      const page =
+        typeof response === 'object' && response?.page !== undefined
+          ? response.page
+          : filters?.page || 1;
+      const limit =
+        typeof response === 'object' && response?.limit !== undefined
+          ? response.limit
+          : filters?.limit || 10;
+      const totalPages =
+        typeof response === 'object' && response?.totalPages !== undefined
+          ? response.totalPages
+          : Math.ceil(total / (limit || 1));
+
+      const mappedItems = items.map((appt: any) => {
         const rawStatus = appt.status || appt.appointmentStatus || 'SCHEDULED';
         return {
           ...appt,
           status: rawStatus === 'HOLD' ? 'HELD' : rawStatus,
         };
       });
+
+      return {
+        items: mappedItems,
+        total,
+        page,
+        limit,
+        totalPages,
+      };
     } catch {
       // Mock Fallback for local demo resilience
       await new Promise((resolve) => setTimeout(resolve, 600));
@@ -23,7 +77,7 @@ export const patientApi = {
       const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       const pastDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
-      return [
+      const mockItems: PatientAppointment[] = [
         {
           id: 'app-101',
           patientId,
@@ -68,6 +122,14 @@ export const patientApi = {
           createdAt: pastDate.toISOString(),
         },
       ];
+
+      return {
+        items: mockItems,
+        total: mockItems.length,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      };
     }
   },
 

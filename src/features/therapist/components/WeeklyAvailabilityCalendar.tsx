@@ -23,8 +23,16 @@ export interface AvailabilityBlock {
   startHour: number; // 9
   durationHours: number; // 1
   location: string;
-  type: 'available' | 'booked' | 'break' | 'held';
-  status?: 'scheduled' | 'completed' | 'no_show' | 'cancelled' | 'held' | 'available' | 'break';
+  type: 'available' | 'booked' | 'break' | 'held' | 'expired';
+  status?:
+    | 'scheduled'
+    | 'completed'
+    | 'no_show'
+    | 'cancelled'
+    | 'held'
+    | 'available'
+    | 'break'
+    | 'expired';
   title?: string;
   services?: string[];
   patientName?: string;
@@ -144,9 +152,14 @@ export const WeeklyAvailabilityCalendar: React.FC<{
     // Filter appointments for this date
     const dateAppointments = appointmentBlocks.filter((b) => b.date === dateIso);
 
-    // If day rule is missing or disabled, only show booked/scheduled appointments if any exist
+    // Include all actual appointments for this date
+    for (const appt of dateAppointments) {
+      result.push(appt);
+    }
+
+    // If day rule is missing or disabled, return appointments only
     if (!dayRule || !dayRule.isEnabled) {
-      return dateAppointments;
+      return result;
     }
 
     const slotDurMins = scheduleConfig?.slotDurationMinutes || 50;
@@ -185,21 +198,34 @@ export const WeeklyAvailabilityCalendar: React.FC<{
       });
     }
 
-    // Derive available slots
+    // Helper to parse HH:mm to minutes from midnight
+    const parseMins = (timeStr: string) => {
+      const [h, m] = (timeStr || '00:00').split(':').map(Number);
+      return (h || 0) * 60 + (m || 0);
+    };
+
+    // Derive available or expired slots
     let currMins = shiftStartMins;
     let slotIndex = 0;
     while (currMins + slotDurMins <= shiftEndMins) {
       const slotStartMins = currMins;
       const slotEndMins = currMins + slotDurMins;
 
-      // Check if slot falls inside break window
-      const isBreak =
+      // Check if slot overlaps with break window
+      const overlapsBreak =
         breakStartMins !== null &&
         breakEndMins !== null &&
         slotStartMins < breakEndMins &&
         slotEndMins > breakStartMins;
 
-      if (!isBreak) {
+      // Check if slot overlaps with ANY existing appointment on this date
+      const overlapsAppt = dateAppointments.some((appt) => {
+        const apptStartMins = parseMins(appt.startTime);
+        const apptEndMins = parseMins(appt.endTime);
+        return apptStartMins < slotEndMins && apptEndMins > slotStartMins;
+      });
+
+      if (!overlapsBreak && !overlapsAppt) {
         const startHStr = String(Math.floor(slotStartMins / 60)).padStart(2, '0');
         const startMStr = String(slotStartMins % 60).padStart(2, '0');
         const endHStr = String(Math.floor(slotEndMins / 60)).padStart(2, '0');
@@ -208,36 +234,28 @@ export const WeeklyAvailabilityCalendar: React.FC<{
         const startTimeStr = `${startHStr}:${startMStr}`;
         const endTimeStr = `${endHStr}:${endMStr}`;
 
-        // Check if an appointment or hold exists at this time window
-        const matchingAppt = dateAppointments.find((appt) => appt.startTime === startTimeStr);
+        // Check if slot end date & time has already passed
+        const [y, m, d] = dateIso.split('-').map(Number);
+        const [eH, eM] = endTimeStr.split(':').map(Number);
+        const slotEndDateTime = new Date(y, m - 1, d, eH, eM, 0, 0);
+        const isPast = slotEndDateTime < nowTime;
 
-        if (matchingAppt) {
-          result.push(matchingAppt);
-        } else {
-          result.push({
-            id: `derived-${dateIso}-${slotIndex}`,
-            date: dateIso,
-            startTime: startTimeStr,
-            endTime: endTimeStr,
-            startHour: slotStartMins / 60,
-            durationHours: slotDurMins / 60,
-            location: 'Telehealth',
-            type: 'available',
-            status: 'available',
-            title: 'Available Slot',
-          });
-        }
+        result.push({
+          id: `derived-${dateIso}-${slotIndex}`,
+          date: dateIso,
+          startTime: startTimeStr,
+          endTime: endTimeStr,
+          startHour: slotStartMins / 60,
+          durationHours: slotDurMins / 60,
+          location: 'Telehealth',
+          type: isPast ? 'expired' : 'available',
+          status: isPast ? 'expired' : 'available',
+          title: isPast ? 'Expired Slot' : 'Available Slot',
+        });
       }
 
       slotIndex++;
       currMins = slotEndMins + bufferDurMins;
-    }
-
-    // Add any appointments that fell outside derived windows
-    for (const appt of dateAppointments) {
-      if (!result.some((r) => r.id === appt.id)) {
-        result.push(appt);
-      }
     }
 
     return result;
@@ -285,6 +303,15 @@ export const WeeklyAvailabilityCalendar: React.FC<{
           text: 'text-slate-600',
           titleText: 'text-slate-800 font-bold',
           label: 'BREAK',
+        };
+      case 'expired':
+      case 'past':
+        return {
+          card: 'bg-slate-100/70 border-l-4 border-l-slate-400 border border-slate-200/80 text-slate-400 opacity-60 pointer-events-none',
+          badge: 'bg-slate-400 text-white',
+          text: 'text-slate-400',
+          titleText: 'text-slate-500 font-medium',
+          label: 'EXPIRED',
         };
       case 'available':
         return {
@@ -912,6 +939,11 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                     Therapist non-working intermission period. No appointments are derived during
                     this interval.
                   </p>
+                </div>
+              ) : selectedBlock.status === 'expired' || selectedBlock.type === 'expired' ? (
+                <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 text-slate-700">
+                  <p className="font-bold mb-1">Expired Slot</p>
+                  <p>This time slot has already passed and is no longer available for booking.</p>
                 </div>
               ) : (
                 <div className="p-3 bg-teal-50 rounded-xl border border-teal-200 text-teal-800">
