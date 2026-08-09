@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import type { User } from '@/types/auth';
 
+// sessionStorage flag — survives page refresh but not new tabs or browser close.
+// Used to skip the bootstrap spinner for users who never had a session.
+const SESSION_FLAG = 'session_active';
+
+const hasSessionFlag = () => sessionStorage.getItem(SESSION_FLAG) === '1';
+const setSessionFlag = () => sessionStorage.setItem(SESSION_FLAG, '1');
+const clearSessionFlag = () => sessionStorage.removeItem(SESSION_FLAG);
+
 export interface AuthStoreState {
   user: User | null;
   token: string | null;
@@ -19,6 +27,7 @@ export const useAuthStore = create<AuthStoreState>()((set) => ({
   isAuthenticated: false,
 
   setAuth: (user: User, token: string) => {
+    setSessionFlag();
     set({
       user,
       token,
@@ -34,6 +43,7 @@ export const useAuthStore = create<AuthStoreState>()((set) => ({
   },
 
   logout: () => {
+    clearSessionFlag();
     set({
       user: null,
       token: null,
@@ -46,3 +56,5 @@ export const useAuthStore = create<AuthStoreState>()((set) => ({
       user: state.user ? { ...state.user, ...updatedFields } : null,
     })),
 }));
+
+export { hasSessionFlag };

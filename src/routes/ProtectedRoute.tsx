@@ -22,7 +22,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
   const isUserLoading = hasToken && !user;
 
   if (isBootstrapping || isUserLoading) {
-    return <PageSpinner label="Restoring session..." />;
+    return <PageSpinner label="Getting things ready..." />;
   }
 
   if (!isAuthenticated && !hasToken) {
