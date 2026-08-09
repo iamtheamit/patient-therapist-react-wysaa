@@ -217,28 +217,36 @@ export const PatientScheduleCalendar: React.FC = () => {
     : false;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-[#c3c6d6]/40 p-5 space-y-4 text-left relative">
+    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 space-y-4 text-left relative transition-shadow hover:shadow-md">
       {/* Calendar Header */}
-      <div className="flex justify-between items-center">
-        <h3 className="font-heading font-bold text-sm text-[#191c1e] flex items-center gap-2">
-          <CalendarIcon className="w-4 h-4 text-[#003d9b]" />
-          <span>Your Schedule</span>
-        </h3>
+      <div className="flex justify-between items-center pb-1">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#003d9b] border border-blue-100 flex items-center justify-center shrink-0">
+            <CalendarIcon className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="font-heading font-bold text-sm text-slate-900">Schedule & Activity</h3>
+            <p className="text-[11px] text-slate-500 font-medium">
+              View appointments and held slots
+            </p>
+          </div>
+        </div>
+
         <Link
           to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
-          className="text-[#003d9b] hover:text-[#0052cc] transition-colors text-xs font-bold flex items-center gap-1 group"
+          className="text-[#003d9b] hover:text-[#002b70] transition-colors text-xs font-semibold flex items-center gap-1 group bg-blue-50/60 hover:bg-blue-100/60 px-2.5 py-1.5 rounded-lg border border-blue-100/80"
         >
-          <span>View full list</span>
+          <span>View all</span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
 
       {/* Month Selector Bar */}
-      <div className="flex justify-between items-center text-[#191c1e] text-xs font-bold bg-[#f8f9fb] p-2 rounded-xl border border-[#c3c6d6]/30">
+      <div className="flex justify-between items-center text-slate-800 text-xs font-semibold bg-slate-50/80 p-2 rounded-xl border border-slate-200/70">
         <button
           type="button"
           onClick={handlePrevMonth}
-          className="p-1.5 hover:bg-white hover:shadow-2xs text-[#51606f] hover:text-[#191c1e] rounded-lg transition-all cursor-pointer"
+          className="p-1.5 hover:bg-white hover:shadow-xs text-slate-600 hover:text-slate-900 rounded-lg border border-transparent hover:border-slate-200 transition-all cursor-pointer"
           title="Previous month"
           aria-label="Previous month"
         >
@@ -246,14 +254,14 @@ export const PatientScheduleCalendar: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-2">
-          <span className="font-heading text-sm font-bold">
+          <span className="font-heading text-xs font-bold text-slate-900 tracking-tight">
             {monthNames[currentMonth]} {currentYear}
           </span>
           {(currentMonth !== today.getMonth() || currentYear !== today.getFullYear()) && (
             <button
               type="button"
               onClick={handleResetToToday}
-              className="text-[10px] font-bold text-[#003d9b] bg-[#e6f0ff] hover:bg-[#d0e2ff] px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+              className="text-[10px] font-bold text-[#003d9b] bg-blue-100/70 hover:bg-blue-200/80 px-2 py-0.5 rounded-full transition-colors cursor-pointer border border-blue-200/60"
             >
               Today
             </button>
@@ -263,7 +271,7 @@ export const PatientScheduleCalendar: React.FC = () => {
         <button
           type="button"
           onClick={handleNextMonth}
-          className="p-1.5 hover:bg-white hover:shadow-2xs text-[#51606f] hover:text-[#191c1e] rounded-lg transition-all cursor-pointer"
+          className="p-1.5 hover:bg-white hover:shadow-xs text-slate-600 hover:text-slate-900 rounded-lg border border-transparent hover:border-slate-200 transition-all cursor-pointer"
           title="Next month"
           aria-label="Next month"
         >
@@ -277,7 +285,7 @@ export const PatientScheduleCalendar: React.FC = () => {
         {daysOfWeek.map((day) => (
           <div
             key={day}
-            className="text-[#51606f] font-bold py-1 text-[11px] uppercase tracking-wider"
+            className="text-slate-400 font-bold py-1 text-[10px] uppercase tracking-wider"
           >
             {day}
           </div>
@@ -301,22 +309,22 @@ export const PatientScheduleCalendar: React.FC = () => {
                 }
               }}
               className={cn(
-                'relative py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer flex flex-col items-center justify-center min-h-[38px] group',
+                'relative py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer flex flex-col items-center justify-center min-h-[40px] group',
                 dayItem.isSelected
-                  ? 'bg-[#003d9b] text-white shadow-md font-bold scale-[1.05] z-10'
+                  ? 'bg-[#003d9b] text-white shadow-md font-bold scale-[1.03] z-10'
                   : dayItem.isCurrentMonth
-                    ? 'text-[#191c1e] hover:bg-[#f0f5ff] hover:text-[#003d9b]'
-                    : 'text-[#c3c6d6] hover:bg-slate-50',
+                    ? 'text-slate-800 hover:bg-blue-50/70 hover:text-[#003d9b]'
+                    : 'text-slate-300 hover:bg-slate-50',
                 dayItem.isToday &&
                   !dayItem.isSelected &&
-                  'ring-2 ring-[#003d9b] font-bold text-[#003d9b] bg-[#e6f0ff]/40',
+                  'ring-1.5 ring-[#003d9b] font-bold text-[#003d9b] bg-blue-50/50',
                 hasAny && !dayItem.isSelected && 'font-bold text-[#003d9b]',
               )}
             >
               <span>{dayItem.dayNumber}</span>
 
               {/* Status Dot Indicators */}
-              <div className="flex items-center gap-0.5 mt-0.5">
+              <div className="flex items-center gap-1 mt-0.5">
                 {hasAppt && (
                   <span
                     className={cn(
@@ -340,7 +348,7 @@ export const PatientScheduleCalendar: React.FC = () => {
       </div>
 
       {/* Legend Footer */}
-      <div className="flex gap-4 text-[11px] text-[#51606f] justify-center pt-3 border-t border-slate-100 font-medium">
+      <div className="flex gap-4 text-[11px] text-slate-500 justify-center pt-3 border-t border-slate-100 font-medium">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 bg-[#003d9b] rounded-full" />
           <span>Appointment</span>
@@ -351,37 +359,42 @@ export const PatientScheduleCalendar: React.FC = () => {
         </div>
       </div>
 
-      {/* Interactive Micro Modal Popover */}
+      {/* Enterprise Micro Modal Popover */}
       {activeModalDate && (
         <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={() => setActiveModalDate(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 text-left"
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="bg-[#003d9b] text-white p-4 flex items-center justify-between relative overflow-hidden">
-              <div className="relative z-10">
-                <div className="flex items-center gap-1.5 text-xs text-[#b2c5ff] font-semibold">
-                  <CalendarIcon className="w-3.5 h-3.5" />
+            <div className="bg-gradient-to-r from-slate-50 via-blue-50/30 to-slate-50 p-4 border-b border-slate-200/80 flex items-start justify-between relative">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100/70 text-[#003d9b] border border-blue-200/60">
+                  <CalendarIcon className="w-3.5 h-3.5 text-[#003d9b]" />
                   <span>{formattedModalDate}</span>
                   {isModalDateToday && (
-                    <span className="bg-white/20 text-white px-1.5 py-0.2 rounded text-[10px] font-bold">
+                    <span className="bg-[#003d9b] text-white px-1.5 py-0.2 rounded text-[9px] font-bold tracking-wider uppercase ml-1">
                       Today
                     </span>
                   )}
                 </div>
-                <h4 className="text-base font-bold font-heading text-white mt-0.5">
+                <h4 className="text-base font-bold font-heading text-slate-900 mt-2">
                   {hasModalEvents ? 'Scheduled Activity' : 'No Events Scheduled'}
                 </h4>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  {hasModalEvents
+                    ? `${modalDayData.appointments.length + modalDayData.holds.length} activity item(s) on this date`
+                    : 'Your calendar is free for this day.'}
+                </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setActiveModalDate(null)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer relative z-10"
+                className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-all cursor-pointer border border-slate-200/80 shadow-2xs shrink-0"
                 aria-label="Close modal"
               >
                 <X className="w-4 h-4" />
@@ -389,7 +402,7 @@ export const PatientScheduleCalendar: React.FC = () => {
             </div>
 
             {/* Modal Body */}
-            <div className="p-4 space-y-3 max-h-[320px] overflow-y-auto">
+            <div className="p-4 space-y-3 max-h-[360px] overflow-y-auto">
               {hasModalEvents ? (
                 <>
                   {modalDayData.appointments.map((appt) => {
@@ -401,31 +414,32 @@ export const PatientScheduleCalendar: React.FC = () => {
                     return (
                       <div
                         key={appt.id}
-                        className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-2.5 hover:border-[#003d9b]/40 transition-all shadow-2xs"
+                        className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-3 hover:border-blue-300 hover:shadow-xs transition-all"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-[#003d9b]/10 text-[#003d9b] font-bold text-xs flex items-center justify-center shrink-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#003d9b] border border-blue-100 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                               <Video className="w-4 h-4" />
                             </div>
                             <div>
-                              <p className="font-bold text-sm text-[#191c1e]">
+                              <p className="font-bold text-sm text-slate-900 leading-snug">
                                 {appt.therapist.name}
                               </p>
-                              <p className="text-xs text-[#51606f] font-medium">
+                              <p className="text-xs text-slate-500 font-medium">
                                 {appt.therapist.specialization}
                               </p>
                             </div>
                           </div>
 
-                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                          <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             Confirmed
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/60">
-                          <div className="flex items-center gap-1.5 text-[#003d9b] font-bold">
-                            <Clock className="w-3.5 h-3.5" />
+                        <div className="flex items-center justify-between text-xs bg-slate-50/80 p-2.5 rounded-lg border border-slate-100 font-medium text-slate-700">
+                          <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                            <Clock className="w-3.5 h-3.5 text-[#003d9b]" />
                             <span>{apptTime}</span>
                           </div>
 
@@ -434,7 +448,7 @@ export const PatientScheduleCalendar: React.FC = () => {
                               href={appt.meetingLink}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs font-bold text-white bg-[#003d9b] hover:bg-[#0052cc] px-3 py-1 rounded-lg shadow-2xs transition-colors"
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#003d9b] hover:bg-[#002b70] px-3 py-1.5 rounded-lg shadow-2xs transition-all cursor-pointer"
                             >
                               <span>Join Call</span>
                               <Video className="w-3 h-3" />
@@ -442,9 +456,10 @@ export const PatientScheduleCalendar: React.FC = () => {
                           ) : (
                             <Link
                               to={`${ROUTES.PATIENT.DASHBOARD}#appointments`}
-                              className="text-xs font-bold text-[#003d9b] hover:underline"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-[#003d9b] hover:text-[#002b70] transition-colors"
                             >
-                              View details
+                              <span>View details</span>
+                              <ArrowRight className="w-3 h-3" />
                             </Link>
                           )}
                         </div>
@@ -461,31 +476,36 @@ export const PatientScheduleCalendar: React.FC = () => {
                     return (
                       <div
                         key={hold.id}
-                        className="bg-amber-50/80 border border-amber-300/70 rounded-xl p-3 space-y-2.5 shadow-2xs"
+                        className="bg-gradient-to-br from-amber-50/90 via-amber-50/40 to-orange-50/30 border border-amber-300/80 rounded-xl p-3.5 space-y-3 shadow-2xs"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-900 font-bold text-xs flex items-center justify-center shrink-0">
-                              <Clock className="w-4 h-4 text-amber-600" />
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100/80 text-amber-800 border border-amber-200 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                              <Clock className="w-4 h-4 text-amber-700" />
                             </div>
                             <div>
-                              <p className="font-bold text-sm text-[#191c1e]">
+                              <p className="font-bold text-sm text-slate-900 leading-snug">
                                 {hold.therapist.name}
                               </p>
                               <p className="text-xs text-amber-800 font-medium">Slot Held</p>
                             </div>
                           </div>
 
-                          <span className="bg-white text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-2xs">
+                          <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-2xs shrink-0">
+                            <Sparkles className="w-3 h-3 text-amber-600" />
                             Active Hold
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs pt-1 border-t border-amber-200/80">
-                          <span className="font-bold text-amber-900">{holdTime}</span>
+                        <div className="flex items-center justify-between text-xs bg-white/90 p-2.5 rounded-lg border border-amber-200/80 font-medium">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                            <Clock className="w-3.5 h-3.5 text-amber-600" />
+                            <span>{holdTime}</span>
+                          </div>
+
                           <Link
                             to={`${ROUTES.PATIENT.DASHBOARD}#holds`}
-                            className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 bg-white hover:bg-amber-100 px-3 py-1 rounded-lg border border-amber-400 shadow-2xs transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200/80 px-3 py-1.5 rounded-lg border border-amber-300 shadow-2xs transition-colors"
                           >
                             <span>Complete Booking</span>
                             <ArrowRight className="w-3 h-3" />
@@ -497,19 +517,19 @@ export const PatientScheduleCalendar: React.FC = () => {
                 </>
               ) : (
                 <div className="text-center py-6 px-4 space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-[#f0f5ff] text-[#003d9b] flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#003d9b] border border-blue-100 flex items-center justify-center mx-auto shadow-2xs">
                     <Sparkles className="w-6 h-6 text-[#003d9b]" />
                   </div>
                   <div>
-                    <h5 className="font-bold text-sm text-[#191c1e]">No Appointments</h5>
-                    <p className="text-xs text-[#51606f] mt-1">
+                    <h5 className="font-bold text-sm text-slate-900">No Appointments</h5>
+                    <p className="text-xs text-slate-500 mt-1">
                       You have no sessions or slot holds on this date.
                     </p>
                   </div>
                   <Link
                     to={ROUTES.PATIENT.BOOK}
                     onClick={() => setActiveModalDate(null)}
-                    className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-[#003d9b] to-[#0052cc] hover:from-[#002d73] hover:to-[#003d9b] py-2.5 px-4 rounded-xl shadow-xs transition-all cursor-pointer"
+                    className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-white bg-[#003d9b] hover:bg-[#002b70] py-2.5 px-4 rounded-xl shadow-xs transition-all cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Book Session on this Date</span>
@@ -519,11 +539,16 @@ export const PatientScheduleCalendar: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-3 bg-slate-50 border-t border-slate-200/80 flex justify-end">
+            <div className="p-3 bg-slate-50/90 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500 font-medium">
+              <span>
+                {hasModalEvents
+                  ? `${modalDayData.appointments.length + modalDayData.holds.length} total item(s)`
+                  : 'Free day'}
+              </span>
               <button
                 type="button"
                 onClick={() => setActiveModalDate(null)}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-[#51606f] hover:text-[#191c1e] border border-slate-200 shadow-2xs hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 hover:text-slate-900 border border-slate-200 shadow-2xs hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 Close
               </button>
