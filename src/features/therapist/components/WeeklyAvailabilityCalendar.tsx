@@ -929,6 +929,7 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                         <button
                           key={st.key}
                           type="button"
+                          disabled={st.key === 'scheduled' || isActive}
                           onClick={() =>
                             handleUpdateBlockStatus(
                               selectedBlock.id,
@@ -937,8 +938,8 @@ export const WeeklyAvailabilityCalendar: React.FC<{
                           }
                           className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-between border ${
                             isActive
-                              ? `${st.activeColor} border-transparent shadow-2xs`
-                              : 'bg-white border-[#c3c6d6]/60 text-[#434654] hover:bg-slate-50'
+                              ? `${st.activeColor} border-transparent shadow-2xs cursor-default`
+                              : 'bg-white border-[#c3c6d6]/60 text-[#434654] hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed'
                           }`}
                         >
                           <span className="flex items-center gap-1.5">
