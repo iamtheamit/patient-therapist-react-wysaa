@@ -1,4 +1,4 @@
-import type { User, UserRole } from '@/types/auth';
+import type { User } from '@/types/auth';
 
 export interface LoginCredentials {
   email: string;
@@ -9,7 +9,6 @@ export interface RegisterCredentials {
   name: string;
   email: string;
   password: string;
-  role: UserRole;
 }
 
 export interface BackendAuthTokens {
